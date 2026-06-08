@@ -466,19 +466,28 @@
     }
 
     async function fetchFiatRates(base) {
-      // Using exchangerate-api (free, no key)
+      // Primary: Frankfurter (free, no key, ECB-sourced, no rate caps — fast & reliable)
       try {
-        const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
-        if (!res.ok) throw new Error('fiat api');
+        const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}`);
+        if (!res.ok) throw new Error('frankfurter');
         const data = await res.json();
-        return data.rates || {};
-      } catch (e) {
-        // Fallback: approximate rates (very rough, only for demo if APIs blocked)
-        console.warn('Fiat API fallback used');
-        const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
-        // very rough scaling
-        if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
-        return approx;
+        if (data && data.rates) return { ...data.rates, [base]: 1 };
+        throw new Error('frankfurter empty');
+      } catch (e1) {
+        console.warn('Frankfurter unavailable, trying exchangerate-api fallback');
+        // Secondary: exchangerate-api (free, no key)
+        try {
+          const res2 = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+          if (!res2.ok) throw new Error('fiat api');
+          const data2 = await res2.json();
+          return data2.rates || {};
+        } catch (e2) {
+          // Final fallback: approximate rates (very rough, only for demo if APIs blocked)
+          console.warn('Fiat API fallback used');
+          const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
+          if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
+          return approx;
+        }
       }
     }
 
