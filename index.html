@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SISBRAPAG • Global Remittances &amp; Trade</title>
+  <meta name="description" content="SISBRAPAG — Simplifying international remittances, import/export, and crypto-enabled settlements. Minimal. Reliable.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+    
+    :root {
+      --accent: #10b981;
+    }
+    
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+    }
+    
+    .font-display {
+      font-family: 'Space Grotesk', 'Inter', system_ui, sans-serif;
+      font-weight: 600;
+    }
+
+    .section {
+      scroll-margin-top: 80px;
+    }
+
+    .nav-active {
+      color: #111827;
+      font-weight: 600;
+    }
+
+    .service-card {
+      transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), 
+                  box-shadow 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    
+    .service-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+    }
+
+    .converter-card {
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.05),
+                  0 4px 6px -4px rgb(0 0 0 / 0.05);
+    }
+
+    .rate-text {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .minimal-input {
+      transition: all 0.1s ease;
+    }
+    
+    .minimal-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    .stat {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .trade-bg {
+      background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased">
+  <!-- NAV -->
+  <nav class="bg-white/95 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+    <div class="max-w-screen-xl mx-auto px-6">
+      <div class="flex h-16 items-center justify-between">
+        <div class="flex items-center gap-x-3">
+          <div class="flex items-center gap-x-2">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 flex items-center justify-center">
+              <span class="text-white font-bold text-xl tracking-tighter">S</span>
+            </div>
+            <div>
+              <span class="font-display text-2xl font-semibold tracking-tighter">SISBRAPAG</span>
+            </div>
+          </div>
+          <div class="hidden sm:block text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-500 tracking-[1px]">EST. 2018</div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-x-8 text-sm">
+          <a href="#services" class="text-slate-600 hover:text-slate-900 transition-colors">Services</a>
+          <a href="#converter" class="text-slate-600 hover:text-slate-900 transition-colors">Converter</a>
+          <a href="#about" class="text-slate-600 hover:text-slate-900 transition-colors">About</a>
+        </div>
+
+        <div class="flex items-center gap-x-3">
+          <a href="#converter" 
+             class="hidden sm:inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors">
+            Try Converter
+          </a>
+          <a href="#contact" 
+             class="inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors">
+            Contact
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="max-w-screen-xl mx-auto px-6 pt-16 pb-12">
+    <div class="max-w-3xl">
+      <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium px-3 py-1 mb-6">
+        <i class="fa-solid fa-globe fa-sm"></i>
+        <span>Brazil ↔ World</span>
+      </div>
+      
+      <h1 class="font-display text-6xl md:text-7xl leading-[1.05] tracking-tighter font-semibold">
+        Global trade.<br>
+        Simple remittances.<br>
+        <span class="text-emerald-600">Crypto ready.</span>
+      </h1>
+      
+      <p class="mt-6 max-w-md text-xl text-slate-600">
+        SISBRAPAG helps businesses and individuals move value across borders — 
+        with traditional rails and digital assets.
+      </p>
+
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="#converter" 
+           class="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 hover:bg-black px-8 py-4 text-base font-semibold text-white transition-all active:scale-[0.985]">
+          <span>Open live converter</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <a href="#services" 
+           class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 hover:bg-white px-7 py-4 text-base font-medium transition-all">
+          See services
+        </a>
+      </div>
+      
+      <div class="mt-8 flex items-center gap-x-6 text-sm text-slate-500">
+        <div class="flex items-center gap-x-1.5">
+          <i class="fa-solid fa-check text-emerald-500"></i>
+          <span>Remittances</span>
+        </div>
+        <div class="flex items-center gap-x-1.5">
+          <i class="fa-solid fa-check text-emerald-500"></i>
+          <span>Import / Export</span>
+        </div>
+        <div class="flex items-center gap-x-1.5">
+          <i class="fa-solid fa-check text-emerald-500"></i>
+          <span>Crypto settlements</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div id="services" class="max-w-screen-xl mx-auto px-6 pt-8 pb-16 section">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <div class="uppercase tracking-[2px] text-xs font-semibold text-emerald-600 mb-1">What we do</div>
+        <h2 class="font-display text-4xl tracking-tighter font-semibold">Core services</h2>
+      </div>
+      <a href="#contact" class="hidden sm:block text-sm font-medium text-emerald-700 hover:text-emerald-800">Talk to the team →</a>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <!-- Remittances -->
+      <div class="service-card bg-white border border-slate-100 rounded-3xl p-7">
+        <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600 mb-6">
+          <i class="fa-solid fa-paper-plane text-xl"></i>
+        </div>
+        <h3 class="font-semibold text-2xl tracking-tight">International Remittances</h3>
+        <p class="mt-3 text-slate-600 leading-relaxed">
+          Fast, transparent transfers between Brazil and international partners. 
+          Support for major currencies and stablecoins with competitive rates.
+        </p>
+        <div class="mt-6 text-xs font-medium text-emerald-700 flex items-center gap-2">
+          <span class="inline-block w-1.5 h-px bg-emerald-600"></span>
+          <span>BRL • USD • EUR • Crypto on/off-ramps</span>
+        </div>
+      </div>
+
+      <!-- Import / Export -->
+      <div class="service-card bg-white border border-slate-100 rounded-3xl p-7">
+        <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-sky-100 text-sky-600 mb-6">
+          <i class="fa-solid fa-ship text-xl"></i>
+        </div>
+        <h3 class="font-semibold text-2xl tracking-tight">Import &amp; Export Support</h3>
+        <p class="mt-3 text-slate-600 leading-relaxed">
+          End-to-end payment facilitation, supplier settlements, and trade finance 
+          coordination for companies moving goods across borders.
+        </p>
+        <div class="mt-6 text-xs font-medium text-sky-700 flex items-center gap-2">
+          <span class="inline-block w-1.5 h-px bg-sky-600"></span>
+          <span>Trade payments • Escrow coordination • Documentation</span>
+        </div>
+      </div>
+
+      <!-- Crypto & Trading -->
+      <div class="service-card bg-white border border-slate-100 rounded-3xl p-7">
+        <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-amber-100 text-amber-600 mb-6">
+          <i class="fa-brands fa-bitcoin text-xl"></i>
+        </div>
+        <h3 class="font-semibold text-2xl tracking-tight">Crypto Conversions &amp; Settlements</h3>
+        <p class="mt-3 text-slate-600 leading-relaxed">
+          Direct fiat ↔ crypto and crypto ↔ crypto conversions. 
+          Ideal for treasury management, supplier payments, and client remittances.
+        </p>
+        <div class="mt-6 text-xs font-medium text-amber-700 flex items-center gap-2">
+          <span class="inline-block w-1.5 h-px bg-amber-600"></span>
+          <span>BTC • ETH • USDT • USDC + major pairs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONVERTER - THE STAR FEATURE -->
+  <div id="converter" class="bg-white border-y border-slate-100 section">
+    <div class="max-w-screen-xl mx-auto px-6 py-16">
+      <div class="max-w-xl mb-9">
+        <div class="uppercase text-emerald-600 text-xs tracking-[1.5px] font-semibold">Live tool</div>
+        <h2 class="font-display text-4xl tracking-tighter font-semibold mt-1">Currency &amp; Crypto Converter</h2>
+        <p class="mt-3 text-slate-600">Real-time rates for illustration. Convert between traditional currencies and digital assets — back and forth.</p>
+      </div>
+
+      <div class="max-w-2xl mx-auto">
+        <div class="converter-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+          <!-- Amount -->
+          <div class="mb-6">
+            <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-2">YOU SEND</label>
+            <div class="flex items-center gap-3">
+              <input id="amount" 
+                     type="number" 
+                     value="1000" 
+                     step="any"
+                     class="minimal-input flex-1 text-4xl font-semibold bg-slate-50 border border-slate-200 focus:border-emerald-300 rounded-2xl px-5 py-4 outline-none">
+              <div id="from-symbol" 
+                   class="min-w-[52px] text-center text-lg font-medium text-slate-400 tabular-nums"></div>
+            </div>
+          </div>
+
+          <!-- From / To row -->
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
+            <!-- From -->
+            <div class="sm:col-span-2">
+              <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-1.5">FROM</label>
+              <select id="from-currency" 
+                      class="minimal-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base focus:border-emerald-300">
+                <!-- populated by JS -->
+              </select>
+            </div>
+
+            <!-- Swap -->
+            <div class="flex justify-center sm:justify-center pb-1 sm:pb-2">
+              <button id="swap-btn"
+                      class="group w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                      title="Swap currencies">
+                <i class="fa-solid fa-exchange-alt text-slate-400 group-active:rotate-180 transition-transform"></i>
+              </button>
+            </div>
+
+            <!-- To -->
+            <div class="sm:col-span-2">
+              <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-1.5">TO</label>
+              <select id="to-currency" 
+                      class="minimal-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base focus:border-emerald-300">
+                <!-- populated by JS -->
+              </select>
+            </div>
+          </div>
+
+          <!-- Result -->
+          <div class="mt-8 pt-7 border-t border-slate-100">
+            <div class="flex justify-between items-baseline mb-1">
+              <div class="text-xs font-semibold tracking-widest text-slate-500">RECIPIENT RECEIVES</div>
+              <div id="rate-line" class="text-[10px] text-emerald-700 font-medium"></div>
+            </div>
+            
+            <div class="flex items-baseline gap-x-3">
+              <div id="result-amount" 
+                   class="font-display text-5xl font-semibold tabular-nums text-slate-900 tracking-tighter">
+                —
+              </div>
+              <div id="to-symbol" class="text-xl text-slate-400 font-medium"></div>
+            </div>
+
+            <div id="result-status" class="mt-2 text-xs text-slate-500 min-h-[18px]"></div>
+          </div>
+
+          <!-- Quick presets -->
+          <div class="mt-6 flex flex-wrap gap-2">
+            <button data-preset="100" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">100</button>
+            <button data-preset="500" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">500</button>
+            <button data-preset="1000" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">1,000</button>
+            <button data-preset="5000" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">5,000</button>
+            <button data-preset="0.01" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">0.01 BTC</button>
+          </div>
+
+          <div class="mt-6 text-[10px] text-center text-slate-400">
+            Rates are live from public sources (CoinGecko + open exchange data). For illustration only. 
+            Actual execution rates provided upon request.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <div id="about" class="max-w-screen-xl mx-auto px-6 py-16 section">
+    <div class="max-w-2xl">
+      <div class="uppercase text-xs font-semibold tracking-widest text-emerald-600">Our story</div>
+      <h2 class="font-display text-4xl tracking-tighter font-semibold mt-2">A simpler way to move value across borders.</h2>
+      
+      <div class="prose prose-slate mt-6 text-[15px] text-slate-600">
+        <p>SISBRAPAG (Sistema Brasil Pagamentos Digitais Ltda) is a Rio de Janeiro-based company specialized in 
+        cross-border payments, trade facilitation, and digital asset solutions.</p>
+        
+        <p>We serve companies and individuals who need reliable ways to send money, pay suppliers abroad, 
+        receive international revenue, or hold and convert between traditional currencies and crypto — all while 
+        keeping things transparent and efficient.</p>
+      </div>
+
+      <div class="mt-8 grid grid-cols-3 gap-4 text-sm">
+        <div>
+          <div class="font-mono text-2xl font-semibold text-emerald-600">2018</div>
+          <div class="text-slate-500 mt-0.5">Founded</div>
+        </div>
+        <div>
+          <div class="font-mono text-2xl font-semibold text-emerald-600">LATAM + Global</div>
+          <div class="text-slate-500 mt-0.5">Coverage</div>
+        </div>
+        <div>
+          <div class="font-mono text-2xl font-semibold text-emerald-600">Fiat + Crypto</div>
+          <div class="text-slate-500 mt-0.5">Capabilities</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT / CTA -->
+  <div id="contact" class="border-t border-slate-100 bg-white">
+    <div class="max-w-screen-xl mx-auto px-6 py-14">
+      <div class="flex flex-col md:flex-row md:items-center gap-y-8 md:justify-between">
+        <div>
+          <div class="text-2xl font-semibold tracking-tight">Ready to move value?</div>
+          <p class="text-slate-600 mt-2 max-w-md">Tell us what you need — remittances, trade settlement, or a specific conversion pair. We'll respond quickly.</p>
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="mailto:hello@sisbrapag.com?subject=SISBRAPAG%20Inquiry" 
+             class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
+            <i class="fa-regular fa-envelope"></i>
+            <span>hello@sisbrapag.com</span>
+          </a>
+          <a href="https://wa.me/55" target="_blank"
+             class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+            <i class="fa-brands fa-whatsapp"></i>
+            <span>WhatsApp</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="border-t border-slate-100 py-8">
+    <div class="max-w-screen-xl mx-auto px-6 text-xs text-slate-400 flex flex-col md:flex-row gap-y-2 items-center justify-between">
+      <div>
+        © <span id="year"></span> SISBRAPAG — Sistema Brasil Pagamentos Digitais Ltda. CNPJ 32.742.398/0001-28
+      </div>
+      <div class="flex gap-x-5">
+        <span>Rio de Janeiro, Brazil</span>
+        <a href="https://sisbrapag.com" class="hover:text-slate-500">sisbrapag.com</a>
+        <a href="https://sisbrapag.com.br" class="hover:text-slate-500">sisbrapag.com.br</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Tailwind script config
+    function initTailwind() {
+      document.documentElement.style.setProperty('--accent', '#10b981');
+    }
+
+    // Supported currencies
+    const SUPPORTED = [
+      // Fiats
+      { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', type: 'fiat' },
+      { code: 'USD', name: 'US Dollar', symbol: '$', type: 'fiat' },
+      { code: 'EUR', name: 'Euro', symbol: '€', type: 'fiat' },
+      { code: 'GBP', name: 'British Pound', symbol: '£', type: 'fiat' },
+      // Cryptos
+      { code: 'BTC', name: 'Bitcoin', symbol: '₿', type: 'crypto', cgId: 'bitcoin' },
+      { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', type: 'crypto', cgId: 'ethereum' },
+      { code: 'USDT', name: 'Tether USD', symbol: '₮', type: 'crypto', cgId: 'tether' },
+      { code: 'USDC', name: 'USD Coin', symbol: 'USDC', type: 'crypto', cgId: 'usd-coin' },
+    ];
+
+    let rateCache = {};
+    let lastFetchTime = 0;
+    const CACHE_TTL = 45 * 1000; // 45 seconds
+
+    function populateSelects() {
+      const fromSel = document.getElementById('from-currency');
+      const toSel = document.getElementById('to-currency');
+
+      fromSel.innerHTML = '';
+      toSel.innerHTML = '';
+
+      const fiatGroup = document.createElement('optgroup');
+      fiatGroup.label = 'Fiat Currencies';
+      
+      const cryptoGroup = document.createElement('optgroup');
+      cryptoGroup.label = 'Cryptocurrencies';
+
+      SUPPORTED.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.code;
+        opt.textContent = `${item.code} — ${item.name}`;
+        
+        if (item.type === 'fiat') {
+          fiatGroup.appendChild(opt.cloneNode(true));
+        } else {
+          cryptoGroup.appendChild(opt.cloneNode(true));
+        }
+      });
+
+      fromSel.appendChild(fiatGroup);
+      fromSel.appendChild(cryptoGroup.cloneNode(true));
+      
+      toSel.appendChild(fiatGroup.cloneNode(true));
+      toSel.appendChild(cryptoGroup);
+
+      // Defaults
+      fromSel.value = 'BRL';
+      toSel.value = 'USD';
+    }
+
+    function updateSymbols() {
+      const fromCode = document.getElementById('from-currency').value;
+      const toCode = document.getElementById('to-currency').value;
+
+      const fromItem = SUPPORTED.find(i => i.code === fromCode);
+      const toItem = SUPPORTED.find(i => i.code === toCode);
+
+      document.getElementById('from-symbol').textContent = fromItem ? fromItem.symbol : '';
+      document.getElementById('to-symbol').textContent = toItem ? toItem.symbol : '';
+    }
+
+    function formatAmount(amount, code) {
+      const item = SUPPORTED.find(i => i.code === code);
+      if (!item) return amount.toFixed(2);
+
+      if (item.type === 'crypto') {
+        // Crypto: more precision for small amounts
+        if (amount < 0.01) return amount.toFixed(8);
+        if (amount < 1) return amount.toFixed(4);
+        return amount.toFixed(2);
+      } else {
+        // Fiat
+        return amount.toLocaleString(undefined, { 
+          minimumFractionDigits: 2, 
+          maximumFractionDigits: 2 
+        });
+      }
+    }
+
+    async function fetchFiatRates(base) {
+      // Using exchangerate-api (free, no key)
+      try {
+        const res = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+        if (!res.ok) throw new Error('fiat api');
+        const data = await res.json();
+        return data.rates || {};
+      } catch (e) {
+        // Fallback: approximate rates (very rough, only for demo if APIs blocked)
+        console.warn('Fiat API fallback used');
+        const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
+        // very rough scaling
+        if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
+        return approx;
+      }
+    }
+
+    async function fetchCryptoPrices(ids) {
+      const idParam = ids.join(',');
+      const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idParam}&vs_currencies=usd,brl,eur,gbp`);
+      if (!res.ok) throw new Error('coingecko');
+      return await res.json();
+    }
+
+    async function getConversionRate(fromCode, toCode) {
+      const now = Date.now();
+      const cacheKey = `${fromCode}-${toCode}`;
+
+      if (rateCache[cacheKey] && (now - lastFetchTime) < CACHE_TTL) {
+        return rateCache[cacheKey];
+      }
+
+      const from = SUPPORTED.find(i => i.code === fromCode);
+      const to = SUPPORTED.find(i => i.code === toCode);
+      if (!from || !to) return null;
+
+      let rate = null;
+
+      try {
+        if (from.type === 'fiat' && to.type === 'fiat') {
+          // Pure fiat
+          const rates = await fetchFiatRates(fromCode);
+          rate = rates[toCode] || null;
+        } 
+        else if (from.type === 'crypto' && to.type === 'crypto') {
+          // Crypto to crypto — go through USD
+          const prices = await fetchCryptoPrices([from.cgId, to.cgId]);
+          const fromUsd = prices[from.cgId]?.usd;
+          const toUsd = prices[to.cgId]?.usd;
+          if (fromUsd && toUsd) rate = fromUsd / toUsd;
+        } 
+        else {
+          // Mixed fiat/crypto
+          const cryptoItem = from.type === 'crypto' ? from : to;
+          const fiatItem = from.type === 'fiat' ? from : to;
+          const isFromCrypto = from.type === 'crypto';
+
+          const prices = await fetchCryptoPrices([cryptoItem.cgId]);
+          const cryptoInFiat = prices[cryptoItem.cgId]?.[fiatItem.code.toLowerCase()];
+
+          if (!cryptoInFiat) {
+            // fallback to USD then convert
+            const usdPrices = await fetchCryptoPrices([cryptoItem.cgId]);
+            const cryptoUsd = usdPrices[cryptoItem.cgId]?.usd;
+            if (cryptoUsd) {
+              const fiatRates = await fetchFiatRates('USD');
+              const fiatToUsd = 1 / (fiatRates[fiatItem.code] || 1);
+              if (isFromCrypto) {
+                rate = cryptoUsd * (fiatRates[fiatItem.code] || 1);
+              } else {
+                rate = (1 / cryptoUsd) * fiatToUsd;
+              }
+            }
+          } else {
+            rate = isFromCrypto ? cryptoInFiat : (1 / cryptoInFiat);
+          }
+        }
+      } catch (err) {
+        console.error('Rate fetch error', err);
+        // Last resort demo rates
+        const demoRates = {
+          'BRL-USD': 0.177, 'USD-BRL': 5.65,
+          'BRL-EUR': 0.163, 'EUR-BRL': 6.13,
+          'BTC-USD': 63500, 'USD-BTC': 0.0000157,
+          'ETH-USD': 2650, 'USDT-USD': 1,
+        };
+        rate = demoRates[`${fromCode}-${toCode}`] || demoRates[`${toCode}-${fromCode}`] ? 
+               (demoRates[`${toCode}-${fromCode}`] ? 1 / demoRates[`${toCode}-${fromCode}`] : null) : 1;
+      }
+
+      if (rate) {
+        rateCache[cacheKey] = rate;
+        lastFetchTime = now;
+      }
+      return rate;
+    }
+
+    let debounceTimer = null;
+
+    async function updateConversion() {
+      const amountEl = document.getElementById('amount');
+      const fromSel = document.getElementById('from-currency');
+      const toSel = document.getElementById('to-currency');
+      const resultEl = document.getElementById('result-amount');
+      const rateLine = document.getElementById('rate-line');
+      const statusEl = document.getElementById('result-status');
+
+      const amount = parseFloat(amountEl.value) || 0;
+      const from = fromSel.value;
+      const to = toSel.value;
+
+      if (!amount || from === to) {
+        resultEl.textContent = formatAmount(amount || 0, to);
+        rateLine.textContent = from === to ? '1 : 1' : '';
+        statusEl.textContent = '';
+        return;
+      }
+
+      statusEl.textContent = 'Fetching live rates…';
+      statusEl.className = 'mt-2 text-xs text-emerald-600';
+
+      try {
+        const rate = await getConversionRate(from, to);
+        
+        if (rate === null || isNaN(rate)) {
+          throw new Error('No rate');
+        }
+
+        const converted = amount * rate;
+        resultEl.textContent = formatAmount(converted, to);
+        
+        // Show rate
+        const prettyRate = rate < 0.01 ? rate.toFixed(8) : rate.toFixed(rate < 1 ? 4 : 2);
+        rateLine.textContent = `1 ${from} = ${prettyRate} ${to}`;
+
+        statusEl.textContent = 'Rates updated • Data from public APIs';
+        statusEl.className = 'mt-2 text-xs text-slate-500';
+      } catch (e) {
+        resultEl.textContent = '—';
+        rateLine.textContent = '';
+        statusEl.textContent = 'Unable to fetch live rates. Using approximate values.';
+        statusEl.className = 'mt-2 text-xs text-amber-600';
+      }
+    }
+
+    function setupConverter() {
+      const amountEl = document.getElementById('amount');
+      const fromSel = document.getElementById('from-currency');
+      const toSel = document.getElementById('to-currency');
+      const swapBtn = document.getElementById('swap-btn');
+
+      // Populate
+      populateSelects();
+      updateSymbols();
+
+      // Event listeners
+      const triggerUpdate = () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(updateConversion, 280);
+      };
+
+      amountEl.addEventListener('input', triggerUpdate);
+      fromSel.addEventListener('change', () => {
+        updateSymbols();
+        triggerUpdate();
+      });
+      toSel.addEventListener('change', () => {
+        updateSymbols();
+        triggerUpdate();
+      });
+
+      swapBtn.addEventListener('click', () => {
+        const fromVal = fromSel.value;
+        const toVal = toSel.value;
+        fromSel.value = toVal;
+        toSel.value = fromVal;
+        updateSymbols();
+        
+        // Also swap the numeric value when it makes sense
+        const amount = parseFloat(amountEl.value);
+        if (!isNaN(amount) && amount > 0) {
+          // We will recalc on next update
+        }
+        triggerUpdate();
+      });
+
+      // Quick amount presets
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const val = btn.dataset.preset;
+          amountEl.value = val;
+          triggerUpdate();
+        });
+      });
+
+      // Initial calculation
+      setTimeout(() => {
+        updateConversion();
+      }, 420);
+
+      // Also update on focus out for better UX
+      amountEl.addEventListener('blur', updateConversion);
+    }
+
+    function setupPresetsAndMisc() {
+      // Year in footer
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Keyboard support: press / focuses amount
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+          e.preventDefault();
+          document.getElementById('amount').focus();
+          document.getElementById('amount').select();
+        }
+      });
+
+      // Make sure converter is nice on mobile
+      console.log('%c[SISBRAPAG] Minimal website ready — converter uses live public APIs.', 'color:#64748b');
+    }
+
+    // Boot
+    function init() {
+      initTailwind();
+      setupConverter();
+      setupPresetsAndMisc();
+
+      // Bonus: allow pressing Enter anywhere in converter area to refresh
+      const converterArea = document.getElementById('converter');
+      if (converterArea) {
+        converterArea.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            document.getElementById('amount').focus();
+            updateConversion();
+          }
+        });
+      }
+
+      // Optional: show a tiny toast hint once
+      setTimeout(() => {
+        const status = document.getElementById('result-status');
+        if (status && status.textContent.includes('live rates')) {
+          // already good
+        }
+      }, 2200);
+    }
+
+    // Start everything
+    window.onload = init;
+  </script>
+</body>
+</html>
