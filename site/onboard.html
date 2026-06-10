@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Started · SISBRAPAG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; font-weight: 600; }
+    .input-field {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: #fff;
+    }
+    .input-field:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 0.8125rem 1rem;
+      background: #111827;
+      color: #fff;
+      border-radius: 0.5rem;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+      border: none;
+    }
+    .btn-primary:hover { background: #1f2937; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981; margin-right: 6px; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+  <!-- Nav -->
+  <nav class="bg-white border-b border-gray-100 px-6 py-4">
+    <a href="/" class="font-display text-lg text-gray-900 tracking-tight">SISBRAPAG</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 flex items-center justify-center px-4 py-16">
+    <div class="w-full max-w-md">
+
+      <!-- Card: form state -->
+      <div id="form-card">
+        <div class="mb-8">
+          <span class="dot"></span>
+          <span class="text-sm text-emerald-600 font-medium">Free to start</span>
+          <h1 class="font-display text-3xl text-gray-900 mt-3 mb-2">Get started</h1>
+          <p class="text-gray-500 text-sm leading-relaxed">
+            Enter your name and email. We'll send you a secure link -- no password needed.
+          </p>
+        </div>
+
+        <form id="onboard-form" class="space-y-4" novalidate>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5" for="full-name">Full name</label>
+            <input id="full-name" type="text" class="input-field" placeholder="Jayme Pereira" autocomplete="name" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5" for="email">Email address</label>
+            <input id="email" type="email" class="input-field" placeholder="you@company.com" autocomplete="email" required>
+          </div>
+          <div id="error-msg" class="hidden text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3"></div>
+          <button type="submit" id="submit-btn" class="btn-primary mt-2">Send magic link</button>
+        </form>
+
+        <p class="text-xs text-gray-400 text-center mt-6 leading-relaxed">
+          By continuing you agree to SISBRAPAG's terms. We'll never share your email.
+        </p>
+      </div>
+
+      <!-- Card: sent state -->
+      <div id="sent-card" class="hidden text-center">
+        <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+          </svg>
+        </div>
+        <h2 class="font-display text-2xl text-gray-900 mb-3">Check your inbox</h2>
+        <p class="text-gray-500 text-sm leading-relaxed mb-2">
+          We sent a magic link to <strong id="sent-email" class="text-gray-700"></strong>.
+        </p>
+        <p class="text-gray-400 text-sm">Click the link in the email to access your dashboard. The link expires in 1 hour.</p>
+        <button onclick="resetForm()" class="mt-8 text-sm text-gray-400 hover:text-gray-600 underline underline-offset-2">Use a different email</button>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="text-center py-6 text-xs text-gray-400">
+    2025 SISBRAPAG - <a href="/" class="hover:text-gray-600">Back to site</a>
+  </footer>
+
+  <script>
+    const SUPABASE_URL = 'https://iiclntwwutsaoorbncfp.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpY2xudHd3dXRzYW9vcmJuY2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODAyMTksImV4cCI6MjA5NjY1NjIxOX0.pf-aJ3idjxAyU2LTu9PizMdJ5fHqlQrabf8NqwvkLbI'
+    const { createClient } = supabase
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    sb.auth.getSession().then(({ data }) => {
+      if (data.session) window.location.href = '/dashboard.html'
+    })
+    const form = document.getElementById('onboard-form')
+    const btn = document.getElementById('submit-btn')
+    const errorMsg = document.getElementById('error-msg')
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const name = document.getElementById('full-name').value.trim()
+      const email = document.getElementById('email').value.trim()
+      if (!name) return showError('Please enter your full name.')
+      if (!email || !email.includes('@')) return showError('Please enter a valid email address.')
+      btn.disabled = true
+      btn.textContent = 'Sending...'
+      errorMsg.classList.add('hidden')
+      const { error } = await sb.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: 'https://sisbrapag.com/dashboard.html',
+          data: { full_name: name }
+        }
+      })
+      if (error) {
+        showError(error.message)
+        btn.disabled = false
+        btn.textContent = 'Send magic link'
+        return
+      }
+      localStorage.setItem('sisbrapag_pending_name', name)
+      document.getElementById('form-card').classList.add('hidden')
+      document.getElementById('sent-card').classList.remove('hidden')
+      document.getElementById('sent-email').textContent = email
+    })
+    function showError(msg) {
+      errorMsg.textContent = msg
+      errorMsg.classList.remove('hidden')
+    }
+    function resetForm() {
+      document.getElementById('sent-card').classList.add('hidden')
+      document.getElementById('form-card').classList.remove('hidden')
+      btn.disabled = false
+      btn.textContent = 'Send magic link'
+      errorMsg.classList.add('hidden')
+    }
+  </script>
+</body>
+</html>

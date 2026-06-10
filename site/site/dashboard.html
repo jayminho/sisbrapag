@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard · SISBRAPAG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; font-weight: 600; }
+    .input-field {
+      width: 100%; padding: 0.6875rem 0.875rem;
+      border: 1px solid #e5e7eb; border-radius: 0.5rem;
+      font-size: 0.9rem; outline: none; background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-field:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+    .select-field {
+      width: 100%; padding: 0.6875rem 0.875rem;
+      border: 1px solid #e5e7eb; border-radius: 0.5rem;
+      font-size: 0.9rem; outline: none; background: #fff;
+      appearance: none; cursor: pointer;
+    }
+    .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-active  { background: #d1fae5; color: #065f46; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="w-56 bg-white border-r border-gray-100 flex flex-col fixed h-full z-10">
+      <div class="px-5 py-5 border-b border-gray-100">
+        <span class="font-display text-base text-gray-900">SISBRAPAG</span>
+      </div>
+      <nav class="flex-1 px-3 py-4 space-y-0.5">
+        <a href="#" onclick="showSection('overview')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 font-medium" id="nav-overview">
+          <i class="fa-solid fa-house w-4 text-gray-400"></i> Overview
+        </a>
+        <a href="#" onclick="showSection('profile')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-profile">
+          <i class="fa-solid fa-user w-4 text-gray-400"></i> My Profile
+        </a>
+        <a href="#" onclick="showSection('services')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-services">
+          <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Services
+        </a>
+        <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
+          <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
+        </a>
+      </nav>
+      <div class="px-3 py-4 border-t border-gray-100">
+        <button onclick="signOut()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600">
+          <i class="fa-solid fa-right-from-bracket w-4"></i> Sign out
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="ml-56 flex-1 px-8 py-8">
+      <div id="loading-state" class="flex items-center justify-center h-64">
+        <div class="text-gray-400 text-sm">Loading...</div>
+      </div>
+      <div id="auth-content" class="hidden">
+
+        <!-- OVERVIEW -->
+        <section id="section-overview" class="section">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900" id="welcome-heading">Welcome back</h1>
+            <p class="text-gray-500 text-sm mt-1" id="welcome-sub">Here's a summary of your account.</p>
+          </div>
+          <div id="profile-banner" class="hidden bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 flex items-start gap-4 mb-6">
+            <i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5"></i>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-amber-900">Complete your profile</p>
+              <p class="text-sm text-amber-700 mt-0.5">Add your company details so we can activate your services.</p>
+            </div>
+            <button onclick="showSection('profile')" class="text-sm font-medium text-amber-800 hover:text-amber-900 underline underline-offset-2 whitespace-nowrap">Complete now</button>
+          </div>
+          <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Account status</p>
+              <span class="badge badge-pending" id="status-badge"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Pending</span>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Active services</p>
+              <p class="text-2xl font-display text-gray-900">0</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Member since</p>
+              <p class="text-sm font-medium text-gray-700" id="member-since">-</p>
+            </div>
+          </div>
+          <h2 class="font-display text-base text-gray-900 mb-4">Available services</h2>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-earth-americas text-emerald-500 text-sm"></i></div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">International Remittances</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">Send and receive funds globally with competitive FX rates.</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-ship text-blue-500 text-sm"></i></div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">Import &amp; Export</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">Trade finance and currency settlement for commercial operations.</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-brands fa-bitcoin text-purple-500 text-sm"></i></div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">Crypto Settlement</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">Crypto-enabled cross-border payments and conversions.</p>
+            </div>
+            <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
+              <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-building-columns text-orange-500 text-sm"></i></div>
+              <h3 class="text-sm font-semibold text-gray-900 mb-1">FX Exchange</h3>
+              <p class="text-xs text-gray-400 leading-relaxed">Real-time currency exchange for BRL, USD, EUR and more.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- PROFILE -->
+        <section id="section-profile" class="section hidden">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900">My Profile</h1>
+            <p class="text-gray-500 text-sm mt-1">Complete your details to activate your account.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-6 max-w-2xl">
+            <form id="profile-form" class="space-y-5" novalidate>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Full name</label>
+                  <input id="p-name" type="text" class="input-field" placeholder="Jayme Pereira">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                  <input id="p-email" type="email" class="input-field bg-gray-50 text-gray-400" disabled>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone / WhatsApp</label>
+                  <input id="p-phone" type="tel" class="input-field" placeholder="+55 21 9 8712 8712">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+                  <select id="p-country" class="select-field">
+                    <option value="">Select country...</option>
+                    <option value="BR">Brazil</option>
+                    <option value="US">United States</option>
+                    <option value="PT">Portugal</option>
+                    <option value="AR">Argentina</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Company name <span class="text-gray-400 font-normal">(optional)</span></label>
+                  <input id="p-company" type="text" class="input-field" placeholder="ACME Ltda.">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Primary use</label>
+                  <select id="p-use" class="select-field">
+                    <option value="">Select...</option>
+                    <option value="remittance">Personal remittances</option>
+                    <option value="import-export">Import / Export</option>
+                    <option value="crypto">Crypto settlement</option>
+                    <option value="fx">FX exchange</option>
+                    <option value="multiple">Multiple services</option>
+                  </select>
+                </div>
+              </div>
+              <div id="profile-error" class="hidden text-sm text-red-600 bg-red-50 rounded-lg px-4 py-3"></div>
+              <div id="profile-success" class="hidden text-sm text-emerald-700 bg-emerald-50 rounded-lg px-4 py-3">Profile saved successfully.</div>
+              <div class="pt-2">
+                <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">Save profile</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- SERVICES -->
+        <section id="section-services" class="section hidden">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900">Services</h1>
+            <p class="text-gray-500 text-sm mt-1">Request access to SISBRAPAG services.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-8 text-center max-w-md mx-auto">
+            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-lock text-gray-400"></i></div>
+            <h3 class="font-display text-base text-gray-900 mb-2">Complete your profile first</h3>
+            <p class="text-sm text-gray-400 leading-relaxed mb-5">Fill in your details and our team will reach out within 1 business day.</p>
+            <button onclick="showSection('profile')" class="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">Complete profile</button>
+          </div>
+        </section>
+
+        <!-- DOCUMENTS -->
+        <section id="section-documents" class="section hidden">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900">Documents</h1>
+            <p class="text-gray-500 text-sm mt-1">Upload and manage your compliance documents.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 p-8 text-center max-w-md mx-auto">
+            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-file-arrow-up text-gray-400"></i></div>
+            <h3 class="font-display text-base text-gray-900 mb-2">No documents yet</h3>
+            <p class="text-sm text-gray-400 leading-relaxed">Once your account is activated, you'll upload KYC and compliance documents here.</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://iiclntwwutsaoorbncfp.supabase.co'
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpY2xudHd3dXRzYW9vcmJuY2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODAyMTksImV4cCI6MjA5NjY1NjIxOX0.pf-aJ3idjxAyU2LTu9PizMdJ5fHqlQrabf8NqwvkLbI'
+    const { createClient } = supabase
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    let currentUser = null
+
+    async function init() {
+      const { data: { session } } = await sb.auth.getSession()
+      if (!session) { window.location.href = '/onboard.html'; return }
+      currentUser = session.user
+      showAuthContent()
+    }
+
+    function showAuthContent() {
+      document.getElementById('loading-state').classList.add('hidden')
+      document.getElementById('auth-content').classList.remove('hidden')
+      const user = currentUser
+      const meta = user.user_metadata || {}
+      const name = meta.full_name || localStorage.getItem('sisbrapag_pending_name') || user.email.split('@')[0]
+      const createdAt = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      document.getElementById('welcome-heading').textContent = 'Welcome, ' + name.split(' ')[0]
+      document.getElementById('member-since').textContent = createdAt
+      const profileComplete = meta.country && meta.primary_use
+      if (!profileComplete) {
+        document.getElementById('profile-banner').classList.remove('hidden')
+      } else {
+        document.getElementById('status-badge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active'
+        document.getElementById('status-badge').className = 'badge badge-active'
+      }
+      document.getElementById('p-name').value = name
+      document.getElementById('p-email').value = user.email
+      document.getElementById('p-phone').value = meta.phone || ''
+      document.getElementById('p-country').value = meta.country || ''
+      document.getElementById('p-company').value = meta.company || ''
+      document.getElementById('p-use').value = meta.primary_use || ''
+    }
+
+    function showSection(name) {
+      document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'))
+      document.getElementById('section-' + name).classList.remove('hidden')
+      document.querySelectorAll('.nav-link').forEach(a => {
+        a.classList.remove('text-gray-700', 'bg-gray-100', 'font-medium')
+        a.classList.add('text-gray-500')
+      })
+      const active = document.getElementById('nav-' + name)
+      if (active) {
+        active.classList.remove('text-gray-500')
+        active.classList.add('text-gray-700', 'bg-gray-100', 'font-medium')
+      }
+    }
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = e.target.querySelector('button[type=submit]')
+      btn.disabled = true; btn.textContent = 'Saving...'
+      const updates = {
+        full_name: document.getElementById('p-name').value.trim(),
+        phone: document.getElementById('p-phone').value.trim(),
+        country: document.getElementById('p-country').value,
+        company: document.getElementById('p-company').value.trim(),
+        primary_use: document.getElementById('p-use').value,
+      }
+      const { error } = await sb.auth.updateUser({ data: updates })
+      btn.disabled = false; btn.textContent = 'Save profile'
+      if (error) {
+        document.getElementById('profile-error').textContent = error.message
+        document.getElementById('profile-error').classList.remove('hidden')
+      } else {
+        document.getElementById('profile-success').classList.remove('hidden')
+        document.getElementById('profile-error').classList.add('hidden')
+        setTimeout(() => document.getElementById('profile-success').classList.add('hidden'), 3000)
+        const { data: { user } } = await sb.auth.getUser()
+        currentUser = user
+        showAuthContent()
+      }
+    })
+
+    async function signOut() {
+      await sb.auth.signOut()
+      window.location.href = '/onboard.html'
+    }
+
+    init()
+  </script>
+</body>
+</html>
