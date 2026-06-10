@@ -273,6 +273,17 @@
         primary_use: document.getElementById('p-use').value,
       }
       const { error } = await sb.auth.updateUser({ data: updates })
+      if (!error) {
+        await sb.from('profiles').upsert({
+          id: currentUser.id,
+          email: currentUser.email,
+          full_name: updates.full_name,
+          phone: updates.phone,
+          country: updates.country,
+          company: updates.company,
+          primary_use: updates.primary_use,
+        })
+      }
       btn.disabled = false; btn.textContent = 'Save profile'
       if (error) {
         document.getElementById('profile-error').textContent = error.message
