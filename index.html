@@ -141,7 +141,7 @@
         </a>
       </div>
       
-      <div class="mt-8 flex items-center gap-x-6 text-sm text-slate-500">
+      <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
         <div class="flex items-center gap-x-1.5">
           <i class="fa-solid fa-check text-emerald-500"></i>
           <span>Remittances</span>
@@ -153,6 +153,10 @@
         <div class="flex items-center gap-x-1.5">
           <i class="fa-solid fa-check text-emerald-500"></i>
           <span>Crypto settlements</span>
+        </div>
+        <div class="flex items-center gap-x-1.5" id="user-count-badge" style="display:none!important">
+          <i class="fa-solid fa-users text-emerald-500"></i>
+          <span id="user-count-text">Join businesses already on SISBRAPAG</span>
         </div>
       </div>
     </div>
@@ -732,6 +736,23 @@
 
     // Start everything
     window.onload = init;
+
+    // Social proof: live user count from Supabase
+    (async function loadUserCount() {
+      try {
+        const SUPABASE_URL = 'https://iiclntwwutsaoorbncfp.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpY2xudHd3dXRzYW9vcmJuY2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODAyMTksImV4cCI6MjA5NjY1NjIxOX0.pf-aJ3idjxAyU2LTu9PizMdJ5fHqlQrabf8NqwvkLbI'
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id`, {
+          headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'Prefer': 'count=exact', 'Range': '0-0' }
+        })
+        const count = parseInt(res.headers.get('content-range')?.split('/')[1] || '0', 10)
+        if (count >= 1) {
+          const label = count === 1 ? 'Join 1 business already on SISBRAPAG' : `Join ${count} businesses already on SISBRAPAG`
+          document.getElementById('user-count-text').textContent = label
+          document.getElementById('user-count-badge').style.cssText = 'display:flex!important;align-items:center;gap:0.375rem'
+        }
+      } catch (_) {}
+    })()
   </script>
 </body>
 </html>
