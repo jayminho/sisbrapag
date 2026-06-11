@@ -93,6 +93,17 @@
           </div>
         </div>
 
+        <!-- Analytics -->
+        <div class="bg-white rounded-xl border border-gray-100 px-5 py-5 mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <p class="text-xs text-gray-400 font-medium uppercase tracking-wide">Page Views — Last 30 Days</p>
+            <span class="text-xs text-gray-400" id="analytics-total-label">—</span>
+          </div>
+          <div id="analytics-rows" class="space-y-2 text-sm text-gray-700">
+            <span class="text-gray-400 text-xs">Loading…</span>
+          </div>
+        </div>
+
         <!-- Search -->
         <div class="mb-4">
           <input id="search-input" type="text" placeholder="Search by name, email, company…"
@@ -336,7 +347,37 @@
       window.location.href = '/onboard.html'
     }
 
+    async function loadAnalytics() {
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      const { data, error } = await sb
+        .from('page_views')
+        .select('page')
+        .gte('created_at', since)
+      if (error || !data) return
+      const counts = {}
+      data.forEach(r => { counts[r.page] = (counts[r.page] || 0) + 1 })
+      const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
+      const total = data.length
+      document.getElementById('analytics-total-label').textContent = total + ' total views'
+      const container = document.getElementById('analytics-rows')
+      if (sorted.length === 0) {
+        container.innerHTML = '<span class="text-gray-400 text-xs">No data yet</span>'
+        return
+      }
+      container.innerHTML = sorted.map(([page, count]) => {
+        const pct = Math.round((count / total) * 100)
+        return `<div class="flex items-center gap-3">
+          <span class="w-32 shrink-0 text-gray-500 truncate text-xs">${esc(page)}</span>
+          <div class="flex-1 bg-gray-100 rounded-full h-1.5">
+            <div class="bg-emerald-500 h-1.5 rounded-full" style="width:${pct}%"></div>
+          </div>
+          <span class="w-8 text-right text-xs text-gray-500">${count}</span>
+        </div>`
+      }).join('')
+    }
+
     init()
+    loadAnalytics()
   </script>
 </body>
 </html>
