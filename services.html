@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services · SISBRAPAG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .font-display { font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif; font-weight: 700; }
+    .service-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .service-card:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.07); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
+    <div class="max-w-screen-xl mx-auto px-6 h-16 flex items-center justify-between">
+      <a href="/" class="font-display text-lg text-slate-900 tracking-tight">SISBRAPAG</a>
+      <div class="hidden md:flex items-center gap-6 text-sm">
+        <a href="/#services" class="text-slate-600 hover:text-slate-900 transition-colors">Services</a>
+        <a href="/#converter" class="text-slate-600 hover:text-slate-900 transition-colors">Converter</a>
+        <a href="/#about" class="text-slate-600 hover:text-slate-900 transition-colors">About</a>
+      </div>
+      <a href="/onboard.html" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors">
+        Get Started
+      </a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="bg-slate-900 text-white">
+    <div class="max-w-screen-xl mx-auto px-6 py-20">
+      <div class="inline-flex items-center gap-2 rounded-full bg-emerald-900/60 text-emerald-400 text-xs font-medium px-3 py-1 mb-6">
+        <i class="fa-solid fa-arrow-right-arrow-left fa-sm"></i>
+        <span>Cross-border financial services</span>
+      </div>
+      <h1 class="font-display text-5xl md:text-6xl leading-tight tracking-tight max-w-2xl">
+        Services built for<br><span class="text-emerald-400">global operations</span>
+      </h1>
+      <p class="mt-5 text-lg text-slate-400 max-w-xl leading-relaxed">
+        Whether you're sending remittances, settling imports, or moving value via crypto — SISBRAPAG handles the complexity so you don't have to.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/onboard.html" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 px-7 py-3.5 text-sm font-semibold text-white transition-colors">
+          Open an account <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <a href="https://wa.me/5521987128712" target="_blank" class="inline-flex items-center gap-2 rounded-2xl border border-slate-700 hover:border-slate-500 px-7 py-3.5 text-sm font-medium text-slate-300 transition-colors">
+          <i class="fa-brands fa-whatsapp text-emerald-400"></i> Talk to the team
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="max-w-screen-xl mx-auto px-6 py-20">
+
+    <!-- Remittances -->
+    <div id="remittances" class="service-card bg-white rounded-3xl border border-slate-100 p-8 md:p-10 mb-6">
+      <div class="flex flex-col md:flex-row md:items-start gap-8">
+        <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+          <i class="fa-solid fa-paper-plane text-2xl"></i>
+        </div>
+        <div class="flex-1">
+          <div class="uppercase tracking-widest text-xs font-semibold text-emerald-600 mb-2">Remittances</div>
+          <h2 class="font-display text-3xl tracking-tight mb-3">International Remittances</h2>
+          <p class="text-slate-600 leading-relaxed max-w-2xl">
+            Fast, transparent transfers between Brazil and international partners. We support individual and business remittances with competitive rates, minimal friction, and full compliance with Brazilian FX regulation (BCB).
+          </p>
+          <div class="mt-6 grid sm:grid-cols-3 gap-4">
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Currencies</div>
+              <div class="text-sm font-medium text-slate-800">BRL, USD, EUR, GBP and more</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Settlement</div>
+              <div class="text-sm font-medium text-slate-800">1–3 business days</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pricing</div>
+              <div class="text-sm font-medium text-slate-800">Contact us for rates</div>
+            </div>
+          </div>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="text-xs bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full">Personal transfers</span>
+            <span class="text-xs bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full">Business remittances</span>
+            <span class="text-xs bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full">BCB compliant</span>
+            <span class="text-xs bg-emerald-50 text-emerald-700 font-medium px-3 py-1 rounded-full">Stablecoin rails</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="https://wa.me/5521987128712" target="_blank" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap">
+            Get a quote <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Import / Export -->
+    <div id="import-export" class="service-card bg-white rounded-3xl border border-slate-100 p-8 md:p-10 mb-6">
+      <div class="flex flex-col md:flex-row md:items-start gap-8">
+        <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+          <i class="fa-solid fa-ship text-2xl"></i>
+        </div>
+        <div class="flex-1">
+          <div class="uppercase tracking-widest text-xs font-semibold text-sky-600 mb-2">Trade Finance</div>
+          <h2 class="font-display text-3xl tracking-tight mb-3">Import &amp; Export</h2>
+          <p class="text-slate-600 leading-relaxed max-w-2xl">
+            End-to-end payment facilitation for companies moving goods across borders. We coordinate supplier settlements, manage FX risk exposure, and handle the financial leg of your import and export operations — so your logistics team can focus on shipping.
+          </p>
+          <div class="mt-6 grid sm:grid-cols-3 gap-4">
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Coverage</div>
+              <div class="text-sm font-medium text-slate-800">Brazil ↔ Global</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Payment modes</div>
+              <div class="text-sm font-medium text-slate-800">Wire, SWIFT, crypto rails</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pricing</div>
+              <div class="text-sm font-medium text-slate-800">Contact us for rates</div>
+            </div>
+          </div>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="text-xs bg-sky-50 text-sky-700 font-medium px-3 py-1 rounded-full">Supplier payments</span>
+            <span class="text-xs bg-sky-50 text-sky-700 font-medium px-3 py-1 rounded-full">Escrow coordination</span>
+            <span class="text-xs bg-sky-50 text-sky-700 font-medium px-3 py-1 rounded-full">FX hedging</span>
+            <span class="text-xs bg-sky-50 text-sky-700 font-medium px-3 py-1 rounded-full">Documentation support</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="https://wa.me/5521987128712" target="_blank" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50 px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap">
+            Get a quote <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Crypto -->
+    <div id="crypto" class="service-card bg-white rounded-3xl border border-slate-100 p-8 md:p-10 mb-6">
+      <div class="flex flex-col md:flex-row md:items-start gap-8">
+        <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
+          <i class="fa-brands fa-bitcoin text-2xl"></i>
+        </div>
+        <div class="flex-1">
+          <div class="uppercase tracking-widest text-xs font-semibold text-amber-600 mb-2">Crypto</div>
+          <h2 class="font-display text-3xl tracking-tight mb-3">Crypto Settlement</h2>
+          <p class="text-slate-600 leading-relaxed max-w-2xl">
+            Buy and sell crypto with BRL or international currencies. We handle onramping (fiat → crypto) and offramping (crypto → fiat) for individuals and businesses — ideal for treasury management, supplier payments, and cross-border settlements using stablecoins.
+          </p>
+
+          <!-- Pricing callout -->
+          <div class="mt-6 bg-amber-50 border border-amber-100 rounded-2xl p-5 max-w-md">
+            <div class="text-xs font-semibold text-amber-700 uppercase tracking-wide mb-3">Transparent pricing</div>
+            <div class="flex gap-6">
+              <div>
+                <div class="text-3xl font-display text-amber-700">3%</div>
+                <div class="text-xs text-amber-600 font-medium mt-0.5">Onramp fee</div>
+                <div class="text-xs text-slate-500 mt-1">Fiat → Crypto</div>
+              </div>
+              <div class="w-px bg-amber-200"></div>
+              <div>
+                <div class="text-3xl font-display text-amber-700">3%</div>
+                <div class="text-xs text-amber-600 font-medium mt-0.5">Offramp fee</div>
+                <div class="text-xs text-slate-500 mt-1">Crypto → Fiat</div>
+              </div>
+            </div>
+            <p class="text-xs text-slate-500 mt-3">Fee applied on transaction value. No hidden charges.</p>
+          </div>
+
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="text-xs bg-amber-50 text-amber-700 font-medium px-3 py-1 rounded-full">BTC · ETH</span>
+            <span class="text-xs bg-amber-50 text-amber-700 font-medium px-3 py-1 rounded-full">USDT · USDC</span>
+            <span class="text-xs bg-amber-50 text-amber-700 font-medium px-3 py-1 rounded-full">Stablecoin rails</span>
+            <span class="text-xs bg-amber-50 text-amber-700 font-medium px-3 py-1 rounded-full">Treasury management</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="/onboard.html" class="inline-flex items-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-400 px-5 py-2.5 text-sm font-semibold text-white transition-colors whitespace-nowrap">
+            Get started <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- FX Exchange -->
+    <div id="fx" class="service-card bg-white rounded-3xl border border-slate-100 p-8 md:p-10">
+      <div class="flex flex-col md:flex-row md:items-start gap-8">
+        <div class="w-14 h-14 flex-shrink-0 flex items-center justify-center rounded-2xl bg-purple-100 text-purple-600">
+          <i class="fa-solid fa-building-columns text-2xl"></i>
+        </div>
+        <div class="flex-1">
+          <div class="uppercase tracking-widest text-xs font-semibold text-purple-600 mb-2">FX</div>
+          <h2 class="font-display text-3xl tracking-tight mb-3">FX Exchange</h2>
+          <p class="text-slate-600 leading-relaxed max-w-2xl">
+            Real-time currency exchange for businesses that operate across multiple markets. Convert between BRL, USD, EUR, and other major currencies with competitive spreads and same-day or next-day settlement depending on the pair.
+          </p>
+          <div class="mt-6 grid sm:grid-cols-3 gap-4">
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pairs</div>
+              <div class="text-sm font-medium text-slate-800">BRL/USD, BRL/EUR, USD/EUR and more</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Settlement</div>
+              <div class="text-sm font-medium text-slate-800">Same-day or T+1</div>
+            </div>
+            <div class="bg-slate-50 rounded-2xl p-4">
+              <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Pricing</div>
+              <div class="text-sm font-medium text-slate-800">Contact us for rates</div>
+            </div>
+          </div>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="text-xs bg-purple-50 text-purple-700 font-medium px-3 py-1 rounded-full">Spot FX</span>
+            <span class="text-xs bg-purple-50 text-purple-700 font-medium px-3 py-1 rounded-full">Competitive spreads</span>
+            <span class="text-xs bg-purple-50 text-purple-700 font-medium px-3 py-1 rounded-full">Corporate accounts</span>
+            <span class="text-xs bg-purple-50 text-purple-700 font-medium px-3 py-1 rounded-full">Same-day settlement</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0">
+          <a href="https://wa.me/5521987128712" target="_blank" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 hover:border-purple-300 hover:bg-purple-50 px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors whitespace-nowrap">
+            Get a quote <i class="fa-solid fa-arrow-right text-xs"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CTA STRIP -->
+  <div class="bg-slate-900 text-white">
+    <div class="max-w-screen-xl mx-auto px-6 py-16 flex flex-col md:flex-row items-center justify-between gap-6">
+      <div>
+        <h2 class="font-display text-3xl tracking-tight">Ready to move value across borders?</h2>
+        <p class="text-slate-400 mt-2">Open your account in minutes — no paperwork upfront.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="/onboard.html" class="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 px-7 py-3.5 text-sm font-semibold text-white transition-colors">
+          Open an account <i class="fa-solid fa-arrow-right"></i>
+        </a>
+        <a href="https://wa.me/5521987128712" target="_blank" class="inline-flex items-center gap-2 rounded-2xl border border-slate-700 hover:border-slate-500 px-7 py-3.5 text-sm font-medium text-slate-300 transition-colors">
+          <i class="fa-brands fa-whatsapp text-emerald-400"></i> WhatsApp us
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-white border-t border-slate-100">
+    <div class="max-w-screen-xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-slate-400">
+      <span class="font-display text-slate-700">SISBRAPAG</span>
+      <span>© 2026 SISBRAPAG. All rights reserved.</span>
+      <a href="/" class="hover:text-slate-600 transition-colors">← Back to homepage</a>
+    </div>
+  </footer>
+
+</body>
+</html>
