@@ -49,6 +49,9 @@
         <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
         </a>
+        <a href="#" onclick="showSection('converter')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-converter">
+          <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Converter
+        </a>
       </nav>
       <div class="px-3 py-4 border-t border-gray-100">
         <button onclick="signOut()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600">
@@ -92,6 +95,43 @@
               <p class="text-sm font-medium text-gray-700" id="member-since">-</p>
             </div>
           </div>
+          <!-- Pending timeline card (shown when profile complete but status = pending) -->
+          <div id="pending-timeline" class="hidden bg-white border border-amber-100 rounded-xl p-6 mb-6">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-clock-rotate-left text-amber-500"></i>
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-900 text-sm">Application under review</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Our team is reviewing your profile. You'll receive an email once your account is activated.</p>
+              </div>
+            </div>
+            <!-- Progress steps -->
+            <div class="flex items-center gap-0">
+              <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center">
+                  <i class="fa-solid fa-check text-white text-xs"></i>
+                </div>
+                <span class="text-xs text-emerald-600 font-medium text-center">Profile<br>complete</span>
+              </div>
+              <div class="flex-1 h-px bg-amber-200 mb-5"></div>
+              <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center ring-4 ring-amber-100">
+                  <i class="fa-solid fa-magnifying-glass text-white text-xs"></i>
+                </div>
+                <span class="text-xs text-amber-600 font-semibold text-center">Under<br>review</span>
+              </div>
+              <div class="flex-1 h-px bg-gray-200 mb-5"></div>
+              <div class="flex flex-col items-center gap-1.5 flex-1">
+                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <i class="fa-solid fa-bolt text-gray-400 text-xs"></i>
+                </div>
+                <span class="text-xs text-gray-400 font-medium text-center">Account<br>activated</span>
+              </div>
+            </div>
+            <p class="text-xs text-gray-400 mt-5 text-center">Typically within <strong class="text-gray-600">1 business day</strong> · We'll email <span id="pending-email" class="text-gray-600"></span></p>
+          </div>
+
           <h2 class="font-display text-base text-gray-900 mb-4">Available services</h2>
           <div class="grid grid-cols-2 gap-4">
             <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
@@ -274,6 +314,67 @@
           </div>
         </section>
 
+        <!-- CONVERTER -->
+        <section id="section-converter" class="section hidden">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900">FX Converter</h1>
+            <p class="text-gray-500 text-sm mt-1">Live rates for illustration. Use this to estimate your transfer before requesting.</p>
+          </div>
+
+          <div class="bg-white rounded-xl border border-gray-100 p-6 max-w-xl">
+            <!-- Amount -->
+            <div class="mb-5">
+              <label class="text-xs font-semibold tracking-widest text-gray-400 block mb-2">YOU SEND</label>
+              <div class="flex items-center gap-3">
+                <input id="cv-amount" type="number" value="1000" step="any"
+                  class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+                <span id="cv-from-symbol" class="text-lg font-medium text-gray-400 min-w-[40px] text-right"></span>
+              </div>
+            </div>
+
+            <!-- From / Swap / To -->
+            <div class="grid grid-cols-5 gap-3 items-end mb-6">
+              <div class="col-span-2">
+                <label class="text-xs font-semibold tracking-widest text-gray-400 block mb-1.5">FROM</label>
+                <select id="cv-from" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"></select>
+              </div>
+              <div class="flex justify-center pb-1">
+                <button id="cv-swap" class="w-10 h-10 flex items-center justify-center rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+                  <i class="fa-solid fa-exchange-alt text-gray-400 text-sm"></i>
+                </button>
+              </div>
+              <div class="col-span-2">
+                <label class="text-xs font-semibold tracking-widest text-gray-400 block mb-1.5">TO</label>
+                <select id="cv-to" class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"></select>
+              </div>
+            </div>
+
+            <!-- Result -->
+            <div class="bg-gray-50 rounded-xl px-5 py-4 border border-gray-100">
+              <div class="flex justify-between items-baseline mb-1">
+                <span class="text-xs font-semibold tracking-widest text-gray-400">RECIPIENT RECEIVES</span>
+                <span id="cv-rate-line" class="text-xs text-emerald-600 font-medium"></span>
+              </div>
+              <div class="flex items-baseline gap-2">
+                <span id="cv-result" class="font-display text-4xl font-semibold text-gray-900 tracking-tight">—</span>
+                <span id="cv-to-symbol" class="text-lg text-gray-400 font-medium"></span>
+              </div>
+              <p id="cv-status" class="mt-1.5 text-xs text-gray-400 min-h-[16px]"></p>
+            </div>
+
+            <!-- Presets -->
+            <div class="mt-4 flex flex-wrap gap-2">
+              <button data-cv-preset="100"  class="cv-preset text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">100</button>
+              <button data-cv-preset="500"  class="cv-preset text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">500</button>
+              <button data-cv-preset="1000" class="cv-preset text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">1,000</button>
+              <button data-cv-preset="5000" class="cv-preset text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">5,000</button>
+              <button data-cv-preset="10000" class="cv-preset text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">10,000</button>
+            </div>
+
+            <p class="mt-4 text-xs text-gray-400 text-center">Rates from public APIs (CoinGecko + Frankfurter). For illustration only — actual execution rate confirmed at transfer time.</p>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -292,7 +393,7 @@
       showAuthContent()
     }
 
-    function showAuthContent() {
+    async function showAuthContent() {
       document.getElementById('loading-state').classList.add('hidden')
       document.getElementById('auth-content').classList.remove('hidden')
       const user = currentUser
@@ -301,18 +402,39 @@
       const createdAt = new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
       document.getElementById('welcome-heading').textContent = 'Welcome, ' + name.split(' ')[0]
       document.getElementById('member-since').textContent = createdAt
+
       const profileComplete = meta.country && meta.primary_use
+
+      // Fetch real status from profiles table
+      let realStatus = 'pending'
+      try {
+        const { data: profile } = await sb.from('profiles').select('status').eq('id', user.id).single()
+        if (profile?.status) realStatus = profile.status
+      } catch (_) {}
+
+      const isActive = realStatus === 'active'
+
       if (!profileComplete) {
         document.getElementById('profile-banner').classList.remove('hidden')
+        document.getElementById('pending-timeline').classList.add('hidden')
         document.getElementById('services-locked').classList.remove('hidden')
         document.getElementById('services-ready').classList.add('hidden')
-      } else {
+      } else if (isActive) {
         document.getElementById('profile-banner').classList.add('hidden')
+        document.getElementById('pending-timeline').classList.add('hidden')
         document.getElementById('status-badge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active'
         document.getElementById('status-badge').className = 'badge badge-active'
         document.getElementById('services-locked').classList.add('hidden')
         document.getElementById('services-ready').classList.remove('hidden')
+      } else {
+        // Profile complete but pending activation
+        document.getElementById('profile-banner').classList.add('hidden')
+        document.getElementById('pending-timeline').classList.remove('hidden')
+        document.getElementById('pending-email').textContent = user.email
+        document.getElementById('services-locked').classList.add('hidden')
+        document.getElementById('services-ready').classList.remove('hidden')
       }
+
       document.getElementById('p-name').value = name
       document.getElementById('p-email').value = user.email
       document.getElementById('p-phone').value = meta.phone || ''
@@ -487,6 +609,32 @@
       fileInput.value = ''
       showDocFeedback('✓ Uploaded successfully.', 'success')
       loadDocuments()
+      // Notify admin (non-blocking)
+      const meta = currentUser.user_metadata || {}
+      const userName = meta.full_name || currentUser.email
+      const docLabel = DOC_LABELS[typeSelect.value] || typeSelect.value
+      const uploadedAt = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: 'jaymepereiranunes@yahoo.com.br',
+          subject: `📄 New document uploaded — ${userName}`,
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px;letter-spacing:1px">SISBRAPAG</span></div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <h2 style="margin:0 0 16px;font-size:16px;color:#0f172a">New document uploaded</h2>
+              <table style="width:100%;font-size:14px;color:#334155;border-collapse:collapse">
+                <tr><td style="padding:6px 0;font-weight:600;width:120px">User</td><td>${userName}</td></tr>
+                <tr><td style="padding:6px 0;font-weight:600">Email</td><td>${currentUser.email}</td></tr>
+                <tr><td style="padding:6px 0;font-weight:600">Document</td><td>${docLabel}</td></tr>
+                <tr><td style="padding:6px 0;font-weight:600">Uploaded at</td><td>${uploadedAt}</td></tr>
+              </table>
+              <a href="https://admin.sisbrapag.com" style="display:inline-block;margin-top:20px;background:#0f172a;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 22px;border-radius:8px">View in Admin →</a>
+            </div>
+          </div>`
+        })
+      }).catch(() => {})
     }
 
     async function downloadDoc(userId, filename) {
@@ -507,6 +655,144 @@
       el.textContent = msg
       el.className = 'text-sm ' + (type === 'error' ? 'text-red-500' : 'text-emerald-600')
     }
+
+    // ── Converter ────────────────────────────────────────────
+    const CV_CURRENCIES = [
+      { code: 'BRL', name: 'Brazilian Real',   symbol: 'R$',   type: 'fiat' },
+      { code: 'USD', name: 'US Dollar',         symbol: '$',    type: 'fiat' },
+      { code: 'EUR', name: 'Euro',              symbol: '€',    type: 'fiat' },
+      { code: 'GBP', name: 'British Pound',     symbol: '£',    type: 'fiat' },
+      { code: 'BTC', name: 'Bitcoin',           symbol: '₿',    type: 'crypto', cgId: 'bitcoin' },
+      { code: 'ETH', name: 'Ethereum',          symbol: 'Ξ',    type: 'crypto', cgId: 'ethereum' },
+      { code: 'USDT', name: 'Tether',           symbol: '₮',    type: 'crypto', cgId: 'tether' },
+      { code: 'USDC', name: 'USD Coin',         symbol: 'USDC', type: 'crypto', cgId: 'usd-coin' },
+    ]
+    const COUNTRY_TO_CURRENCY = { BR: 'BRL', US: 'USD', PT: 'EUR', AR: 'USD' }
+
+    let cvRateCache = {}, cvLastFetch = 0
+    const CV_TTL = 45000
+
+    function cvPopulate() {
+      const from = document.getElementById('cv-from')
+      const to = document.getElementById('cv-to')
+      const fiats = CV_CURRENCIES.filter(c => c.type === 'fiat')
+      const cryptos = CV_CURRENCIES.filter(c => c.type === 'crypto')
+      const makeGroups = (sel) => {
+        sel.innerHTML = ''
+        const fg = document.createElement('optgroup'); fg.label = 'Fiat'
+        const cg = document.createElement('optgroup'); cg.label = 'Crypto'
+        fiats.forEach(c => { const o = document.createElement('option'); o.value = c.code; o.textContent = `${c.code} — ${c.name}`; fg.appendChild(o) })
+        cryptos.forEach(c => { const o = document.createElement('option'); o.value = c.code; o.textContent = `${c.code} — ${c.name}`; cg.appendChild(o) })
+        sel.appendChild(fg); sel.appendChild(cg)
+      }
+      makeGroups(from); makeGroups(to)
+      // Default FROM = user's country currency, TO = USD
+      const userCountry = currentUser?.user_metadata?.country || 'BR'
+      from.value = COUNTRY_TO_CURRENCY[userCountry] || 'BRL'
+      to.value = from.value === 'USD' ? 'EUR' : 'USD'
+      cvUpdateSymbols()
+    }
+
+    function cvUpdateSymbols() {
+      const f = CV_CURRENCIES.find(c => c.code === document.getElementById('cv-from').value)
+      const t = CV_CURRENCIES.find(c => c.code === document.getElementById('cv-to').value)
+      document.getElementById('cv-from-symbol').textContent = f?.symbol || ''
+      document.getElementById('cv-to-symbol').textContent   = t?.symbol || ''
+    }
+
+    async function cvFetchFiat(base) {
+      try {
+        const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}`)
+        const d = await r.json()
+        if (d?.rates) return { ...d.rates, [base]: 1 }
+      } catch (_) {}
+      try {
+        const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`)
+        const d = await r.json()
+        return d.rates || {}
+      } catch (_) {}
+      return { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 }
+    }
+
+    async function cvGetRate(fromCode, toCode) {
+      const key = `${fromCode}-${toCode}`, now = Date.now()
+      if (cvRateCache[key] && (now - cvLastFetch) < CV_TTL) return cvRateCache[key]
+      const f = CV_CURRENCIES.find(c => c.code === fromCode)
+      const t = CV_CURRENCIES.find(c => c.code === toCode)
+      let rate = null
+      try {
+        if (f.type === 'fiat' && t.type === 'fiat') {
+          const rates = await cvFetchFiat(fromCode); rate = rates[toCode] || null
+        } else {
+          const ids = [...new Set([f.cgId, t.cgId].filter(Boolean))].join(',')
+          const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd,brl,eur,gbp`)
+          const prices = await res.json()
+          if (f.type === 'crypto' && t.type === 'crypto') {
+            rate = prices[f.cgId]?.usd / prices[t.cgId]?.usd
+          } else {
+            const crypto = f.type === 'crypto' ? f : t
+            const fiat   = f.type === 'fiat'   ? f : t
+            const priceInFiat = prices[crypto.cgId]?.[fiat.code.toLowerCase()]
+            rate = f.type === 'crypto' ? priceInFiat : (priceInFiat ? 1 / priceInFiat : null)
+          }
+        }
+      } catch (_) {}
+      if (rate) { cvRateCache[key] = rate; cvLastFetch = now }
+      return rate
+    }
+
+    let cvTimer = null
+    async function cvUpdate() {
+      const amt = parseFloat(document.getElementById('cv-amount').value) || 0
+      const from = document.getElementById('cv-from').value
+      const to   = document.getElementById('cv-to').value
+      const statusEl = document.getElementById('cv-status')
+      const resultEl = document.getElementById('cv-result')
+      const rateLine = document.getElementById('cv-rate-line')
+      if (!amt || from === to) { resultEl.textContent = amt || '—'; rateLine.textContent = ''; return }
+      statusEl.textContent = 'Fetching live rates…'
+      try {
+        const rate = await cvGetRate(from, to)
+        if (!rate) throw new Error()
+        const converted = amt * rate
+        const t = CV_CURRENCIES.find(c => c.code === to)
+        resultEl.textContent = t?.type === 'crypto'
+          ? (converted < 0.01 ? converted.toFixed(8) : converted.toFixed(4))
+          : converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        const prettyRate = rate < 0.01 ? rate.toFixed(8) : rate.toFixed(rate < 1 ? 4 : 2)
+        rateLine.textContent = `1 ${from} = ${prettyRate} ${to}`
+        statusEl.textContent = 'Rates updated · public APIs'
+      } catch (_) {
+        resultEl.textContent = '—'; statusEl.textContent = 'Could not fetch rates.'
+      }
+    }
+
+    function setupConverter() {
+      cvPopulate()
+      const trigger = () => { clearTimeout(cvTimer); cvTimer = setTimeout(cvUpdate, 300) }
+      document.getElementById('cv-amount').addEventListener('input', trigger)
+      document.getElementById('cv-from').addEventListener('change', () => { cvUpdateSymbols(); trigger() })
+      document.getElementById('cv-to').addEventListener('change',   () => { cvUpdateSymbols(); trigger() })
+      document.getElementById('cv-swap').addEventListener('click', () => {
+        const f = document.getElementById('cv-from'), t = document.getElementById('cv-to')
+        const tmp = f.value; f.value = t.value; t.value = tmp
+        cvUpdateSymbols(); trigger()
+      })
+      document.querySelectorAll('.cv-preset').forEach(b =>
+        b.addEventListener('click', () => { document.getElementById('cv-amount').value = b.dataset.cvPreset; trigger() })
+      )
+      setTimeout(cvUpdate, 400)
+    }
+
+    // Initialise converter when section is shown
+    let cvReady = false
+    const _origShowSection = showSection
+    window.showSection = function(name) {
+      _origShowSection(name)
+      if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
+    }
+
+    function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
 
     init()
   </script>
