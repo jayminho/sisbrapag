@@ -233,12 +233,44 @@
         <section id="section-documents" class="section hidden">
           <div class="mb-8">
             <h1 class="font-display text-2xl text-gray-900">Documents</h1>
-            <p class="text-gray-500 text-sm mt-1">Upload and manage your compliance documents.</p>
+            <p class="text-gray-500 text-sm mt-1">Upload your KYC and compliance documents. Accepted: PDF, JPG, PNG — max 10 MB each.</p>
           </div>
-          <div class="bg-white rounded-xl border border-gray-100 p-8 text-center max-w-md mx-auto">
-            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-file-arrow-up text-gray-400"></i></div>
-            <h3 class="font-display text-base text-gray-900 mb-2">No documents yet</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">Once your account is activated, you'll upload KYC and compliance documents here.</p>
+
+          <!-- Upload card -->
+          <div class="bg-white rounded-xl border border-gray-100 p-6 mb-6 max-w-lg">
+            <div class="flex flex-col gap-4">
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">Document type</label>
+                <select id="doc-type" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 bg-white">
+                  <option value="passport">Passport / Government ID</option>
+                  <option value="proof_of_address">Proof of Address</option>
+                  <option value="company_registration">Company Registration</option>
+                  <option value="bank_statement">Bank Statement</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-1">File</label>
+                <input id="doc-file" type="file" accept=".pdf,.jpg,.jpeg,.png"
+                  class="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"/>
+              </div>
+              <button id="doc-upload-btn" onclick="uploadDocument()"
+                class="self-start inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors">
+                <i id="doc-upload-icon" class="fa-solid fa-arrow-up-from-bracket"></i>
+                <span id="doc-upload-text">Upload</span>
+              </button>
+              <p id="doc-upload-feedback" class="text-sm hidden"></p>
+            </div>
+          </div>
+
+          <!-- Uploaded files list -->
+          <div class="bg-white rounded-xl border border-gray-100 overflow-hidden max-w-lg">
+            <div class="px-5 py-3 border-b border-gray-50">
+              <p class="text-xs font-medium text-gray-400 uppercase tracking-wide">Uploaded files</p>
+            </div>
+            <div id="doc-list">
+              <div class="px-5 py-8 text-center text-sm text-gray-400">No documents uploaded yet.</div>
+            </div>
           </div>
         </section>
 
@@ -386,6 +418,94 @@
     async function signOut() {
       await sb.auth.signOut()
       window.location.href = '/onboard.html'
+    }
+
+    // ── Documents ──────────────────────────────────────────
+    const DOC_LABELS = {
+      passport: 'Passport / Gov ID',
+      proof_of_address: 'Proof of Address',
+      company_registration: 'Company Registration',
+      bank_statement: 'Bank Statement',
+      other: 'Other'
+    }
+
+    async function loadDocuments() {
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) return
+      const { data, error } = await sb.storage.from('documents').list(user.id, { sortBy: { column: 'created_at', order: 'desc' } })
+      const list = document.getElementById('doc-list')
+      if (error || !data || data.length === 0) {
+        list.innerHTML = '<div class="px-5 py-8 text-center text-sm text-gray-400">No documents uploaded yet.</div>'
+        return
+      }
+      list.innerHTML = data.map(f => {
+        const parts = f.name.split('_')
+        const typeKey = parts[0]
+        const label = DOC_LABELS[typeKey] || typeKey
+        const ext = f.name.split('.').pop().toUpperCase()
+        const size = f.metadata?.size ? (f.metadata.size / 1024).toFixed(0) + ' KB' : ''
+        const date = f.created_at ? new Date(f.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+        return `<div class="flex items-center justify-between px-5 py-3.5 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">${esc(ext)}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-800 truncate">${esc(label)}</p>
+              <p class="text-xs text-gray-400">${esc(date)}${size ? ' · ' + esc(size) : ''}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 ml-3">
+            <button onclick="downloadDoc('${esc(user.id)}', '${esc(f.name)}')" class="text-xs text-emerald-600 hover:text-emerald-800 font-medium px-2 py-1 rounded hover:bg-emerald-50 transition-colors">Download</button>
+            <button onclick="deleteDoc('${esc(user.id)}', '${esc(f.name)}')" class="text-xs text-red-400 hover:text-red-600 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors">Delete</button>
+          </div>
+        </div>`
+      }).join('')
+    }
+
+    async function uploadDocument() {
+      const fileInput = document.getElementById('doc-file')
+      const typeSelect = document.getElementById('doc-type')
+      const btn = document.getElementById('doc-upload-btn')
+      const icon = document.getElementById('doc-upload-icon')
+      const text = document.getElementById('doc-upload-text')
+      const feedback = document.getElementById('doc-upload-feedback')
+      const file = fileInput.files[0]
+      if (!file) { showDocFeedback('Please select a file first.', 'error'); return }
+      if (file.size > 10 * 1024 * 1024) { showDocFeedback('File too large — max 10 MB.', 'error'); return }
+      const { data: { user } } = await sb.auth.getUser()
+      if (!user) return
+      btn.disabled = true
+      icon.className = 'fa-solid fa-spinner fa-spin'
+      text.textContent = 'Uploading…'
+      feedback.className = 'text-sm hidden'
+      const ext = file.name.split('.').pop()
+      const path = `${user.id}/${typeSelect.value}_${Date.now()}.${ext}`
+      const { error } = await sb.storage.from('documents').upload(path, file, { upsert: false })
+      btn.disabled = false
+      icon.className = 'fa-solid fa-arrow-up-from-bracket'
+      text.textContent = 'Upload'
+      if (error) { showDocFeedback('Upload failed: ' + error.message, 'error'); return }
+      fileInput.value = ''
+      showDocFeedback('✓ Uploaded successfully.', 'success')
+      loadDocuments()
+    }
+
+    async function downloadDoc(userId, filename) {
+      const { data, error } = await sb.storage.from('documents').createSignedUrl(`${userId}/${filename}`, 60)
+      if (error || !data) { alert('Could not generate download link.'); return }
+      const a = document.createElement('a'); a.href = data.signedUrl; a.download = filename; a.click()
+    }
+
+    async function deleteDoc(userId, filename) {
+      if (!confirm('Delete this document?')) return
+      const { error } = await sb.storage.from('documents').remove([`${userId}/${filename}`])
+      if (error) { alert('Delete failed: ' + error.message); return }
+      loadDocuments()
+    }
+
+    function showDocFeedback(msg, type) {
+      const el = document.getElementById('doc-upload-feedback')
+      el.textContent = msg
+      el.className = 'text-sm ' + (type === 'error' ? 'text-red-500' : 'text-emerald-600')
     }
 
     init()
