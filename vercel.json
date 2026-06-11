@@ -4,5 +4,17 @@
   "framework": null,
   "buildCommand": null,
   "devCommand": null,
-  "installCommand": null
+  "installCommand": null,
+  "rewrites": [
+    {
+      "has": [{ "type": "host", "value": "app.sisbrapag.com" }],
+      "source": "/",
+      "destination": "/dashboard.html"
+    },
+    {
+      "has": [{ "type": "host", "value": "admin.sisbrapag.com" }],
+      "source": "/",
+      "destination": "/admin.html"
+    }
+  ]
 }
