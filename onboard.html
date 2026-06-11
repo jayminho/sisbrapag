@@ -100,10 +100,16 @@
     </div>
   </main>
 
-  <footer class="text-center py-6 text-xs text-gray-400">
-    2025 SISBRAPAG - <a href="/" class="hover:text-gray-600">Back to site</a>
+  <footer class="text-center py-6 text-xs text-gray-400 space-y-1.5">
+    <div>© <span id="footer-year"></span> SISBRAPAG</div>
+    <div class="flex justify-center gap-4">
+      <a href="/" class="hover:text-gray-600">Home</a>
+      <a href="/terms.html" class="hover:text-gray-600">Terms</a>
+      <a href="/privacy.html" class="hover:text-gray-600">Privacy</a>
+    </div>
   </footer>
 
+  <script>document.getElementById('footer-year').textContent = new Date().getFullYear()</script>
   <script>
     const SUPABASE_URL = 'https://iiclntwwutsaoorbncfp.supabase.co'
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpY2xudHd3dXRzYW9vcmJuY2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODAyMTksImV4cCI6MjA5NjY1NjIxOX0.pf-aJ3idjxAyU2LTu9PizMdJ5fHqlQrabf8NqwvkLbI'

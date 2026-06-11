@@ -50,13 +50,17 @@
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
         </a>
         <a href="#" onclick="showSection('converter')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-converter">
-          <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Converter
+          <i class="fa-solid fa-calculator w-4 text-gray-400"></i> Converter
         </a>
       </nav>
-      <div class="px-3 py-4 border-t border-gray-100">
+      <div class="px-3 py-4 border-t border-gray-100 space-y-0.5">
         <button onclick="signOut()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600">
           <i class="fa-solid fa-right-from-bracket w-4"></i> Sign out
         </button>
+        <div class="flex gap-3 px-3 pt-1">
+          <a href="/terms.html" class="text-xs text-gray-300 hover:text-gray-500">Terms</a>
+          <a href="/privacy.html" class="text-xs text-gray-300 hover:text-gray-500">Privacy</a>
+        </div>
       </div>
     </aside>
 
@@ -618,7 +622,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
-          to: 'jaymepereiranunes@yahoo.com.br',
+          to: ['jaymepereiranunes@yahoo.com.br'],
           subject: `📄 New document uploaded — ${userName}`,
           html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
             <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px;letter-spacing:1px">SISBRAPAG</span></div>
@@ -784,12 +788,13 @@
       setTimeout(cvUpdate, 400)
     }
 
-    // Initialise converter when section is shown
+    // Initialise converter when section is shown; reload documents on nav
     let cvReady = false
     const _origShowSection = showSection
     window.showSection = function(name) {
       _origShowSection(name)
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
+      if (name === 'documents') loadDocuments()
     }
 
     function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
