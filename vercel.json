@@ -9,7 +9,7 @@
     {
       "has": [{ "type": "host", "value": "app.sisbrapag.com" }],
       "source": "/",
-      "destination": "/onboard.html"
+      "destination": "/dashboard.html"
     },
     {
       "has": [{ "type": "host", "value": "admin.sisbrapag.com" }],
