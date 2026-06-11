@@ -1,0 +1,3 @@
+- [SISBRAPAG fiat FX fix](project_sisbrapag_fiat_fx_fix.md) — switched converter to Frankfurter API; deploy via gh CLI (not github.dev — no terminal there)
+- [SISBRAPAG site changes](project_sisbrapag_site_changes.md) — running log of all site changes; latest: onboarding system live (2026-06-10)
+- [SISBRAPAG onboarding](project_sisbrapag_onboarding.md) — magic link auth system: onboard.html + dashboard.html, Supabase free tier, full spec + next steps
