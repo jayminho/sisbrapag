@@ -349,32 +349,134 @@
   <!-- CONTACT / CTA -->
   <div id="contact" class="border-t border-slate-100 bg-white">
     <div class="max-w-screen-xl mx-auto px-6 py-14">
-      <div class="flex flex-col md:flex-row md:items-center gap-y-8 md:justify-between">
-        <div>
+      <div class="flex flex-col lg:flex-row gap-12 lg:gap-20">
+
+        <!-- Left: heading + direct contact -->
+        <div class="flex-1">
           <div class="text-2xl font-semibold tracking-tight">Ready to move value?</div>
           <p class="text-slate-600 mt-2 max-w-md">Tell us what you need — remittances, trade settlement, or a specific conversion pair. We'll respond quickly.</p>
+          <div class="flex flex-col sm:flex-row lg:flex-col gap-3 mt-6">
+            <a href="/onboard.html"
+               class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
+              <i class="fa-solid fa-arrow-right"></i>
+              <span>Get Started</span>
+            </a>
+            <a href="mailto:hello@sisbrapag.com?subject=SISBRAPAG%20Inquiry"
+               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
+              <i class="fa-regular fa-envelope"></i>
+              <span>hello@sisbrapag.com</span>
+            </a>
+            <a href="https://wa.me/5521987128712" target="_blank"
+               class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
+              <i class="fa-brands fa-whatsapp"></i>
+              <span>WhatsApp</span>
+            </a>
+          </div>
         </div>
-        
-        <div class="flex flex-col sm:flex-row gap-3">
-          <a href="/onboard.html"
-             class="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-semibold text-white hover:bg-emerald-700 transition-colors">
-            <i class="fa-solid fa-arrow-right"></i>
-            <span>Get Started</span>
-          </a>
-          <a href="mailto:hello@sisbrapag.com?subject=SISBRAPAG%20Inquiry"
-             class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
-            <i class="fa-regular fa-envelope"></i>
-            <span>hello@sisbrapag.com</span>
-          </a>
-          <a href="https://wa.me/5521987128712" target="_blank"
-             class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
-            <i class="fa-brands fa-whatsapp"></i>
-            <span>WhatsApp</span>
-          </a>
+
+        <!-- Right: contact form -->
+        <div class="flex-1">
+          <form id="contactForm" class="flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row gap-4">
+              <div class="flex-1 flex flex-col gap-1">
+                <label for="cf-name" class="text-xs font-medium text-slate-500 uppercase tracking-wide">Name</label>
+                <input id="cf-name" type="text" required placeholder="Your name"
+                       class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"/>
+              </div>
+              <div class="flex-1 flex flex-col gap-1">
+                <label for="cf-email" class="text-xs font-medium text-slate-500 uppercase tracking-wide">Email</label>
+                <input id="cf-email" type="email" required placeholder="you@company.com"
+                       class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"/>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label for="cf-message" class="text-xs font-medium text-slate-500 uppercase tracking-wide">Message</label>
+              <textarea id="cf-message" required rows="4" placeholder="Tell us what you need…"
+                        class="rounded-xl border border-slate-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition resize-none"></textarea>
+            </div>
+            <button type="submit" id="cf-submit"
+                    class="self-start inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-7 py-3.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors">
+              <span id="cf-btn-text">Send message</span>
+              <i id="cf-btn-icon" class="fa-solid fa-paper-plane"></i>
+            </button>
+            <p id="cf-feedback" class="text-sm hidden"></p>
+          </form>
         </div>
+
       </div>
     </div>
   </div>
+
+  <script>
+    (function () {
+      const SUPABASE_URL = 'https://iiclntwwutsaoorbncfp.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpY2xudHd3dXRzYW9vcmJuY2ZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwODAyMTksImV4cCI6MjA5NjY1NjIxOX0.pf-aJ3idjxAyU2LTu9PizMdJ5fHqlQrabf8NqwvkLbI';
+
+      const form     = document.getElementById('contactForm');
+      const submit   = document.getElementById('cf-submit');
+      const btnText  = document.getElementById('cf-btn-text');
+      const btnIcon  = document.getElementById('cf-btn-icon');
+      const feedback = document.getElementById('cf-feedback');
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name    = document.getElementById('cf-name').value.trim();
+        const email   = document.getElementById('cf-email').value.trim();
+        const message = document.getElementById('cf-message').value.trim();
+
+        submit.disabled = true;
+        btnText.textContent = 'Sending…';
+        btnIcon.className = 'fa-solid fa-spinner fa-spin';
+        feedback.className = 'text-sm hidden';
+
+        const html = `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
+            <div style="background:#0B1120;padding:24px 32px">
+              <div style="color:#10B981;font-size:18px;font-weight:700;letter-spacing:1px">SISBRAPAG</div>
+            </div>
+            <div style="padding:32px;background:#fff;border:1px solid #e2e8f0">
+              <h2 style="margin:0 0 16px;font-size:16px;color:#0f172a">New contact form submission</h2>
+              <table style="width:100%;border-collapse:collapse;font-size:14px;color:#334155">
+                <tr><td style="padding:8px 0;font-weight:600;width:80px">Name</td><td style="padding:8px 0">${name}</td></tr>
+                <tr><td style="padding:8px 0;font-weight:600">Email</td><td style="padding:8px 0"><a href="mailto:${email}" style="color:#10B981">${email}</a></td></tr>
+                <tr><td style="padding:8px 0;font-weight:600;vertical-align:top">Message</td><td style="padding:8px 0;white-space:pre-wrap">${message}</td></tr>
+              </table>
+            </div>
+            <div style="padding:16px 32px;background:#f8fafc;font-size:12px;color:#94a3b8">
+              Sent from sisbrapag.com contact form
+            </div>
+          </div>`;
+
+        try {
+          const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+            body: JSON.stringify({
+              to: 'hello@sisbrapag.com',
+              subject: `Contact from ${name} — SISBRAPAG`,
+              html
+            })
+          });
+
+          if (res.ok) {
+            form.reset();
+            feedback.textContent = '✓ Message sent! We\'ll be in touch shortly.';
+            feedback.className = 'text-sm text-emerald-600';
+          } else {
+            throw new Error('Send failed');
+          }
+        } catch {
+          feedback.textContent = 'Something went wrong. Please email hello@sisbrapag.com directly.';
+          feedback.className = 'text-sm text-red-500';
+        }
+
+        submit.disabled = false;
+        btnText.textContent = 'Send message';
+        btnIcon.className = 'fa-solid fa-paper-plane';
+        feedback.classList.remove('hidden');
+      });
+    })();
+  </script>
 
   <footer class="border-t border-slate-100 py-8">
     <div class="max-w-screen-xl mx-auto px-6 text-xs text-slate-400 flex flex-col md:flex-row gap-y-2 items-center justify-between">
