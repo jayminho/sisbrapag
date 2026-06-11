@@ -251,10 +251,10 @@
           </div>
         </div>`
       try {
-        await fetch('https://api.resend.com/emails', {
+        await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer re_FdB6VUSP_KBT2w83vqMFbztndVEruhqTw' },
-          body: JSON.stringify({ from: 'SISBRAPAG <noreply@sisbrapag.com>', to: [email], subject: 'Your SISBRAPAG account is now active', html })
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ to: [email], subject: 'Your SISBRAPAG account is now active', html })
         })
       } catch (e) { console.warn('Activation email failed:', e) }
     }
