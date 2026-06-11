@@ -143,6 +143,20 @@
         <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div id="modal-body" class="space-y-3 text-sm"></div>
+      <!-- Notes -->
+      <div class="mt-5 pt-5 border-t border-gray-100">
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Admin Notes</label>
+        <textarea id="modal-notes" rows="3"
+          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 resize-none text-gray-800 placeholder-gray-300"
+          placeholder="Internal notes — only visible to you…"></textarea>
+        <div class="flex items-center justify-between mt-2">
+          <span id="notes-feedback" class="text-xs text-emerald-600 hidden">Saved ✓</span>
+          <button id="notes-save-btn" onclick="saveNotes()"
+            class="ml-auto px-4 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Save notes
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -307,9 +321,12 @@
       renderTable(filtered)
     }
 
+    let modalUserId = null
+
     function openModal(id) {
       const u = allUsers.find(u => u.id === id)
       if (!u) return
+      modalUserId = id
       document.getElementById('modal-name').textContent = u.full_name || u.email || 'User'
       const joined = u.created_at
         ? new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -329,7 +346,27 @@
           <span class="text-gray-400 shrink-0">${k}</span>
           <span class="text-gray-800 text-right break-all">${esc(String(v))}</span>
         </div>` : '').join('')
+      document.getElementById('modal-notes').value = u.notes || ''
+      document.getElementById('notes-feedback').classList.add('hidden')
       document.getElementById('modal-overlay').classList.remove('hidden')
+    }
+
+    async function saveNotes() {
+      if (!modalUserId) return
+      const notes = document.getElementById('modal-notes').value
+      const btn = document.getElementById('notes-save-btn')
+      btn.disabled = true
+      btn.textContent = 'Saving…'
+      const { error } = await sb.from('profiles').update({ notes }).eq('id', modalUserId)
+      btn.disabled = false
+      btn.textContent = 'Save notes'
+      if (error) { alert('Error saving notes: ' + error.message); return }
+      // Update in-memory
+      const u = allUsers.find(u => u.id === modalUserId)
+      if (u) u.notes = notes
+      const fb = document.getElementById('notes-feedback')
+      fb.classList.remove('hidden')
+      setTimeout(() => fb.classList.add('hidden'), 2500)
     }
 
     function closeModal(e) {
