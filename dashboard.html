@@ -52,6 +52,10 @@
         <a href="#" onclick="showSection('converter')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-converter">
           <i class="fa-solid fa-calculator w-4 text-gray-400"></i> Converter
         </a>
+        <a href="#" onclick="showSection('messages')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-messages">
+          <i class="fa-solid fa-comment-dots w-4 text-gray-400"></i> Messages
+          <span id="msg-badge" class="hidden ml-auto bg-emerald-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
+        </a>
       </nav>
       <div class="px-3 py-4 border-t border-gray-100 space-y-0.5">
         <button onclick="signOut()" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600">
@@ -379,6 +383,29 @@
           </div>
         </section>
 
+        <!-- MESSAGES -->
+        <section id="section-messages" class="section hidden">
+          <div class="mb-8">
+            <h1 class="font-display text-2xl text-gray-900">Messages</h1>
+            <p class="text-gray-500 text-sm mt-1">Chat with the SISBRAPAG team.</p>
+          </div>
+          <div class="bg-white rounded-xl border border-gray-100 overflow-hidden max-w-2xl flex flex-col" style="height:520px">
+            <!-- Thread -->
+            <div id="msg-thread" class="flex-1 overflow-y-auto px-5 py-5 space-y-3">
+              <div id="msg-empty" class="text-center text-sm text-gray-400 py-16">No messages yet. Send us a message below.</div>
+            </div>
+            <!-- Compose -->
+            <div class="border-t border-gray-100 px-5 py-4 flex gap-3 items-end">
+              <textarea id="msg-input" rows="2" placeholder="Type a message… (Enter to send)"
+                class="flex-1 resize-none text-sm border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"></textarea>
+              <button onclick="sendUserMessage()" id="msg-send-btn"
+                class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors">
+                <i class="fa-solid fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -400,6 +427,7 @@
     async function showAuthContent() {
       document.getElementById('loading-state').classList.add('hidden')
       document.getElementById('auth-content').classList.remove('hidden')
+      setTimeout(() => updateMsgBadge(), 1000) // check for unread on load
       const user = currentUser
       const meta = user.user_metadata || {}
       const name = meta.full_name || localStorage.getItem('sisbrapag_pending_name') || user.email.split('@')[0]
@@ -790,14 +818,127 @@
 
     // Initialise converter when section is shown; reload documents on nav
     let cvReady = false
+    let msgPollTimer = null
     const _origShowSection = showSection
     window.showSection = function(name) {
       _origShowSection(name)
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
       if (name === 'documents') loadDocuments()
+      if (name === 'messages') { loadUserMessages(true); startMsgPoll() }
+      else stopMsgPoll()
     }
 
     function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+    // ── Messaging ────────────────────────────────────────────
+    async function loadUserMessages(markRead = false) {
+      const { data, error } = await sb
+        .from('messages')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: true })
+
+      const thread = document.getElementById('msg-thread')
+      const empty  = document.getElementById('msg-empty')
+      if (error || !data || data.length === 0) {
+        if (empty) empty.classList.remove('hidden')
+        return
+      }
+      if (empty) empty.classList.add('hidden')
+
+      const atBottom = thread.scrollHeight - thread.scrollTop <= thread.clientHeight + 60
+      thread.innerHTML = data.map(m => {
+        const isUser = !m.is_from_admin
+        const time = new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        const date = new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
+        return `<div class="flex ${isUser ? 'justify-end' : 'justify-start'} mb-2">
+          <div class="max-w-xs lg:max-w-sm">
+            <div class="px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${isUser
+              ? 'bg-emerald-600 text-white rounded-br-md'
+              : 'bg-gray-100 text-gray-800 rounded-bl-md'}">
+              ${esc(m.body)}
+            </div>
+            <p class="text-xs text-gray-400 mt-1 ${isUser ? 'text-right' : 'text-left'}">${date} · ${time}</p>
+          </div>
+        </div>`
+      }).join('')
+
+      if (atBottom) thread.scrollTop = thread.scrollHeight
+
+      if (markRead) {
+        const unread = data.filter(m => m.is_from_admin && !m.read_at).map(m => m.id)
+        if (unread.length > 0) {
+          sb.from('messages').update({ read_at: new Date().toISOString() }).in('id', unread).then(() => {})
+        }
+        updateMsgBadge(0)
+      }
+    }
+
+    async function updateMsgBadge(count) {
+      const badge = document.getElementById('msg-badge')
+      if (!badge) return
+      if (count === undefined) {
+        const { data } = await sb.from('messages').select('id')
+          .eq('user_id', currentUser.id).eq('is_from_admin', true).is('read_at', null)
+        count = data?.length || 0
+      }
+      if (count > 0) { badge.textContent = count; badge.classList.remove('hidden') }
+      else badge.classList.add('hidden')
+    }
+
+    function startMsgPoll() {
+      stopMsgPoll()
+      msgPollTimer = setInterval(() => loadUserMessages(false), 30000)
+    }
+    function stopMsgPoll() {
+      if (msgPollTimer) { clearInterval(msgPollTimer); msgPollTimer = null }
+    }
+
+    async function sendUserMessage() {
+      const input = document.getElementById('msg-input')
+      const btn   = document.getElementById('msg-send-btn')
+      const body  = input.value.trim()
+      if (!body) return
+      btn.disabled = true
+      const { error } = await sb.from('messages').insert({
+        user_id: currentUser.id, is_from_admin: false, body
+      })
+      btn.disabled = false
+      if (error) { alert('Send failed: ' + error.message); return }
+      input.value = ''
+      await loadUserMessages(false)
+      // Notify admin
+      const meta = currentUser.user_metadata || {}
+      const userName = meta.full_name || currentUser.email
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: ['jaymepereiranunes@yahoo.com.br'],
+          subject: `💬 New message from ${userName} — SISBRAPAG`,
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <h2 style="margin:0 0 8px;font-size:16px;color:#0f172a">New message from ${esc(userName)}</h2>
+              <p style="margin:0 0 16px;font-size:14px;color:#6b7280">${esc(currentUser.email)}</p>
+              <div style="background:#f8fafc;border-left:3px solid #10B981;padding:12px 16px;border-radius:4px;font-size:14px;color:#334155">${esc(body)}</div>
+              <a href="https://admin.sisbrapag.com" style="display:inline-block;margin-top:20px;background:#0f172a;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 22px;border-radius:8px">Reply in Admin →</a>
+            </div>
+          </div>`
+        })
+      }).catch(() => {})
+    }
+
+    // Enter to send (Shift+Enter for newline)
+    document.addEventListener('DOMContentLoaded', () => {
+      const inp = document.getElementById('msg-input')
+      if (inp) inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage() }
+      })
+    })
+
+    // Badge poll — check for unread every 60s regardless of active section
+    setInterval(() => { if (currentUser) updateMsgBadge() }, 60000)
 
     init()
   </script>
