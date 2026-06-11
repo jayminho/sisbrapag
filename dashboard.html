@@ -303,10 +303,48 @@
       }
     }
 
+    async function sendWelcomeEmail(name, email) {
+      const firstName = name.split(' ')[0]
+      const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+      <tr><td style="background:#0B1120;padding:24px 32px;">
+        <span style="color:#10B981;font-size:18px;font-weight:700;letter-spacing:0.5px;">SISBRAPAG</span>
+      </td></tr>
+      <tr><td style="padding:36px 32px 28px;">
+        <h1 style="margin:0 0 8px;font-size:22px;font-weight:700;color:#111827;">You're all set, ${firstName}! 🎉</h1>
+        <p style="margin:0 0 20px;font-size:15px;color:#6b7280;line-height:1.6;">Your profile is complete and your account is now in review. Our team will activate your services within <strong style="color:#111827;">1 business day</strong>.</p>
+        <p style="margin:0 0 28px;font-size:15px;color:#6b7280;line-height:1.6;">In the meantime, you can explore your dashboard and get familiar with the services available.</p>
+        <a href="https://app.sisbrapag.com" style="display:inline-block;background:#10B981;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:13px 28px;border-radius:8px;">Go to Dashboard →</a>
+      </td></tr>
+      <tr><td style="padding:20px 32px;border-top:1px solid #f3f4f6;">
+        <p style="margin:0;font-size:13px;color:#9ca3af;">Questions? Reach us on <a href="https://wa.me/5521987128712" style="color:#10B981;text-decoration:none;">WhatsApp</a> or reply to this email.</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer re_FdB6VUSP_KBT2w83vqMFbztndVEruhqTw', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'SISBRAPAG <noreply@sisbrapag.com>',
+          to: [email],
+          subject: 'Your SISBRAPAG account is set up ✓',
+          html,
+        })
+      }).catch(() => {}) // non-blocking, silent fail
+    }
+
     document.getElementById('profile-form').addEventListener('submit', async (e) => {
       e.preventDefault()
       const btn = e.target.querySelector('button[type=submit]')
       btn.disabled = true; btn.textContent = 'Saving...'
+      const isFirstSave = !currentUser.user_metadata?.country
       const updates = {
         full_name: document.getElementById('p-name').value.trim(),
         phone: document.getElementById('p-phone').value.trim(),
@@ -334,6 +372,10 @@
         document.getElementById('profile-success').classList.remove('hidden')
         document.getElementById('profile-error').classList.add('hidden')
         setTimeout(() => document.getElementById('profile-success').classList.add('hidden'), 3000)
+        // Send welcome email on first profile completion (non-blocking)
+        if (isFirstSave && updates.country && updates.primary_use) {
+          sendWelcomeEmail(updates.full_name || currentUser.email, currentUser.email)
+        }
         // Patch local metadata immediately so UI updates without stale JWT delay
         currentUser = { ...currentUser, user_metadata: { ...currentUser.user_metadata, ...updates } }
         showAuthContent()
