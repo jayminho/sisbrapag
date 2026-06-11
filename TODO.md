@@ -5,45 +5,23 @@
 
 ---
 
-## Phase 1 — Trust & Conversion (Homepage)
-*Get visitors to convert. Simple HTML changes, no backend.*
+## Phase 1 — Trust & Conversion (Homepage) ✅
+*Completed 2026-06-11*
 
-- [ ] **"How it works" section** (index.html)
-  - 3-step visual: Sign up → Send docs → Transfer funds
-  - Simple icons, short copy, clean layout
-  - _Unlocks:_ clearer user expectations → lower drop-off on onboarding
-
-- [ ] **Legal / compliance pages**
-  - `terms.html` — Terms of Service
-  - `privacy.html` — Privacy Policy
-  - Link in footer of index, onboard, dashboard
-  - _Unlocks:_ trust for cautious users; required before any transaction flow
-
-- [ ] **Testimonials section** (index.html)
-  - Placeholder-ready cards (name, company, quote)
-  - Can populate with real quotes as they come in
-  - _Unlocks:_ social proof alongside the user count already live
+- [x] **"How it works" section** (index.html) — 3-step visual, desktop connector line, CTA
+- [x] **Legal / compliance pages** — `terms.html` + `privacy.html`, linked in index/onboard/dashboard
+- [x] **Testimonials section** (index.html) — 3 placeholder cards with star ratings
+- [x] **Nav anchor links** — "How it works" added to homepage nav
 
 ---
 
-## Phase 2 — User Experience (Dashboard)
-*Make the dashboard useful for users who are already in.*
+## Phase 2 — User Experience (Dashboard) ✅
+*Completed 2026-06-11*
 
-- [ ] **Pending user: estimated timeline + status message** (dashboard.html)
-  - Show a friendly message when status = pending: e.g. "Typically activated within 1 business day"
-  - Triggered automatically by Supabase profile status
-  - _Unlocks:_ reduces silence/uncertainty post-signup; fewer "did it work?" messages
-
-- [ ] **Quotation system in dashboard** (dashboard.html)
-  - Mirror the FX calculator from index.html inside the dashboard
-  - Personalised: show the user's country/currency by default from their profile
-  - Save last quote to Supabase for reference
-  - _Unlocks:_ user can price their transfer before requesting it → feeds directly into Phase 4
-
-- [ ] **Document upload → admin email notification**
-  - Trigger edge function `send-email` when a user uploads a document
-  - Email to jaymepereiranunes@yahoo.com.br: user name, doc type, timestamp
-  - _Unlocks:_ ops awareness; currently uploads happen silently
+- [x] **Pending user: estimated timeline + status message** (dashboard.html) — reads real `profiles.status`, shows 3-step progress card
+- [x] **FX Converter in dashboard** — Converter tab with live Frankfurter + CoinGecko rates, country-prefilled FROM, preset amounts
+- [x] **Document upload → admin email notification** — fires via `send-email` edge function on upload, includes user/doc/timestamp + admin link
+- [x] **loadDocuments wired to nav** — documents list refreshes automatically when Documents section is opened
 
 ---
 
