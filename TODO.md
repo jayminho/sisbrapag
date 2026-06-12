@@ -1,7 +1,7 @@
 # SISBRAPAG — Product Roadmap & TODO
 
 > Build order is intentional: each phase lays the foundation for the next.
-> Last updated: 2026-06-11
+> Last updated: 2026-06-12
 
 ---
 
@@ -25,20 +25,35 @@
 
 ---
 
-## Phase 3 — Operations (Admin Panel)
-*Give the admin tools to manage users and communicate.*
+## Phase 3 — Operations (Admin Panel) ✅
+*Completed 2026-06-11*
 
-- [ ] **Admin notes on user profiles** (admin.html)
-  - Add a `notes` text field to `public.profiles`
-  - In admin modal: textarea to write/save notes per user (e.g. "Spoke on WhatsApp, waiting for CNPJ")
-  - _Unlocks:_ CRM-lite functionality without external tool
+- [x] **Admin notes on user profiles** (admin.html) — `notes` column + textarea in admin modal
+- [x] **Internal messaging system** (admin.html + dashboard.html) — `messages` table, two-way chat, unread badges, email on reply
 
-- [ ] **Internal messaging system** (admin.html + dashboard.html)
-  - New Supabase table: `messages` (from, to, body, read, created_at)
-  - Admin can drop a message to a specific user (e.g. "We need your company registration doc")
-  - User sees a notification badge + inbox in their dashboard
-  - Both-way: user can reply
-  - _Unlocks:_ replaces ad-hoc WhatsApp back-and-forth; keeps comms inside the platform
+---
+
+## Phase 3.5 — Manual Deposit Flow ("good old days" TED + PIX)
+*Interim funding system while PIX cash-in API is blocked (Inter creds pending). Spec complete 2026-06-12 → see `deposit-flow-part1.md`.*
+
+**Part 1 — Design ✅ (2026-06-12, not built)**
+- [x] Full flow spec: menu → amount → payment details → receipt upload → manual review
+- [x] States: created → pending_review → credited / rejected / expired
+- [x] Decisions: TED weekdays 09–16h BRT only / PIX 24/7; 60-min timer; one open deposit/user; numeric ref code
+- [x] Review checklist (money landed, amount, ref, **sender name = holder, no third-party**)
+- [x] Email at every stage + canned rejection reasons
+- [x] Data model (`deposits`, upgrade-ready for auto-matching)
+- [x] Standard branded PDF receipt (`receipt-template.html` + samples)
+
+**Part 2 — Build (next)**
+- [ ] Screens (funding menu, amount, payment details TED/PIX, receipt upload, status)
+- [ ] Supabase `deposits` table + RLS
+- [ ] 60-min expiry job (cron/edge fn) → auto-expire + email
+- [ ] Admin confirm/reject dashboard (canned reasons)
+- [ ] PDF receipt generation wired to credited/rejected
+- [ ] TED availability gate: Brasília TZ + Brazilian holiday calendar
+- [ ] **Telegram approval bot** — instant phone notification on pending_review w/ inline ✅ Creditar / ❌ Recusar buttons
+- [ ] _Later:_ Inter extrato auto-matching (ref_code + amount), limits, reconciliation report
 
 ---
 
