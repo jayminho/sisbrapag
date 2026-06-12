@@ -362,7 +362,140 @@ updated_at    timestamptz default now()
 
 ---
 
-## 10. Reference Links
+## 10. Additional Technical Details (from BACEN spec + PSP documentation)
+
+### 10.1 The `pixCopiaECola` field (EMV BR Code)
+
+Every charge response includes `pixCopiaECola` — a string formatted per the BACEN BR Code standard (EMV Merchant-Presented QR Code). Example:
+
+```
+00020101021226890014br.gov.bcb.pix2567pix.inter.com.br/qr/v2/9d36b84fc70b478a...5204000053039865802BR5913SISBRAPAG6008Brasilia62070503***6304ABCD
+```
+
+This string:
+- Is the **text equivalent** of the QR code — users can paste it into any bank app ("Copia e Cola")
+- Encodes the dynamic location URL (which the payer's bank fetches to get charge details)
+- Is signed and validated by the PSP at payment time
+- Expires when the charge expires (`calendario.expiracao` seconds after creation)
+
+Show both the QR image and this string in the UI. The string is critical for mobile users who can't scan.
+
+### 10.2 CONCLUIDA charge — what the response looks like
+
+When a charge has been paid, `GET /pix/v2/cob/{txid}` returns `status: "CONCLUIDA"` and adds a `pix` array:
+
+```json
+{
+  "status": "CONCLUIDA",
+  "txid": "7978c0c97ea847e78e8849634473c1f1",
+  "valor": { "original": "500.00" },
+  "pix": [
+    {
+      "endToEndId": "E00000000202101010000000000000000",
+      "txid": "7978c0c97ea847e78e8849634473c1f1",
+      "valor": "500.00",
+      "horario": "2021-01-01T16:01:35.000Z",
+      "pagador": {
+        "cpf": "12345678909",
+        "nome": "Nome do Pagador"
+      },
+      "infoPagador": "optional note from payer",
+      "devolucoes": []
+    }
+  ]
+}
+```
+
+Store `pix[0].endToEndId` in the `deposits` table as `pix_end_to_end_id` — it's the BACEN transaction ID used for reconciliation and refund (devolução) operations.
+
+### 10.3 Webhook payload — full detail
+
+Inter POSTs to your registered webhook URL whenever a PIX payment is received:
+
+```json
+{
+  "pix": [
+    {
+      "endToEndId": "E00000000202101010000000000000000",
+      "txid": "7978c0c97ea847e78e8849634473c1f1",
+      "valor": "500.00",
+      "horario": "2021-01-01T16:01:35.000Z",
+      "pagador": {
+        "cpf": "12345678909",
+        "nome": "Nome do Pagador"
+      },
+      "infoPagador": "optional note"
+    }
+  ]
+}
+```
+
+Multiple payments can arrive in a single webhook call (the `pix` array can have more than one item — process all of them). Respond with `HTTP 200` quickly; do processing async if needed.
+
+### 10.4 Creating a charge with a specific txid
+
+Instead of letting Inter generate the txid, you can provide your own:
+
+```
+PUT /pix/v2/cob/{txid}
+```
+
+Rules for txid:
+- Length: 26 to 35 alphanumeric characters
+- Only: `a-z A-Z 0-9`
+- Must be unique per PIX key
+- Recommended: use your internal deposit UUID with hyphens removed
+
+Example: `PUT /pix/v2/cob/7978c0c97ea847e78e8849634473c1f1`
+
+This is useful for idempotency — if the edge function crashes after creating the charge but before saving to DB, you can retry with the same txid without creating a duplicate.
+
+### 10.5 Listing charges (admin / reconciliation)
+
+```
+GET /pix/v2/cob?inicio=2024-01-01T00:00:00Z&fim=2024-01-31T23:59:59Z
+```
+
+`inicio` and `fim` are **mandatory**. Optional filters:
+- `cpf` / `cnpj` — filter by payer document
+- `status` — `ATIVA`, `CONCLUIDA`, `REMOVIDA_PELO_USUARIO_RECEBEDOR`, `REMOVIDA_PELO_PSP`
+- `paginaAtual` (default 0), `itensPorPagina` (default 100, max 1000)
+
+Use this for a future "admin reconciliation" feature.
+
+### 10.6 Sandbox testing behavior (Efí / BACEN PSP standard)
+
+The sandbox follows a standard pattern used by most Brazilian PSPs:
+
+| Charge amount | Sandbox behavior |
+|---|---|
+| R$0.01 – R$10.00 | Auto-confirmed; webhook fires with payment data |
+| R$10.01 and above | Stays `ATIVA`; no webhook; use to test pending state |
+
+This is **not** Inter-specific — it's the standard behavior across Efí, Sicoob, and most sandbox environments. When Inter enables sandbox access, expect the same or similar simulation approach.
+
+### 10.7 Refunds (Devoluções)
+
+Once a payment is confirmed, you can refund via:
+
+```
+PUT /pix/v2/pix/{e2eId}/devolucao/{id}
+```
+
+Where:
+- `e2eId` = the `endToEndId` from the confirmed payment
+- `id` = your internal refund identifier (alphanumeric, max 35 chars)
+
+Body:
+```json
+{ "valor": "500.00" }
+```
+
+Partial refunds are supported (send less than the original amount). Not needed for SISBRAPAG deposits initially, but useful for future dispute handling.
+
+---
+
+## 11. Reference Links
 
 | Resource | URL |
 |---|---|
