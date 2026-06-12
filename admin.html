@@ -32,6 +32,10 @@
         <a href="#" onclick="showAdminSection('users')" id="admin-nav-users" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-700 bg-gray-100 font-medium">
           <i class="fa-solid fa-users w-4 text-gray-400"></i> Users
         </a>
+        <a href="#" onclick="showAdminSection('deposits')" id="admin-nav-deposits" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50">
+          <i class="fa-solid fa-money-bill-transfer w-4 text-gray-400"></i> Deposits
+          <span id="admin-dep-badge" class="hidden ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
+        </a>
         <a href="#" onclick="showAdminSection('messages')" id="admin-nav-messages" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50">
           <i class="fa-solid fa-comment-dots w-4 text-gray-400"></i> Messages
           <span id="admin-msg-badge" class="hidden ml-auto bg-emerald-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
@@ -208,8 +212,56 @@
           </div>
         </div>
 
+        <!-- DEPOSITS SECTION -->
+        <span class="hidden bg-gray-100 text-gray-600 bg-amber-50 text-amber-700 bg-emerald-50 text-emerald-700 bg-red-50 text-red-700 text-gray-500 bg-red-600"></span>
+        <div id="admin-section-deposits" class="hidden">
+          <div class="mb-8 flex items-center justify-between">
+            <div>
+              <h1 class="font-display text-2xl text-gray-900">Deposits</h1>
+              <p class="text-gray-500 text-sm mt-1">Verify manual TED/PIX deposits, then credit or reject.</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="dep-filter" onchange="loadAdminDeposits()" class="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-400 bg-white">
+                <option value="pending_review">Pending review</option>
+                <option value="all">All</option>
+                <option value="credited">Credited</option>
+                <option value="rejected">Rejected</option>
+                <option value="expired">Expired</option>
+              </select>
+              <button onclick="loadAdminDeposits()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <i class="fa-solid fa-arrows-rotate text-gray-400"></i> Refresh
+              </button>
+            </div>
+          </div>
+          <div class="bg-amber-50 border border-amber-100 rounded-xl px-5 py-3 mb-5 flex items-start gap-3">
+            <i class="fa-solid fa-shield-halved text-amber-500 mt-0.5"></i>
+            <p class="text-sm text-amber-800">Before crediting: confirm the money actually landed in the Inter account, the amount matches, and it came <strong>from the same name/CPF</strong> as the account holder. Reject third-party transfers.</p>
+          </div>
+          <div id="admin-dep-list" class="space-y-3">
+            <div class="text-sm text-gray-400 py-10">Loading…</div>
+          </div>
+        </div>
+
       </div>
     </main>
+  </div>
+
+  <!-- Reject reason modal -->
+  <div id="dep-reject-overlay" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onclick="closeReject(event)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm mx-4 p-6" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-base text-gray-900">Reject deposit</h3>
+        <button onclick="closeReject()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <label class="text-xs font-medium text-gray-500 uppercase tracking-wide block mb-2">Reason (sent to the customer)</label>
+      <select id="dep-reject-reason" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 bg-white mb-4">
+        <option value="Nome do depositante diverge do cadastro. A transferência deve partir de conta do próprio titular (mesmo CPF). Depósitos de terceiros não são aceitos.">Nome do depositante diverge do cadastro</option>
+        <option value="O valor recebido não corresponde ao valor informado no depósito.">Valor divergente</option>
+        <option value="Não localizamos o depósito na conta. Verifique se a transferência foi concluída.">Depósito não localizado</option>
+        <option value="O comprovante enviado não pôde ser verificado ou está ilegível.">Comprovante inválido / ilegível</option>
+      </select>
+      <button onclick="confirmReject()" id="dep-reject-btn" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors">Reject &amp; notify customer</button>
+    </div>
   </div>
 
   <!-- Profile modal -->
@@ -256,6 +308,8 @@
 
     const COUNTRY_LABELS = { BR: 'Brazil', US: 'United States', PT: 'Portugal', AR: 'Argentina', other: 'Other' }
 
+    let currentAdmin = null
+
     async function init() {
       const { data: { session } } = await sb.auth.getSession()
       document.getElementById('loading-state').classList.add('hidden')
@@ -263,8 +317,10 @@
       if (session.user.email !== ADMIN_EMAIL) {
         document.getElementById('blocked-state').classList.remove('hidden'); return
       }
+      currentAdmin = session.user
       document.getElementById('admin-content').classList.remove('hidden')
       await loadUsers()
+      updateDepBadge()
     }
 
     async function loadUsers() {
@@ -494,6 +550,7 @@
     function showAdminSection(name) {
       document.getElementById('admin-section-users').classList.toggle('hidden', name !== 'users')
       document.getElementById('admin-section-messages').classList.toggle('hidden', name !== 'messages')
+      document.getElementById('admin-section-deposits').classList.toggle('hidden', name !== 'deposits')
       document.querySelectorAll('.admin-nav').forEach(a => {
         a.classList.remove('text-gray-700', 'bg-gray-100', 'font-medium')
         a.classList.add('text-gray-500')
@@ -501,6 +558,120 @@
       const active = document.getElementById('admin-nav-' + name)
       if (active) { active.classList.remove('text-gray-500'); active.classList.add('text-gray-700', 'bg-gray-100', 'font-medium') }
       if (name === 'messages') loadAdminThreadList()
+      if (name === 'deposits') loadAdminDeposits()
+    }
+
+    // ── Admin deposits ───────────────────────────────────────
+    const brlA = n => 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    let depRejectId = null
+
+    async function updateDepBadge() {
+      const { data } = await sb.from('deposits').select('id').eq('status', 'pending_review')
+      const badge = document.getElementById('admin-dep-badge')
+      const n = data?.length || 0
+      if (n > 0) { badge.textContent = n; badge.classList.remove('hidden') } else badge.classList.add('hidden')
+    }
+
+    async function loadAdminDeposits() {
+      const list = document.getElementById('admin-dep-list')
+      list.innerHTML = '<div class="text-sm text-gray-400 py-10">Loading…</div>'
+      const filter = document.getElementById('dep-filter').value
+      let q = sb.from('deposits').select('*').order('created_at', { ascending: false })
+      if (filter !== 'all') q = q.eq('status', filter)
+      const { data: deps, error } = await q
+      if (error) { list.innerHTML = `<div class="text-sm text-red-500 py-6">Error: ${esc(error.message)}</div>`; return }
+      updateDepBadge()
+      if (!deps || deps.length === 0) { list.innerHTML = '<div class="text-sm text-gray-400 py-10 text-center">No deposits here.</div>'; return }
+
+      // names from profiles
+      const ids = [...new Set(deps.map(d => d.user_id))]
+      const { data: profs } = await sb.from('profiles').select('id, full_name, email').in('id', ids)
+      const pmap = {}; (profs || []).forEach(p => pmap[p.id] = p)
+
+      const badge = { created: 'bg-gray-100 text-gray-600', pending_review: 'bg-amber-50 text-amber-700', credited: 'bg-emerald-50 text-emerald-700', rejected: 'bg-red-50 text-red-700', expired: 'bg-gray-100 text-gray-500' }
+      const label = { created: 'Aguardando', pending_review: 'Em análise', credited: 'Creditado', rejected: 'Recusado', expired: 'Expirado' }
+
+      list.innerHTML = deps.map(d => {
+        const p = pmap[d.user_id] || {}
+        const when = new Date(d.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+        const actions = d.status === 'pending_review'
+          ? `<div class="flex gap-2 mt-3">
+               <button onclick="creditDeposit('${d.id}')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition"><i class="fa-solid fa-check mr-1"></i>Credit</button>
+               <button onclick="openReject('${d.id}')" class="px-4 py-2 bg-white border border-red-200 text-red-600 hover:bg-red-50 text-xs font-semibold rounded-lg transition"><i class="fa-solid fa-xmark mr-1"></i>Reject</button>
+               <button onclick="viewReceipt('${esc(d.receipt_url || '')}')" class="px-4 py-2 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold rounded-lg transition"><i class="fa-solid fa-file-lines mr-1"></i>Receipt</button>
+             </div>`
+          : (d.receipt_url ? `<button onclick="viewReceipt('${esc(d.receipt_url)}')" class="mt-3 px-3 py-1.5 bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 text-xs font-medium rounded-lg transition"><i class="fa-solid fa-file-lines mr-1"></i>Receipt</button>` : '')
+        return `<div class="bg-white border border-gray-100 rounded-xl p-5">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-semibold text-gray-900">${brlA(d.amount)}</span>
+                <span class="text-xs font-medium uppercase text-gray-400">${d.method}</span>
+                <span class="text-xs font-medium px-2 py-0.5 rounded-full ${badge[d.status] || ''}">${label[d.status] || d.status}</span>
+              </div>
+              <p class="text-sm text-gray-600">${esc(p.full_name || 'Unknown')} · <span class="text-gray-400">${esc(p.email || '')}</span></p>
+              <p class="text-xs text-gray-400 mt-0.5">Ref ${d.reference_code} · ${when}</p>
+              ${d.reject_reason ? `<p class="text-xs text-red-500 mt-1">${esc(d.reject_reason)}</p>` : ''}
+            </div>
+          </div>
+          ${actions}
+        </div>`
+      }).join('')
+    }
+
+    async function viewReceipt(path) {
+      if (!path) { alert('No receipt attached.'); return }
+      const { data, error } = await sb.storage.from('receipts').createSignedUrl(path, 120)
+      if (error) { alert('Could not open receipt: ' + error.message); return }
+      window.open(data.signedUrl, '_blank')
+    }
+
+    async function creditDeposit(id) {
+      if (!confirm('Confirm the money landed in Inter (right amount, same name). Credit this deposit?')) return
+      const { data, error } = await sb.from('deposits')
+        .update({ status: 'credited', reviewed_by: currentAdmin?.id || null, reviewed_at: new Date().toISOString() })
+        .eq('id', id).select().single()
+      if (error) { alert('Failed: ' + error.message); return }
+      depEmailOutcome(data, 'credited')
+      loadAdminDeposits()
+    }
+
+    function openReject(id) { depRejectId = id; document.getElementById('dep-reject-overlay').classList.remove('hidden') }
+    function closeReject(e) { if (e && e.target.id !== 'dep-reject-overlay') return; document.getElementById('dep-reject-overlay').classList.add('hidden'); depRejectId = null }
+    async function confirmReject() {
+      if (!depRejectId) return
+      const reason = document.getElementById('dep-reject-reason').value
+      const btn = document.getElementById('dep-reject-btn'); btn.disabled = true
+      const { data, error } = await sb.from('deposits')
+        .update({ status: 'rejected', reject_reason: reason, reviewed_by: currentAdmin?.id || null, reviewed_at: new Date().toISOString() })
+        .eq('id', depRejectId).select().single()
+      btn.disabled = false
+      if (error) { alert('Failed: ' + error.message); return }
+      document.getElementById('dep-reject-overlay').classList.add('hidden')
+      depRejectId = null
+      depEmailOutcome(data, 'rejected')
+      loadAdminDeposits()
+    }
+
+    async function depEmailOutcome(d, outcome) {
+      const { data: prof } = await sb.from('profiles').select('email, full_name').eq('id', d.user_id).single()
+      if (!prof?.email) return
+      const credited = outcome === 'credited'
+      const subject = credited ? `Depósito confirmado — ${brlA(d.amount)}` : `Depósito não confirmado — ${brlA(d.amount)}`
+      const body = credited
+        ? `Seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}) foi confirmado e seu saldo já está disponível.`
+        : `Não conseguimos confirmar seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}).<br><br><strong>Motivo:</strong> ${esc(d.reject_reason || '')}`
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [prof.email], subject,
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <p style="margin:0;font-size:14px;color:#334155;line-height:1.6">${body}</p>
+            </div></div>`
+        })
+      }).catch(() => {})
     }
 
     // ── Admin messaging ──────────────────────────────────────

@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
@@ -45,6 +46,9 @@
         </a>
         <a href="#" onclick="showSection('services')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-services">
           <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Services
+        </a>
+        <a href="#" onclick="showSection('deposit')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-deposit">
+          <i class="fa-solid fa-money-bill-transfer w-4 text-gray-400"></i> Deposit
         </a>
         <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
@@ -404,6 +408,121 @@
               </button>
             </div>
           </div>
+        </section>
+
+        <!-- DEPOSIT -->
+        <!-- tw-safelist (dynamic status colors injected via JS): bg-amber-50 text-amber-500 bg-emerald-50 text-emerald-500 bg-red-50 text-red-500 bg-gray-50 text-gray-500 -->
+        <span class="hidden bg-amber-50 text-amber-500 bg-emerald-50 text-emerald-500 bg-red-50 text-red-500 bg-gray-50 text-gray-500"></span>
+        <section id="section-deposit" class="section hidden">
+          <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 class="font-display text-2xl text-gray-900">Deposit</h1>
+              <p class="text-gray-500 text-sm mt-1">Add funds to your SISBRAPAG balance via TED or PIX.</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-xl px-5 py-3">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Available balance</p>
+              <p class="font-display text-xl text-gray-900"><span id="dep-balance">R$ 0,00</span></p>
+            </div>
+          </div>
+
+          <div id="dep-loading" class="text-sm text-gray-400 py-10">Loading…</div>
+
+          <!-- Open deposit in progress -->
+          <div id="dep-open-card" class="hidden bg-white border border-gray-100 rounded-xl p-6 max-w-xl"></div>
+
+          <!-- STEP 1: method -->
+          <div id="dep-step-method" class="hidden max-w-xl">
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">CHOOSE A METHOD</p>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <button id="dep-pick-pix" onclick="depPickMethod('pix')" class="text-left bg-white border border-gray-200 hover:border-emerald-400 hover:ring-2 hover:ring-emerald-100 rounded-xl p-5 transition">
+                <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-bolt text-emerald-500"></i><span class="font-semibold text-gray-900">PIX</span></div>
+                <p class="text-sm text-gray-500">Chave ou QR Code. Creditado em até 60 minutos.</p>
+                <span class="inline-block mt-3 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Disponível 24h</span>
+              </button>
+              <button id="dep-pick-ted" onclick="depPickMethod('ted')" class="text-left bg-white border border-gray-200 hover:border-emerald-400 hover:ring-2 hover:ring-emerald-100 rounded-xl p-5 transition">
+                <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-building-columns text-gray-500"></i><span class="font-semibold text-gray-900">TED</span></div>
+                <p class="text-sm text-gray-500">Transferência bancária. Creditado em até 60 min.</p>
+                <span id="dep-ted-avail" class="inline-block mt-3 text-xs font-medium px-2 py-0.5 rounded-full"></span>
+              </button>
+            </div>
+            <p id="dep-ted-note" class="hidden text-xs text-gray-400 mt-3"></p>
+          </div>
+
+          <!-- STEP 2: amount -->
+          <div id="dep-step-amount" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="depGoto('method')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">DEPOSIT AMOUNT (BRL)</p>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-lg font-medium text-gray-400">R$</span>
+              <input id="dep-amount" type="number" min="1" step="0.01" placeholder="0,00"
+                class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+            </div>
+            <p id="dep-amount-err" class="text-xs text-red-500 min-h-[16px]"></p>
+            <div class="flex flex-wrap gap-2 mt-2 mb-5">
+              <button onclick="depSetAmt(100)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">100</button>
+              <button onclick="depSetAmt(500)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">500</button>
+              <button onclick="depSetAmt(1000)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">1.000</button>
+              <button onclick="depSetAmt(5000)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">5.000</button>
+            </div>
+            <button id="dep-amount-next" onclick="depCreate()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Generate payment details</button>
+          </div>
+
+          <!-- STEP 3: payment details -->
+          <div id="dep-step-pay" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <p class="text-xs font-semibold tracking-widest text-gray-400">PAY <span id="dep-pay-amount" class="text-gray-900"></span></p>
+              <span id="dep-countdown" class="text-xs font-medium text-amber-600"></span>
+            </div>
+
+            <!-- PIX block -->
+            <div id="dep-pay-pix" class="hidden">
+              <div class="flex justify-center mb-4"><div id="dep-qr" class="p-3 bg-white border border-gray-100 rounded-xl"></div></div>
+              <label class="text-xs font-semibold tracking-widest text-gray-400 block mb-1.5">PIX COPIA E COLA</label>
+              <div class="flex gap-2 mb-3">
+                <input id="dep-pix-payload" readonly class="flex-1 text-xs bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 outline-none font-mono truncate">
+                <button onclick="depCopy('dep-pix-payload', this)" class="px-3 py-2.5 text-xs font-semibold rounded-xl border border-gray-200 hover:bg-gray-50">Copy</button>
+              </div>
+              <p class="text-xs text-gray-400 mb-2">Chave aleatória: <span class="font-mono text-gray-600">a13f5b08-4fbf-4613-bfa2-7cd518388dd6</span></p>
+            </div>
+
+            <!-- TED block -->
+            <div id="dep-pay-ted" class="hidden text-sm">
+              <div class="bg-gray-50 rounded-xl border border-gray-100 divide-y divide-gray-100 mb-3">
+                <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Banco</span><span class="font-medium text-gray-800">Inter (077)</span></div>
+                <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Titular</span><span class="font-medium text-gray-800 text-right">Sistema Brasil Pagamentos Digitais</span></div>
+                <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">CNPJ</span><span class="font-medium text-gray-800">32.742.398/0001-28</span></div>
+                <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Agência</span><span class="font-medium text-gray-800">0001</span></div>
+                <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Conta</span><span class="font-medium text-gray-800">5476239-1</span></div>
+              </div>
+            </div>
+
+            <!-- Reference code (both) -->
+            <div class="bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3 mb-4">
+              <p class="text-xs text-emerald-700 font-medium mb-0.5">Código de referência (inclua na transferência)</p>
+              <p class="font-display text-2xl text-emerald-800 tracking-wider" id="dep-ref"></p>
+            </div>
+
+            <div class="flex items-start gap-2 text-xs text-gray-500 mb-4">
+              <i class="fa-solid fa-circle-info text-gray-400 mt-0.5"></i>
+              <p><strong>Importante:</strong> a transferência deve partir de uma conta no seu próprio nome/CPF. Depósitos de terceiros serão recusados.</p>
+            </div>
+
+            <button onclick="depGoto('receipt')" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Já transferi →</button>
+          </div>
+
+          <!-- STEP 4: receipt upload -->
+          <div id="dep-step-receipt" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="depGoto('pay')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">UPLOAD YOUR RECEIPT</p>
+            <p class="text-sm text-gray-500 mb-4">Attach the proof of transfer (PDF, JPG or PNG). We'll verify and credit your balance — usually within 60 minutes during business hours.</p>
+            <input id="dep-receipt-file" type="file" accept="image/png,image/jpeg,application/pdf"
+              class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 mb-3">
+            <p id="dep-receipt-err" class="text-xs text-red-500 min-h-[16px]"></p>
+            <button id="dep-receipt-btn" onclick="depUploadReceipt()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Send receipt</button>
+          </div>
+
+          <!-- STEP 5: status -->
+          <div id="dep-step-status" class="hidden max-w-xl"></div>
         </section>
 
       </div>
@@ -824,6 +943,8 @@
       _origShowSection(name)
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
       if (name === 'documents') loadDocuments()
+      if (name === 'deposit') loadDeposit()
+      else depStopCountdown()
       if (name === 'messages') { loadUserMessages(true); startMsgPoll() }
       else stopMsgPoll()
     }
@@ -936,6 +1057,278 @@
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendUserMessage() }
       })
     })
+
+    // ── Deposits ─────────────────────────────────────────────
+    const DEP_PIX_KEY = 'a13f5b08-4fbf-4613-bfa2-7cd518388dd6'
+    const DEP_WINDOW_MIN = 60
+    let depState = { method: null, current: null }
+    let depTimer = null
+
+    const brl = n => 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    // TED available weekdays 09:00–16:00 America/Sao_Paulo (holidays = TODO Part 2)
+    function depTedAvailable() {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Sao_Paulo', weekday: 'short', hour: '2-digit', hour12: false
+      }).formatToParts(new Date())
+      const wd = parts.find(p => p.type === 'weekday').value
+      const hr = parseInt(parts.find(p => p.type === 'hour').value, 10)
+      const isWeekday = !['Sat', 'Sun'].includes(wd)
+      const inHours = hr >= 9 && hr < 16
+      return { ok: isWeekday && inHours, isWeekday, inHours }
+    }
+
+    function depShow(step) {
+      ['loading', 'open-card', 'step-method', 'step-amount', 'step-pay', 'step-receipt', 'step-status']
+        .forEach(s => document.getElementById('dep-' + s).classList.add('hidden'))
+      if (step) document.getElementById('dep-' + step).classList.remove('hidden')
+    }
+    function depGoto(step) {
+      depShow('step-' + step)
+      if (step === 'pay') depRenderPay()
+    }
+
+    async function loadDeposit() {
+      depShow('loading')
+      depStopCountdown()
+      // balance = sum of credited
+      try {
+        const { data: credited } = await sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status', 'credited')
+        const bal = (credited || []).reduce((s, d) => s + Number(d.amount), 0)
+        document.getElementById('dep-balance').textContent = brl(bal)
+      } catch (_) {}
+
+      // any open deposit?
+      const { data } = await sb.from('deposits').select('*').eq('user_id', currentUser.id)
+        .in('status', ['created', 'pending_review']).order('created_at', { ascending: false }).limit(1)
+      const open = data && data[0]
+
+      if (open && open.status === 'created') {
+        if (new Date(open.expires_at) <= new Date()) {
+          // client-side expiry (cron will own this in Part 2)
+          await sb.from('deposits').update({ status: 'expired' }).eq('id', open.id)
+          depState.current = null
+          return depRefreshMethod()
+        }
+        depState.current = open; depState.method = open.method
+        return depGoto('pay')
+      }
+      if (open && open.status === 'pending_review') {
+        depState.current = open
+        return depRenderStatus(open)
+      }
+      depRefreshMethod()
+    }
+
+    function depRefreshMethod() {
+      const av = depTedAvailable()
+      const tedBtn = document.getElementById('dep-pick-ted')
+      const avTag = document.getElementById('dep-ted-avail')
+      const note = document.getElementById('dep-ted-note')
+      if (av.ok) {
+        tedBtn.disabled = false; tedBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none')
+        avTag.textContent = 'Disponível agora'; avTag.className = 'inline-block mt-3 text-xs font-medium px-2 py-0.5 rounded-full text-emerald-700 bg-emerald-50'
+        note.classList.add('hidden')
+      } else {
+        tedBtn.disabled = true; tedBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none')
+        avTag.textContent = 'Indisponível'; avTag.className = 'inline-block mt-3 text-xs font-medium px-2 py-0.5 rounded-full text-gray-500 bg-gray-100'
+        note.classList.remove('hidden')
+        note.textContent = 'TED disponível somente em dias úteis das 09h às 16h (horário de Brasília). Use PIX para depositar agora.'
+      }
+      depShow('step-method')
+    }
+
+    function depPickMethod(m) {
+      if (m === 'ted' && !depTedAvailable().ok) return
+      depState.method = m
+      document.getElementById('dep-amount').value = ''
+      document.getElementById('dep-amount-err').textContent = ''
+      depShow('step-amount')
+    }
+    function depSetAmt(v) { document.getElementById('dep-amount').value = v }
+
+    async function depCreate() {
+      const err = document.getElementById('dep-amount-err')
+      const amt = parseFloat(document.getElementById('dep-amount').value)
+      if (!amt || amt <= 0) { err.textContent = 'Enter a valid amount.'; return }
+      err.textContent = ''
+      const btn = document.getElementById('dep-amount-next'); btn.disabled = true
+
+      const expires = new Date(Date.now() + DEP_WINDOW_MIN * 60000).toISOString()
+      let row = null, lastErr = null
+      for (let i = 0; i < 4 && !row; i++) {
+        const ref = String(Math.floor(10000 + Math.random() * 90000))
+        const { data, error } = await sb.from('deposits').insert({
+          user_id: currentUser.id, method: depState.method, amount: amt,
+          reference_code: ref, status: 'created', expires_at: expires
+        }).select().single()
+        if (error) {
+          lastErr = error
+          if (error.code === '23505' && /reference_code/.test(error.message || '')) continue // ref collision, retry
+          break // likely the one-open-deposit guard or other
+        }
+        row = data
+      }
+      btn.disabled = false
+      if (!row) {
+        if (lastErr && lastErr.code === '23505') { err.textContent = 'You already have an open deposit. Finish or cancel it first.'; setTimeout(loadDeposit, 1200); return }
+        err.textContent = 'Could not start deposit: ' + (lastErr?.message || 'unknown error'); return
+      }
+      depState.current = row
+      depEmailUser('created', row)
+      depGoto('pay')
+    }
+
+    function depRenderPay() {
+      const d = depState.current; if (!d) return loadDeposit()
+      document.getElementById('dep-pay-amount').textContent = brl(d.amount)
+      document.getElementById('dep-ref').textContent = d.reference_code
+      const pix = document.getElementById('dep-pay-pix'), ted = document.getElementById('dep-pay-ted')
+      if (d.method === 'pix') {
+        pix.classList.remove('hidden'); ted.classList.add('hidden')
+        const payload = buildPixPayload(d.amount, d.reference_code)
+        document.getElementById('dep-pix-payload').value = payload
+        const qr = document.getElementById('dep-qr'); qr.innerHTML = ''
+        new QRCode(qr, { text: payload, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M })
+      } else {
+        ted.classList.remove('hidden'); pix.classList.add('hidden')
+      }
+      depStartCountdown(d.expires_at)
+    }
+
+    // EMV / BR Code (PIX copia e cola) with CRC16-CCITT
+    function emv(id, val) { const l = String(val.length).padStart(2, '0'); return id + l + val }
+    function crc16(str) {
+      let crc = 0xFFFF
+      for (let i = 0; i < str.length; i++) {
+        crc ^= str.charCodeAt(i) << 8
+        for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF
+      }
+      return crc.toString(16).toUpperCase().padStart(4, '0')
+    }
+    function buildPixPayload(amount, txid) {
+      const gui = emv('00', 'br.gov.bcb.pix') + emv('01', DEP_PIX_KEY)
+      const mai = emv('26', gui)
+      const add = emv('62', emv('05', String(txid)))
+      let p = emv('00', '01') + mai + emv('52', '0000') + emv('53', '986') +
+        emv('54', Number(amount).toFixed(2)) + emv('58', 'BR') +
+        emv('59', 'SISTEMA BRASIL PAGAM') + emv('60', 'RIO DE JANEIRO') + add + '6304'
+      return p + crc16(p)
+    }
+
+    function depCopy(id, btn) {
+      const el = document.getElementById(id)
+      navigator.clipboard.writeText(el.value).then(() => {
+        const t = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => btn.textContent = t, 1500)
+      })
+    }
+
+    function depStartCountdown(expiresAt) {
+      depStopCountdown()
+      const el = document.getElementById('dep-countdown')
+      const tick = () => {
+        const ms = new Date(expiresAt) - new Date()
+        if (ms <= 0) { el.textContent = 'Expirado'; depStopCountdown(); loadDeposit(); return }
+        const m = Math.floor(ms / 60000), s = Math.floor((ms % 60000) / 1000)
+        el.textContent = `Expira em ${m}:${String(s).padStart(2, '0')}`
+      }
+      tick(); depTimer = setInterval(tick, 1000)
+    }
+    function depStopCountdown() { if (depTimer) { clearInterval(depTimer); depTimer = null } }
+
+    async function depUploadReceipt() {
+      const d = depState.current; if (!d) return loadDeposit()
+      const err = document.getElementById('dep-receipt-err')
+      const file = document.getElementById('dep-receipt-file').files[0]
+      if (!file) { err.textContent = 'Choose a file first.'; return }
+      err.textContent = ''
+      const btn = document.getElementById('dep-receipt-btn'); btn.disabled = true
+      const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
+      const path = `${currentUser.id}/${d.id}.${ext}`
+      const { error: upErr } = await sb.storage.from('receipts').upload(path, file, { upsert: true })
+      if (upErr) { btn.disabled = false; err.textContent = 'Upload failed: ' + upErr.message; return }
+      const { error: updErr } = await sb.from('deposits')
+        .update({ status: 'pending_review', receipt_url: path }).eq('id', d.id)
+      btn.disabled = false
+      if (updErr) { err.textContent = 'Could not submit: ' + updErr.message; return }
+      d.status = 'pending_review'; d.receipt_url = path
+      depStopCountdown()
+      depEmailUser('uploaded', d)
+      depEmailAdmin(d)
+      depRenderStatus(d)
+    }
+
+    function depRenderStatus(d) {
+      depStopCountdown()
+      const map = {
+        pending_review: { c: 'amber', i: 'fa-clock-rotate-left', t: 'Em análise', s: 'Recebemos seu comprovante. Estamos verificando o depósito — crédito em até 60 minutos (horário comercial).' },
+        credited: { c: 'emerald', i: 'fa-circle-check', t: 'Depósito creditado', s: 'O valor já está disponível no seu saldo.' },
+        rejected: { c: 'red', i: 'fa-circle-xmark', t: 'Depósito recusado', s: d.reject_reason || 'Não foi possível confirmar este depósito.' },
+        expired: { c: 'gray', i: 'fa-ban', t: 'Depósito cancelado', s: 'O tempo para confirmação expirou. Inicie um novo depósito quando quiser.' }
+      }
+      const m = map[d.status] || map.pending_review
+      const showNew = ['credited', 'rejected', 'expired'].includes(d.status)
+      document.getElementById('dep-step-status').innerHTML = `
+        <div class="bg-white border border-gray-100 rounded-xl p-6">
+          <div class="flex items-start gap-4">
+            <div class="w-11 h-11 rounded-full bg-${m.c}-50 flex items-center justify-center shrink-0">
+              <i class="fa-solid ${m.i} text-${m.c}-500 text-lg"></i>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold text-gray-900">${m.t}</h3>
+              <p class="text-sm text-gray-500 mt-1">${esc(m.s)}</p>
+              <div class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                <span class="text-gray-400">Valor: <span class="text-gray-700 font-medium">${brl(d.amount)}</span></span>
+                <span class="text-gray-400">Método: <span class="text-gray-700 font-medium uppercase">${d.method}</span></span>
+                <span class="text-gray-400">Ref: <span class="text-gray-700 font-medium">${d.reference_code}</span></span>
+              </div>
+              ${showNew ? `<button onclick="loadDeposit()" class="mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">New deposit</button>` : ''}
+            </div>
+          </div>
+        </div>`
+      depShow('step-status')
+    }
+
+    function depEmailAdmin(d) {
+      const meta = currentUser.user_metadata || {}
+      const userName = meta.full_name || currentUser.email
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: ['jaymepereiranunes@yahoo.com.br'],
+          subject: `💰 New deposit to review — ${brl(d.amount)} (${d.method.toUpperCase()})`,
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <h2 style="margin:0 0 12px;font-size:16px;color:#0f172a">Deposit pending review</h2>
+              <p style="margin:0 0 6px;font-size:14px;color:#334155"><strong>${esc(userName)}</strong> (${esc(currentUser.email)})</p>
+              <p style="margin:0 0 4px;font-size:14px;color:#334155">Amount: <strong>${brl(d.amount)}</strong> · Method: <strong>${d.method.toUpperCase()}</strong> · Ref: <strong>${d.reference_code}</strong></p>
+              <p style="margin:12px 0 0;font-size:13px;color:#64748b">Check Inter that the money landed, from the same name/CPF, then credit or reject in the admin panel.</p>
+              <a href="https://admin.sisbrapag.com" style="display:inline-block;margin-top:18px;background:#0f172a;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 22px;border-radius:8px">Review in Admin →</a>
+            </div></div>`
+        })
+      }).catch(() => {})
+    }
+
+    function depEmailUser(stage, d) {
+      const subj = stage === 'created'
+        ? `Depósito iniciado — ${brl(d.amount)}`
+        : `Comprovante recebido — ${brl(d.amount)}`
+      const msg = stage === 'created'
+        ? `Seu depósito de <strong>${brl(d.amount)}</strong> foi iniciado. Você tem 60 minutos para concluir a transferência (ref <strong>${d.reference_code}</strong>) e enviar o comprovante.`
+        : `Recebemos seu comprovante para o depósito de <strong>${brl(d.amount)}</strong>. Estamos verificando — crédito em até 60 minutos (horário comercial).`
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [currentUser.email], subject: subj,
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <p style="margin:0;font-size:14px;color:#334155;line-height:1.6">${msg}</p>
+            </div></div>`
+        })
+      }).catch(() => {})
+    }
 
     // Badge poll — check for unread every 60s regardless of active section
     setInterval(() => { if (currentUser) updateMsgBadge() }, 60000)
