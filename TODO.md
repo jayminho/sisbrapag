@@ -1,7 +1,16 @@
 # SISBRAPAG — Product Roadmap & TODO
 
 > Build order is intentional: each phase lays the foundation for the next.
-> Last updated: 2026-06-12
+> Last updated: 2026-06-12 (evening)
+
+## ▶ START HERE NEXT SESSION — Deposit Flow Part 2 (continued)
+Deposit Part 2 core is LIVE (user screens + admin confirm/reject + deposits table + receipts bucket). Remaining, in order:
+1. **Branded PDF receipt** on credit/reject (attach the comprovante from `receipt-template.html`) — START HERE.
+2. **60-min expiry edge function** (server-side, replaces client-side fallback).
+3. **Telegram approval bot** (instant phone notify on pending_review + inline ✅/❌).
+4. Later: Inter extrato auto-matching, deposit limits, reconciliation report.
+Also done today: admin email+password login + subdomain routing fix (admin/app roots).
+
 
 ---
 
@@ -45,15 +54,22 @@
 - [x] Data model (`deposits`, upgrade-ready for auto-matching)
 - [x] Standard branded PDF receipt (`receipt-template.html` + samples)
 
-**Part 2 — Build (next)**
-- [ ] Screens (funding menu, amount, payment details TED/PIX, receipt upload, status)
-- [ ] Supabase `deposits` table + RLS
-- [ ] 60-min expiry job (cron/edge fn) → auto-expire + email
-- [ ] Admin confirm/reject dashboard (canned reasons)
-- [ ] PDF receipt generation wired to credited/rejected
-- [ ] TED availability gate: Brasília TZ + Brazilian holiday calendar
+**Part 2 — Build**
+- [x] Screens (funding menu, amount, payment details TED/PIX+QR, receipt upload, status) — dashboard.html
+- [x] Supabase `deposits` table + RLS (`supabase/deposits_table.sql`)
+- [x] `receipts` storage bucket + RLS (`supabase/receipts_bucket.sql`)
+- [x] Admin confirm/reject dashboard (canned reasons, receipt view) — admin.html
+- [x] TED availability gate: Brasília TZ (weekdays 09–16h) — _holiday calendar still TODO_
+- [x] User + admin emails at each stage
+- [ ] **PDF receipt generation** wired to credited/rejected ← NEXT
+- [ ] 60-min expiry job (cron/edge fn) → auto-expire + email (currently client-side fallback only)
+- [ ] TED holiday calendar (greys out national/ANBIMA holidays)
 - [ ] **Telegram approval bot** — instant phone notification on pending_review w/ inline ✅ Creditar / ❌ Recusar buttons
 - [ ] _Later:_ Inter extrato auto-matching (ref_code + amount), limits, reconciliation report
+
+**Infra fixes (2026-06-12 eve)**
+- [x] Admin email+password login (admin.html) — fixes magic-link friction on admin subdomain
+- [x] Subdomain routing fix — vercel.json rewrites → redirects (admin/app roots now resolve)
 
 ---
 
