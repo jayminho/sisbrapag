@@ -13,15 +13,27 @@ Full manual deposit flow tested end-to-end in production and all follow-ups ship
 - [x] Portuguese polish on entire customer deposit flow
 - [x] `atendimento@` alias wired across site + reply-to on customer emails (clean Gmail filtering)
 
-## ▶ START HERE NEXT SESSION — choose a track
-The deposit flow is done; pick the next priority:
-1. **Telegram approval bot** — instant phone notify on pending_review + inline ✅ Creditar / ❌ Recusar. (Was next on the deposit list; nice operational win.)
-2. **TED holiday calendar** — grey out national/ANBIMA holidays (only weekday-hours gating exists today).
-3. **Phase 4 — Transactions** (the actual product): transfer request form → status tracking. The big one.
-4. **Real Inter PIX cash-in API** — STILL BLOCKED awaiting Inter API credentials (see project-sisbrapag-pix-deposit memory). Unblocks instantly when creds arrive.
-5. _Later:_ Inter extrato auto-matching (ref + amount), deposit limits, reconciliation report.
+## ▶ START HERE NEXT SESSION — Phase 4 + 5 planning
 
-**Pending Jayme action (non-code):** finish the 3 Gmail filters (Sistema done; Banco = `from:(no-reply@inter.co OR bancointer.com.br) to:contato@sisbrapag.com.br`; delete old Filter 3, recreate as `to:atendimento@sisbrapag.com`).
+**All 3 Gmail filters confirmed working. Telegram bot live. Deposit flow 100% complete.**
+
+### Next: Design before build (open a dedicated session)
+1. **Phase 4 — International Transfers** (the core product — DESIGN FIRST)
+   - Transfer form: IBAN (EU/€), Sort Code (UK/£), ACH Routing (US/$), SWIFT (rest of world)
+   - Validator/checker for each routing format (green ✅ / warning ⚠️)
+   - FX swap from BRL balance → target currency (rate + 3% fee shown)
+   - Admin receives request → executes manually → clicks "Done" → receipt auto-sent to client
+   - Interconnects: balance, live FX rate, fee calc, invoice/receipt, Telegram notify to admin
+   - Reference sites for clean form UX in `/Downloads/sisbrapagwebsite` folder
+
+2. **Phase 5 — Crypto (BRL → USDC/etc → wallet withdrawal)** (DESIGN FIRST)
+   - Manual flow: client deposits BRL → requests swap → admin credits USDC display → buys on Binance
+   - Client requests withdrawal to wallet address → admin sends from Binance → client notified
+   - Dream: self-custody wallet generation (ERC20/TRC20/SOL) integrated into platform
+   - Binance Business account already registered for SISBRAPAG
+
+3. **TED holiday calendar** — grey out national/ANBIMA holidays (backlog, low urgency)
+4. **Real Inter PIX cash-in API** — BLOCKED awaiting credentials (backlog)
 
 
 ---
@@ -79,7 +91,7 @@ The deposit flow is done; pick the next priority:
 - [x] Payment info in "iniciado" email + Portuguese polish (commits `ec31a9b`, `6d03ffe`)
 - [x] `atendimento@` site alias + email reply-to (commit `a5a0f47`)
 - [ ] TED holiday calendar (greys out national/ANBIMA holidays)
-- [ ] **Telegram approval bot** — instant phone notification on pending_review w/ inline ✅ Creditar / ❌ Recusar buttons
+- [x] **Telegram bot** — `@sisbrapagbot` notifies Jayme on every pending_review deposit (`notify-telegram` edge fn, commit `ed97990`)
 - [ ] _Later:_ Inter extrato auto-matching (ref_code + amount), limits, reconciliation report
 
 **Infra fixes (2026-06-12 eve)**
