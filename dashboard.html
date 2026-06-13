@@ -1258,7 +1258,25 @@
       depStopCountdown()
       depEmailUser('uploaded', d)
       depEmailAdmin(d)
+      depNotifyTelegram(d)
       depRenderStatus(d)
+    }
+
+    async function depNotifyTelegram(d) {
+      try {
+        const prof = currentUser.user_metadata || {}
+        const name = prof.full_name || currentUser.email || 'Desconhecido'
+        await fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({
+            name,
+            amount: d.amount_brl?.toFixed(2),
+            method: d.method,
+            ref: d.reference_code
+          })
+        })
+      } catch (_) { /* silent — never block UI */ }
     }
 
     function depRenderStatus(d) {
