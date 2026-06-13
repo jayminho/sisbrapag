@@ -416,23 +416,23 @@
         <section id="section-deposit" class="section hidden">
           <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 class="font-display text-2xl text-gray-900">Deposit</h1>
-              <p class="text-gray-500 text-sm mt-1">Add funds to your SISBRAPAG balance via TED or PIX.</p>
+              <h1 class="font-display text-2xl text-gray-900">Depósito</h1>
+              <p class="text-gray-500 text-sm mt-1">Adicione fundos ao seu saldo SISBRAPAG via TED ou PIX.</p>
             </div>
             <div class="bg-white border border-gray-100 rounded-xl px-5 py-3">
-              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Available balance</p>
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Saldo disponível</p>
               <p class="font-display text-xl text-gray-900"><span id="dep-balance">R$ 0,00</span></p>
             </div>
           </div>
 
-          <div id="dep-loading" class="text-sm text-gray-400 py-10">Loading…</div>
+          <div id="dep-loading" class="text-sm text-gray-400 py-10">Carregando…</div>
 
           <!-- Open deposit in progress -->
           <div id="dep-open-card" class="hidden bg-white border border-gray-100 rounded-xl p-6 max-w-xl"></div>
 
           <!-- STEP 1: method -->
           <div id="dep-step-method" class="hidden max-w-xl">
-            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">CHOOSE A METHOD</p>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">ESCOLHA UM MÉTODO</p>
             <div class="grid sm:grid-cols-2 gap-4">
               <button id="dep-pick-pix" onclick="depPickMethod('pix')" class="text-left bg-white border border-gray-200 hover:border-emerald-400 hover:ring-2 hover:ring-emerald-100 rounded-xl p-5 transition">
                 <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-bolt text-emerald-500"></i><span class="font-semibold text-gray-900">PIX</span></div>
@@ -450,8 +450,8 @@
 
           <!-- STEP 2: amount -->
           <div id="dep-step-amount" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
-            <button onclick="depGoto('method')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
-            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">DEPOSIT AMOUNT (BRL)</p>
+            <button onclick="depGoto('method')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">VALOR DO DEPÓSITO (BRL)</p>
             <div class="flex items-center gap-3 mb-2">
               <span class="text-lg font-medium text-gray-400">R$</span>
               <input id="dep-amount" type="number" min="1" step="0.01" placeholder="0,00"
@@ -464,7 +464,7 @@
               <button onclick="depSetAmt(1000)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">1.000</button>
               <button onclick="depSetAmt(5000)" class="text-xs px-3 py-1.5 rounded-xl border border-gray-200 hover:bg-gray-50">5.000</button>
             </div>
-            <button id="dep-amount-next" onclick="depCreate()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Generate payment details</button>
+            <button id="dep-amount-next" onclick="depCreate()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Gerar dados de pagamento</button>
           </div>
 
           <!-- STEP 3: payment details -->
@@ -512,13 +512,13 @@
 
           <!-- STEP 4: receipt upload -->
           <div id="dep-step-receipt" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
-            <button onclick="depGoto('pay')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
-            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">UPLOAD YOUR RECEIPT</p>
-            <p class="text-sm text-gray-500 mb-4">Attach the proof of transfer (PDF, JPG or PNG). We'll verify and credit your balance — usually within 60 minutes during business hours.</p>
+            <button onclick="depGoto('pay')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">ENVIE SEU COMPROVANTE</p>
+            <p class="text-sm text-gray-500 mb-4">Anexe o comprovante da transferência (PDF, JPG ou PNG). Vamos verificar e creditar seu saldo — normalmente em até 60 minutos (horário comercial).</p>
             <input id="dep-receipt-file" type="file" accept="image/png,image/jpeg,application/pdf"
               class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 mb-3">
             <p id="dep-receipt-err" class="text-xs text-red-500 min-h-[16px]"></p>
-            <button id="dep-receipt-btn" onclick="depUploadReceipt()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Send receipt</button>
+            <button id="dep-receipt-btn" onclick="depUploadReceipt()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Enviar comprovante</button>
           </div>
 
           <!-- STEP 5: status -->
@@ -1150,7 +1150,7 @@
     async function depCreate() {
       const err = document.getElementById('dep-amount-err')
       const amt = parseFloat(document.getElementById('dep-amount').value)
-      if (!amt || amt <= 0) { err.textContent = 'Enter a valid amount.'; return }
+      if (!amt || amt <= 0) { err.textContent = 'Informe um valor válido.'; return }
       err.textContent = ''
       const btn = document.getElementById('dep-amount-next'); btn.disabled = true
 
@@ -1171,8 +1171,8 @@
       }
       btn.disabled = false
       if (!row) {
-        if (lastErr && lastErr.code === '23505') { err.textContent = 'You already have an open deposit. Finish or cancel it first.'; setTimeout(loadDeposit, 1200); return }
-        err.textContent = 'Could not start deposit: ' + (lastErr?.message || 'unknown error'); return
+        if (lastErr && lastErr.code === '23505') { err.textContent = 'Você já tem um depósito em aberto. Conclua ou aguarde expirar.'; setTimeout(loadDeposit, 1200); return }
+        err.textContent = 'Não foi possível iniciar o depósito: ' + (lastErr?.message || 'erro desconhecido'); return
       }
       depState.current = row
       depEmailUser('created', row)
@@ -1240,17 +1240,17 @@
       const d = depState.current; if (!d) return loadDeposit()
       const err = document.getElementById('dep-receipt-err')
       const file = document.getElementById('dep-receipt-file').files[0]
-      if (!file) { err.textContent = 'Choose a file first.'; return }
+      if (!file) { err.textContent = 'Selecione um arquivo primeiro.'; return }
       err.textContent = ''
       const btn = document.getElementById('dep-receipt-btn'); btn.disabled = true
       const ext = (file.name.split('.').pop() || 'bin').toLowerCase()
       const path = `${currentUser.id}/${d.id}.${ext}`
       const { error: upErr } = await sb.storage.from('receipts').upload(path, file, { upsert: true })
-      if (upErr) { btn.disabled = false; err.textContent = 'Upload failed: ' + upErr.message; return }
+      if (upErr) { btn.disabled = false; err.textContent = 'Falha no envio: ' + upErr.message; return }
       const { error: updErr } = await sb.from('deposits')
         .update({ status: 'pending_review', receipt_url: path }).eq('id', d.id)
       btn.disabled = false
-      if (updErr) { err.textContent = 'Could not submit: ' + updErr.message; return }
+      if (updErr) { err.textContent = 'Não foi possível enviar: ' + updErr.message; return }
       d.status = 'pending_review'; d.receipt_url = path
       depStopCountdown()
       depEmailUser('uploaded', d)
@@ -1282,7 +1282,7 @@
                 <span class="text-gray-400">Método: <span class="text-gray-700 font-medium uppercase">${d.method}</span></span>
                 <span class="text-gray-400">Ref: <span class="text-gray-700 font-medium">${d.reference_code}</span></span>
               </div>
-              ${showNew ? `<button onclick="loadDeposit()" class="mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">New deposit</button>` : ''}
+              ${showNew ? `<button onclick="loadDeposit()" class="mt-5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Novo depósito</button>` : ''}
             </div>
           </div>
         </div>`

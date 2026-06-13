@@ -7,6 +7,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     body { font-family: 'Inter', system-ui, sans-serif; }
@@ -783,18 +784,100 @@
       loadAdminDeposits()
     }
 
+    // Build a branded PDF receipt and return base64 (no data-URI prefix), or null on failure.
+    function buildReceiptPdf(d, prof, outcome) {
+      try {
+        const { jsPDF } = window.jspdf
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+        const W = doc.internal.pageSize.getWidth()
+        const M = 56
+        const credited = outcome === 'credited'
+        const navy = [15, 23, 42], slate = [51, 65, 85], muted = [100, 116, 139], line = [226, 232, 240]
+        const accent = credited ? [16, 185, 129] : [220, 38, 38]
+        const accentD = credited ? [5, 150, 105] : [185, 28, 28]
+        const fmtDT = ts => ts ? new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+        const receiptNo = (d.reference_code || '') + '-' + String(d.id || '').slice(0, 6).toUpperCase()
+
+        // Header
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(...navy)
+        doc.text('SISBRA', M, 64)
+        const w1 = doc.getTextWidth('SISBRA')
+        doc.setTextColor(...accent); doc.text('PAG', M + w1, 64)
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...muted)
+        doc.text('Sistema Brasil Pagamentos Digitais · CNPJ 32.742.398/0001-28', M, 78)
+        doc.setFontSize(8.5); doc.setTextColor(...muted)
+        doc.text([`Comprovante Nº ${receiptNo}`, `Emitido em ${fmtDT(d.reviewed_at || Date.now())}`, `ID do depósito ${d.id || ''}`], W - M, 56, { align: 'right' })
+        doc.setDrawColor(...line); doc.setLineWidth(1.2); doc.line(M, 92, W - M, 92)
+
+        // Status banner
+        doc.setFillColor(...accent); doc.roundedRect(M, 112, W - 2 * M, 52, 8, 8, 'F')
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(22)
+        doc.text(credited ? '✓' : '✕', M + 22, 145)
+        doc.setFontSize(14)
+        doc.text(credited ? 'Depósito Creditado' : 'Depósito Recusado', M + 50, 138)
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5)
+        doc.text(credited ? 'O valor já está disponível no seu saldo SISBRAPAG.' : 'Não foi possível confirmar este depósito.', M + 50, 154)
+
+        // Amount
+        doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+        doc.text('VALOR DO DEPÓSITO', W / 2, 206, { align: 'center' })
+        doc.setTextColor(...navy); doc.setFont('helvetica', 'bold'); doc.setFontSize(30)
+        doc.text(brlA(d.amount), W / 2, 236, { align: 'center' })
+
+        // Details table
+        const rows = [
+          ['Cliente', prof.full_name || '—'],
+          ['Método', (d.method || '').toUpperCase()],
+          ['Código de referência', d.reference_code || '—'],
+          ['Iniciado em', fmtDT(d.created_at)],
+          [credited ? 'Creditado em' : 'Recusado em', fmtDT(d.reviewed_at)],
+          ['Conta recebedora', 'Inter (077) · Ag 0001 · Cc 5476239-1'],
+        ]
+        let y = 276
+        doc.setFontSize(10.5)
+        rows.forEach(([k, v]) => {
+          doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.text(k, M, y)
+          doc.setTextColor(...navy); doc.setFont('helvetica', 'bold'); doc.text(String(v), W - M, y, { align: 'right' })
+          doc.setDrawColor(...line); doc.setLineWidth(0.7); doc.line(M, y + 9, W - M, y + 9)
+          y += 30
+        })
+
+        // Reject reason
+        if (!credited && d.reject_reason) {
+          y += 8
+          doc.setFillColor(254, 242, 242); doc.setDrawColor(254, 202, 202)
+          doc.roundedRect(M, y, W - 2 * M, 56, 6, 6, 'FD')
+          doc.setTextColor(153, 27, 27); doc.setFont('helvetica', 'bold'); doc.setFontSize(10)
+          doc.text('Motivo da recusa', M + 14, y + 22)
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(10)
+          doc.text(doc.splitTextToSize(d.reject_reason, W - 2 * M - 28), M + 14, y + 38)
+        }
+
+        // Footer
+        const fy = doc.internal.pageSize.getHeight() - 56
+        doc.setDrawColor(...line); doc.setLineWidth(0.7); doc.line(M, fy, W - M, fy)
+        doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+        doc.text('Documento gerado eletronicamente por SISBRAPAG · Pagamentos Digitais.', M, fy + 16)
+        doc.text('sisbrapag.com', W - M, fy + 16, { align: 'right' })
+
+        return doc.output('datauristring').split(',')[1] // base64 only
+      } catch (e) { console.warn('PDF receipt failed:', e); return null }
+    }
+
     async function depEmailOutcome(d, outcome) {
       const { data: prof } = await sb.from('profiles').select('email, full_name').eq('id', d.user_id).single()
       if (!prof?.email) return
       const credited = outcome === 'credited'
       const subject = credited ? `Depósito confirmado — ${brlA(d.amount)}` : `Depósito não confirmado — ${brlA(d.amount)}`
       const body = credited
-        ? `Seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}) foi confirmado e seu saldo já está disponível.`
-        : `Não conseguimos confirmar seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}).<br><br><strong>Motivo:</strong> ${esc(d.reject_reason || '')}`
+        ? `Seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}) foi confirmado e seu saldo já está disponível.<br><br>O comprovante em PDF está anexado a este e-mail.`
+        : `Não conseguimos confirmar seu depósito de <strong>${brlA(d.amount)}</strong> (ref ${d.reference_code}).<br><br><strong>Motivo:</strong> ${esc(d.reject_reason || '')}<br><br>O comprovante em PDF está anexado a este e-mail.`
+      const pdf64 = buildReceiptPdf(d, prof, outcome)
+      const attachments = pdf64 ? [{ filename: `comprovante-${d.reference_code || d.id}.pdf`, content: pdf64 }] : undefined
       fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
-          to: [prof.email], subject,
+          to: [prof.email], subject, attachments,
           html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
             <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
             <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
