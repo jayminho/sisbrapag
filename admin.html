@@ -36,6 +36,9 @@
           <i class="fa-solid fa-money-bill-transfer w-4 text-gray-400"></i> Deposits
           <span id="admin-dep-badge" class="hidden ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
         </a>
+        <a href="#" onclick="showAdminSection('documents')" id="admin-nav-documents" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50">
+          <i class="fa-solid fa-folder-open w-4 text-gray-400"></i> Documents
+        </a>
         <a href="#" onclick="showAdminSection('messages')" id="admin-nav-messages" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50">
           <i class="fa-solid fa-comment-dots w-4 text-gray-400"></i> Messages
           <span id="admin-msg-badge" class="hidden ml-auto bg-emerald-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
@@ -259,6 +262,21 @@
             <p class="text-sm text-amber-800">Before crediting: confirm the money actually landed in the Inter account, the amount matches, and it came <strong>from the same name/CPF</strong> as the account holder. Reject third-party transfers.</p>
           </div>
           <div id="admin-dep-list" class="space-y-3">
+            <div class="text-sm text-gray-400 py-10">Loading…</div>
+          </div>
+        </div>
+
+        <div id="admin-section-documents" class="hidden">
+          <div class="mb-8 flex items-center justify-between">
+            <div>
+              <h1 class="font-display text-2xl text-gray-900">Documents</h1>
+              <p class="text-gray-500 text-sm mt-1">KYC and compliance documents uploaded by users.</p>
+            </div>
+            <button onclick="loadAdminDocuments()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <i class="fa-solid fa-arrows-rotate text-gray-400"></i> Refresh
+            </button>
+          </div>
+          <div id="admin-doc-list" class="space-y-4">
             <div class="text-sm text-gray-400 py-10">Loading…</div>
           </div>
         </div>
@@ -606,6 +624,7 @@
       document.getElementById('admin-section-users').classList.toggle('hidden', name !== 'users')
       document.getElementById('admin-section-messages').classList.toggle('hidden', name !== 'messages')
       document.getElementById('admin-section-deposits').classList.toggle('hidden', name !== 'deposits')
+      document.getElementById('admin-section-documents').classList.toggle('hidden', name !== 'documents')
       document.querySelectorAll('.admin-nav').forEach(a => {
         a.classList.remove('text-gray-700', 'bg-gray-100', 'font-medium')
         a.classList.add('text-gray-500')
@@ -614,6 +633,62 @@
       if (active) { active.classList.remove('text-gray-500'); active.classList.add('text-gray-700', 'bg-gray-100', 'font-medium') }
       if (name === 'messages') loadAdminThreadList()
       if (name === 'deposits') loadAdminDeposits()
+      if (name === 'documents') loadAdminDocuments()
+    }
+
+    // ── Admin documents (KYC) ────────────────────────────────
+    const DOC_LABELS = {
+      passport: 'Passport / Government ID', id: 'Passport / Government ID',
+      proof_of_address: 'Proof of address', address: 'Proof of address',
+      selfie: 'Selfie', cnpj: 'CNPJ / Company doc', other: 'Other'
+    }
+    function docTypeFromName(fname) {
+      const base = fname.replace(/_\d+\.[^.]+$/, '').replace(/\.[^.]+$/, '')
+      return DOC_LABELS[base] || base.replace(/_/g, ' ')
+    }
+    async function loadAdminDocuments() {
+      const list = document.getElementById('admin-doc-list')
+      list.innerHTML = '<div class="text-sm text-gray-400 py-10">Loading…</div>'
+      // top-level folders = user_id prefixes
+      const { data: folders, error } = await sb.storage.from('documents').list('', { limit: 1000 })
+      if (error) { list.innerHTML = `<div class="text-sm text-red-500 py-6">Error: ${esc(error.message)}</div>`; return }
+      const userIds = (folders || []).filter(f => f.id === null || !f.metadata).map(f => f.name)
+      if (userIds.length === 0) { list.innerHTML = '<div class="text-sm text-gray-400 py-10 text-center">No documents uploaded yet.</div>'; return }
+
+      const { data: profs } = await sb.from('profiles').select('id, full_name, email').in('id', userIds)
+      const pmap = {}; (profs || []).forEach(p => pmap[p.id] = p)
+
+      const blocks = await Promise.all(userIds.map(async uid => {
+        const { data: files } = await sb.storage.from('documents').list(uid, { limit: 1000, sortBy: { column: 'created_at', order: 'desc' } })
+        const real = (files || []).filter(f => f.id !== null && f.name !== '.emptyFolderPlaceholder')
+        if (real.length === 0) return ''
+        const p = pmap[uid] || {}
+        const rows = real.map(f => {
+          const when = f.created_at ? new Date(f.created_at).toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+          const kb = f.metadata?.size ? Math.round(f.metadata.size / 1024) + ' KB' : ''
+          return `<div class="flex items-center justify-between px-4 py-3 border-t border-gray-100">
+            <div>
+              <p class="text-sm font-medium text-gray-800">${esc(docTypeFromName(f.name))}</p>
+              <p class="text-xs text-gray-400">${esc(f.name)}${when ? ' · ' + when : ''}${kb ? ' · ' + kb : ''}</p>
+            </div>
+            <button onclick="viewDoc('${esc(uid + '/' + f.name)}')" class="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 text-xs font-semibold rounded-lg transition"><i class="fa-solid fa-eye mr-1"></i>View</button>
+          </div>`
+        }).join('')
+        return `<div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+          <div class="px-4 py-3 bg-gray-50">
+            <p class="text-sm font-semibold text-gray-900">${esc(p.full_name || 'Unknown user')}</p>
+            <p class="text-xs text-gray-400">${esc(p.email || uid)} · ${real.length} document${real.length > 1 ? 's' : ''}</p>
+          </div>
+          ${rows}
+        </div>`
+      }))
+      const html = blocks.filter(Boolean).join('')
+      list.innerHTML = html || '<div class="text-sm text-gray-400 py-10 text-center">No documents uploaded yet.</div>'
+    }
+    async function viewDoc(path) {
+      const { data, error } = await sb.storage.from('documents').createSignedUrl(path, 120)
+      if (error) { alert('Could not open document: ' + error.message); return }
+      window.open(data.signedUrl, '_blank')
     }
 
     // ── Admin deposits ───────────────────────────────────────

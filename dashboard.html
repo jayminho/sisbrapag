@@ -1315,8 +1315,40 @@
         ? `Depósito iniciado — ${brl(d.amount)}`
         : `Comprovante recebido — ${brl(d.amount)}`
       const msg = stage === 'created'
-        ? `Seu depósito de <strong>${brl(d.amount)}</strong> foi iniciado. Você tem 60 minutos para concluir a transferência (ref <strong>${d.reference_code}</strong>) e enviar o comprovante.`
+        ? `Seu depósito de <strong>${brl(d.amount)}</strong> foi iniciado. Você tem 60 minutos para concluir a transferência (ref <strong>${d.reference_code}</strong>) e enviar o comprovante. Guarde estes dados de pagamento — eles estão abaixo caso você feche a página.`
         : `Recebemos seu comprovante para o depósito de <strong>${brl(d.amount)}</strong>. Estamos verificando — crédito em até 60 minutos (horário comercial).`
+
+      // On "created", embed the full payment details so the user never loses them if the page is closed.
+      let payBlock = ''
+      if (stage === 'created') {
+        const refRow = `
+          <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:10px;padding:12px 16px;margin:16px 0">
+            <p style="margin:0 0 2px;font-size:12px;color:#047857;font-weight:600">Código de referência (inclua na transferência)</p>
+            <p style="margin:0;font-size:22px;color:#065f46;font-weight:700;letter-spacing:2px">${d.reference_code}</p>
+          </div>`
+        if (d.method === 'pix') {
+          const payload = buildPixPayload(d.amount, d.reference_code)
+          payBlock = `
+            <p style="margin:18px 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#94a3b8">PIX COPIA E COLA</p>
+            <p style="margin:0;font-size:12px;font-family:monospace;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;word-break:break-all">${payload}</p>
+            <p style="margin:10px 0 0;font-size:12px;color:#64748b">Chave aleatória: <span style="font-family:monospace;color:#334155">${DEP_PIX_KEY}</span></p>
+            ${refRow}
+            <p style="margin:0;font-size:12px;color:#64748b"><strong>Importante:</strong> a transferência deve partir de uma conta no seu próprio nome/CPF. Depósitos de terceiros serão recusados.</p>`
+        } else {
+          payBlock = `
+            <p style="margin:18px 0 6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#94a3b8">DADOS PARA TED</p>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;color:#334155">
+              <tr><td style="padding:6px 0;color:#94a3b8">Banco</td><td style="padding:6px 0;text-align:right;font-weight:600">Inter (077)</td></tr>
+              <tr><td style="padding:6px 0;color:#94a3b8">Titular</td><td style="padding:6px 0;text-align:right;font-weight:600">Sistema Brasil Pagamentos Digitais</td></tr>
+              <tr><td style="padding:6px 0;color:#94a3b8">CNPJ</td><td style="padding:6px 0;text-align:right;font-weight:600">32.742.398/0001-28</td></tr>
+              <tr><td style="padding:6px 0;color:#94a3b8">Agência</td><td style="padding:6px 0;text-align:right;font-weight:600">0001</td></tr>
+              <tr><td style="padding:6px 0;color:#94a3b8">Conta</td><td style="padding:6px 0;text-align:right;font-weight:600">5476239-1</td></tr>
+            </table>
+            ${refRow}
+            <p style="margin:0;font-size:12px;color:#64748b"><strong>Importante:</strong> a transferência deve partir de uma conta no seu próprio nome/CPF. Depósitos de terceiros serão recusados.</p>`
+        }
+      }
+
       fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
@@ -1325,6 +1357,7 @@
             <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
             <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
               <p style="margin:0;font-size:14px;color:#334155;line-height:1.6">${msg}</p>
+              ${payBlock}
             </div></div>`
         })
       }).catch(() => {})
