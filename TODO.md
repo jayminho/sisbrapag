@@ -1,15 +1,27 @@
 # SISBRAPAG — Product Roadmap & TODO
 
 > Build order is intentional: each phase lays the foundation for the next.
-> Last updated: 2026-06-12 (evening)
+> Last updated: 2026-06-13 (afternoon)
 
-## ▶ START HERE NEXT SESSION — Deposit Flow Part 2 (continued)
-Deposit Part 2 core is LIVE (user screens + admin confirm/reject + deposits table + receipts bucket). Remaining, in order:
-1. **Branded PDF receipt** on credit/reject (attach the comprovante from `receipt-template.html`) — START HERE.
-2. **60-min expiry edge function** (server-side, replaces client-side fallback).
-3. **Telegram approval bot** (instant phone notify on pending_review + inline ✅/❌).
-4. Later: Inter extrato auto-matching, deposit limits, reconciliation report.
-Also done today: admin email+password login + subdomain routing fix (admin/app roots).
+## ✅ DEPOSIT FLOW = FUNCTIONALLY COMPLETE (2026-06-13)
+Full manual deposit flow tested end-to-end in production and all follow-ups shipped:
+- [x] End-to-end test passed (PIX happy path, admin credit + reject, guardrails)
+- [x] Payment info (PIX copia-e-cola + key + ref / TED details) embedded in the "iniciado" email
+- [x] Admin KYC **Documents** review tab (admin.html) — lists per-user uploads w/ signed-URL View
+- [x] Branded **PDF receipt** attached to credit/reject emails (jsPDF, admin.html)
+- [x] **Server-side 60-min expiry** — `expire-deposits` edge fn + pg_cron (*/5) + user expiry email
+- [x] Portuguese polish on entire customer deposit flow
+- [x] `atendimento@` alias wired across site + reply-to on customer emails (clean Gmail filtering)
+
+## ▶ START HERE NEXT SESSION — choose a track
+The deposit flow is done; pick the next priority:
+1. **Telegram approval bot** — instant phone notify on pending_review + inline ✅ Creditar / ❌ Recusar. (Was next on the deposit list; nice operational win.)
+2. **TED holiday calendar** — grey out national/ANBIMA holidays (only weekday-hours gating exists today).
+3. **Phase 4 — Transactions** (the actual product): transfer request form → status tracking. The big one.
+4. **Real Inter PIX cash-in API** — STILL BLOCKED awaiting Inter API credentials (see project-sisbrapag-pix-deposit memory). Unblocks instantly when creds arrive.
+5. _Later:_ Inter extrato auto-matching (ref + amount), deposit limits, reconciliation report.
+
+**Pending Jayme action (non-code):** finish the 3 Gmail filters (Sistema done; Banco = `from:(no-reply@inter.co OR bancointer.com.br) to:contato@sisbrapag.com.br`; delete old Filter 3, recreate as `to:atendimento@sisbrapag.com`).
 
 
 ---
@@ -61,8 +73,11 @@ Also done today: admin email+password login + subdomain routing fix (admin/app r
 - [x] Admin confirm/reject dashboard (canned reasons, receipt view) — admin.html
 - [x] TED availability gate: Brasília TZ (weekdays 09–16h) — _holiday calendar still TODO_
 - [x] User + admin emails at each stage
-- [ ] **PDF receipt generation** wired to credited/rejected ← NEXT
-- [ ] 60-min expiry job (cron/edge fn) → auto-expire + email (currently client-side fallback only)
+- [x] **PDF receipt generation** wired to credited/rejected (jsPDF in admin.html → attached to outcome email; commit `6d03ffe`)
+- [x] 60-min expiry job — `expire-deposits` edge fn + pg_cron `expire-deposits-5min` (*/5) → auto-expire + user email; commit `a5a0f47`
+- [x] Admin KYC **Documents** review tab (admin.html; commit `ec31a9b`)
+- [x] Payment info in "iniciado" email + Portuguese polish (commits `ec31a9b`, `6d03ffe`)
+- [x] `atendimento@` site alias + email reply-to (commit `a5a0f47`)
 - [ ] TED holiday calendar (greys out national/ANBIMA holidays)
 - [ ] **Telegram approval bot** — instant phone notification on pending_review w/ inline ✅ Creditar / ❌ Recusar buttons
 - [ ] _Later:_ Inter extrato auto-matching (ref_code + amount), limits, reconciliation report
