@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { to, subject, html, from, attachments } = await req.json()
+    const { to, subject, html, from, attachments, replyTo } = await req.json()
 
     const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
     if (!RESEND_API_KEY) {
@@ -32,6 +32,7 @@ serve(async (req) => {
         to: Array.isArray(to) ? to : [to],
         subject,
         html,
+        ...(replyTo ? { reply_to: replyTo } : {}),
         ...(Array.isArray(attachments) && attachments.length ? { attachments } : {}),
       }),
     })

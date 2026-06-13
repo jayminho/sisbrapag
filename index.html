@@ -495,10 +495,10 @@
               <i class="fa-solid fa-arrow-right"></i>
               <span>Get Started</span>
             </a>
-            <a href="mailto:hello@sisbrapag.com?subject=SISBRAPAG%20Inquiry"
+            <a href="mailto:atendimento@sisbrapag.com?subject=SISBRAPAG%20Inquiry"
                class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
               <i class="fa-regular fa-envelope"></i>
-              <span>hello@sisbrapag.com</span>
+              <span>atendimento@sisbrapag.com</span>
             </a>
             <a href="https://wa.me/5521987128712" target="_blank"
                class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-7 py-3.5 text-sm font-semibold hover:bg-slate-50 transition-colors">
@@ -586,7 +586,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
             body: JSON.stringify({
-              to: 'hello@sisbrapag.com',
+              to: 'atendimento@sisbrapag.com',
               subject: `Contact from ${name} — SISBRAPAG`,
               html
             })
@@ -600,7 +600,7 @@
             throw new Error('Send failed');
           }
         } catch {
-          feedback.textContent = 'Something went wrong. Please email hello@sisbrapag.com directly.';
+          feedback.textContent = 'Something went wrong. Please email atendimento@sisbrapag.com directly.';
           feedback.className = 'text-sm text-red-500';
         }
 

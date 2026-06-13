@@ -877,7 +877,7 @@
       fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
-          to: [prof.email], subject, attachments,
+          to: [prof.email], subject, attachments, replyTo: 'atendimento@sisbrapag.com',
           html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
             <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
             <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">

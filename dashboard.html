@@ -1105,8 +1105,11 @@
 
       if (open && open.status === 'created') {
         if (new Date(open.expires_at) <= new Date()) {
-          // client-side expiry (cron will own this in Part 2)
-          await sb.from('deposits').update({ status: 'expired' }).eq('id', open.id)
+          // client-side expiry. Conditional update (.eq status created) so only the actor
+          // that actually flips it emails — avoids a double email with the server-side cron.
+          const { data: flipped } = await sb.from('deposits')
+            .update({ status: 'expired' }).eq('id', open.id).eq('status', 'created').select()
+          if (flipped && flipped.length) depEmailUser('expired', open)
           depState.current = null
           return depRefreshMethod()
         }
@@ -1313,9 +1316,13 @@
     function depEmailUser(stage, d) {
       const subj = stage === 'created'
         ? `Depósito iniciado — ${brl(d.amount)}`
+        : stage === 'expired'
+        ? `Depósito expirado — ${brl(d.amount)}`
         : `Comprovante recebido — ${brl(d.amount)}`
       const msg = stage === 'created'
         ? `Seu depósito de <strong>${brl(d.amount)}</strong> foi iniciado. Você tem 60 minutos para concluir a transferência (ref <strong>${d.reference_code}</strong>) e enviar o comprovante. Guarde estes dados de pagamento — eles estão abaixo caso você feche a página.`
+        : stage === 'expired'
+        ? `O prazo de 60 minutos para concluir seu depósito de <strong>${brl(d.amount)}</strong> (ref ${d.reference_code}) expirou. Nenhum valor foi debitado. Você pode iniciar um novo depósito quando quiser em app.sisbrapag.com.`
         : `Recebemos seu comprovante para o depósito de <strong>${brl(d.amount)}</strong>. Estamos verificando — crédito em até 60 minutos (horário comercial).`
 
       // On "created", embed the full payment details so the user never loses them if the page is closed.
@@ -1352,7 +1359,7 @@
       fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
-          to: [currentUser.email], subject: subj,
+          to: [currentUser.email], subject: subj, replyTo: 'atendimento@sisbrapag.com',
           html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
             <div style="background:#0B1120;padding:20px 28px"><span style="color:#10B981;font-weight:700;font-size:16px">SISBRAPAG</span></div>
             <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
