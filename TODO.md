@@ -1,56 +1,49 @@
 # SISBRAPAG — Product Roadmap & TODO
 
 > Build order is intentional: each phase lays the foundation for the next.
-> Last updated: 2026-06-13 (afternoon)
+> Last updated: 2026-06-13 (evening) — Phase 4 + Phase 5 Crypto COMPLETE
 
-## ✅ DEPOSIT FLOW = FUNCTIONALLY COMPLETE (2026-06-13)
-Full manual deposit flow tested end-to-end in production and all follow-ups shipped:
-- [x] End-to-end test passed (PIX happy path, admin credit + reject, guardrails)
-- [x] Payment info (PIX copia-e-cola + key + ref / TED details) embedded in the "iniciado" email
-- [x] Admin KYC **Documents** review tab (admin.html) — lists per-user uploads w/ signed-URL View
-- [x] Branded **PDF receipt** attached to credit/reject emails (jsPDF, admin.html)
-- [x] **Server-side 60-min expiry** — `expire-deposits` edge fn + pg_cron (*/5) + user expiry email
-- [x] Portuguese polish on entire customer deposit flow
-- [x] `atendimento@` alias wired across site + reply-to on customer emails (clean Gmail filtering)
+## ▶ START HERE NEXT SESSION
 
-## ▶ START HERE NEXT SESSION — Phase 4 + 5 BUILD
+**ALL PHASES 0–5 COMPLETE as of 2026-06-13. Latest commit: `2a159b6`.**
 
-**Design complete ✅ 2026-06-13. Full spec → `docs/phase4-5-design.md`**
+No pending sprints. Next options:
+- **PIX auto-matching** — BLOCKED awaiting Inter API credentials (see `docs/inter-api-reference.md`)
+- **TED holiday calendar** — grey out national/ANBIMA holidays in TED time gate (low urgency)
+- **Phase 6 — Growth** — blog/SEO, referral flow (see bottom of this file)
+- **Hardening** — rate limiting on crypto orders, admin 2FA, KYC document status field
 
-### ✅ All open questions resolved 2026-06-13 — see `docs/phase4-5-design.md` addendum for full details
+---
 
-### Phase 0 — Fee tiers (build first, shared by Phase 4 + 5)
-- [ ] `ALTER TABLE profiles` → add `fee_pct_override numeric(5,2)` + `fee_note text` columns
-- [ ] Admin modal → add "Taxa personalizada" field + save
-- [ ] Dashboard → load effective fee rate at session start, use in all wizards
+## ✅ Phase 0 — Fee Tiers (2026-06-13)
+- [x] `profiles.fee_pct_override` + `fee_note` columns
+- [x] Admin modal — "Taxa personalizada" field + save
+- [x] Dashboard — `effectiveFeePct` global (override ?? 3.0) used in all wizards
 
-### Phase 4 — International Transfers (build sprints)
-- [ ] **Sprint A:** DB migration — `transfer_requests` table + RLS
-- [ ] **Sprint B:** Dashboard — Transferências nav + direction + amount + FX fee calc
-- [ ] **Sprint C:** Dashboard — routing forms (IBAN/Sort Code/ACH/SWIFT) + validators
-- [ ] **Sprint D:** Dashboard — purpose dropdown (BACEN) + review + submit → DB + Telegram + email
-- [ ] **Sprint E:** Dashboard — status timeline + transfer history
-- [ ] **Sprint F:** Admin — Transferências tab + list + detail modal
-- [ ] **Sprint G:** Admin — Concluir modal (actual rate/amounts) + Cancelar modal
-- [ ] **Sprint H:** jsPDF transfer receipt + attach to completion email
+## ✅ Phase 4 — International Transfers (2026-06-13, commits `b2a0d5a`→`cd69257`)
+- [x] **Sprint A:** `transfer_requests` table + RLS
+- [x] **Sprint B:** Transferências nav + direction + amount + FX fee calc (Frankfurter)
+- [x] **Sprint C:** Routing forms — IBAN+SWIFT / Sort+Acct / ACH+Acct / SWIFT generic + validators
+- [x] **Sprint D:** BACEN purpose dropdown + review step + submit → DB + Telegram + email
+- [x] **Sprint E:** Status timeline + transfer history (5-state badges)
+- [x] **Sprint F:** Admin — Transferências tab + filter bar + orders table + detail modal
+- [x] **Sprint G:** Admin — Concluir modal (actual_rate, actual_amount, bank_reference) + Cancelar modal (6 canned reasons)
+- [x] **Sprint H (renamed G):** `buildTransferReceiptPdf()` jsPDF A4, base64 attached to completion email
 
-### Phase 5 — Crypto (build sprints, after or parallel to Phase 4)
-- [ ] **Sprint A:** DB migration — `crypto_holdings` + `crypto_orders` tables + RLS
-- [ ] **Sprint B:** Dashboard — Cripto nav + portfolio view (balances + BRL value via CoinGecko)
-- [ ] **Sprint C:** Dashboard — Buy flow (asset → amount → rate → submit)
-- [ ] **Sprint D:** Dashboard — Sell flow
-- [ ] **Sprint E:** Dashboard — Withdraw flow (asset → network → address → WARNING → submit)
-- [ ] **Sprint F:** Dashboard — Orders history
-- [ ] **Sprint G:** Admin — Cripto tab + orders table + detail modal
-- [ ] **Sprint H:** Admin — Concluir (credits crypto_holdings) + Falhou modals
-- [ ] **Sprint I:** jsPDF crypto receipt + attach to completion email
+## ✅ Phase 5 — Crypto (2026-06-13, commits `417076b`, `2a159b6`)
+- [x] **Sprint A:** `crypto_holdings` + `crypto_orders` tables + RLS + indexes
+- [x] **Sprint B:** Dashboard — Cripto nav + portfolio view (BTC/ETH/USDT/USDC balances + BRL via CoinGecko)
+- [x] **Sprint C:** Dashboard — Buy flow (asset → amount BRL → live rate → fee → submit → CX-XXXXXX ref)
+- [x] **Sprint D:** Dashboard — Sell flow
+- [x] **Sprint E:** Dashboard — Withdraw flow (asset → network → address → WARNING → amount → submit)
+- [x] **Sprint F:** Dashboard — Crypto orders history (status badges + detail)
+- [x] **Sprint G:** Admin — Cripto tab + 5 filter tabs + orders table + amber nav badge
+- [x] **Sprint H:** Admin — Concluir modal (actual_rate, actual_amount_crypto, binance_order_id, txhash for withdrawals) + UPSERT crypto_holdings + Falhou modal
+- [x] **Sprint I:** `buildCryptoReceiptPdf()` jsPDF A4 + attached to completion email as `recibo-CX-XXXXXX.pdf`
 
-### Backlog (unchanged)
+### Backlog
 - **TED holiday calendar** — grey out national/ANBIMA holidays (low urgency)
 - **Real Inter PIX cash-in API** — BLOCKED awaiting credentials
-
-3. **TED holiday calendar** — grey out national/ANBIMA holidays (backlog, low urgency)
-4. **Real Inter PIX cash-in API** — BLOCKED awaiting credentials (backlog)
 
 
 ---
