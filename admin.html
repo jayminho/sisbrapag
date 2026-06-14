@@ -44,6 +44,10 @@
           <i class="fa-solid fa-comment-dots w-4 text-gray-400"></i> Messages
           <span id="admin-msg-badge" class="hidden ml-auto bg-emerald-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
         </a>
+        <a href="#" onclick="showAdminSection('transfers')" id="admin-nav-transfers" class="admin-nav flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50">
+          <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Transfers
+          <span id="admin-tr-badge" class="hidden ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[18px] text-center"></span>
+        </a>
       </nav>
       <div class="px-3 py-4 border-t border-gray-100 space-y-1">
         <a href="/dashboard.html" class="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-400 hover:bg-gray-50 hover:text-gray-600">
@@ -282,6 +286,51 @@
           </div>
         </div>
 
+        <!-- ── TRANSFERS SECTION ─────────────────────────────── -->
+        <div id="admin-section-transfers" class="hidden">
+          <div class="mb-8 flex items-center justify-between">
+            <div>
+              <h1 class="font-display text-2xl text-gray-900">Transferências</h1>
+              <p class="text-gray-500 text-sm mt-1">Solicitações de câmbio internacional dos clientes.</p>
+            </div>
+            <button onclick="loadAdminTransfers()" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <i class="fa-solid fa-arrows-rotate text-gray-400"></i> Refresh
+            </button>
+          </div>
+
+          <!-- Filter bar -->
+          <div class="flex gap-2 mb-5 flex-wrap">
+            <button onclick="adminTrFilter('all')"       id="atr-f-all"        class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-gray-900 text-white font-medium">Todas</button>
+            <button onclick="adminTrFilter('submitted')" id="atr-f-submitted"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Enviadas</button>
+            <button onclick="adminTrFilter('under_review')" id="atr-f-under_review" class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Em análise</button>
+            <button onclick="adminTrFilter('processing')" id="atr-f-processing" class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Em processamento</button>
+            <button onclick="adminTrFilter('completed')" id="atr-f-completed"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Concluídas</button>
+            <button onclick="adminTrFilter('cancelled')" id="atr-f-cancelled"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Canceladas</button>
+          </div>
+
+          <!-- Table -->
+          <div class="bg-white border border-gray-100 rounded-2xl overflow-hidden">
+            <div id="atr-loading" class="px-6 py-10 text-center text-sm text-gray-400">Carregando…</div>
+            <div id="atr-empty"   class="hidden px-6 py-10 text-center text-sm text-gray-400">Nenhuma transferência encontrada.</div>
+            <table id="atr-table" class="hidden w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-100 text-left text-xs text-gray-400 font-medium uppercase tracking-wide">
+                  <th class="px-4 py-3">Ref</th>
+                  <th class="px-4 py-3">Cliente</th>
+                  <th class="px-4 py-3">Direção</th>
+                  <th class="px-4 py-3">Valor</th>
+                  <th class="px-4 py-3">Moeda</th>
+                  <th class="px-4 py-3">Finalidade</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Data</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody id="atr-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -301,6 +350,21 @@
         <option value="O comprovante enviado não pôde ser verificado ou está ilegível.">Comprovante inválido / ilegível</option>
       </select>
       <button onclick="confirmReject()" id="dep-reject-btn" class="w-full py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors">Reject &amp; notify customer</button>
+    </div>
+  </div>
+
+  <!-- Transfer detail modal -->
+  <div id="atr-modal-overlay" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="atrCloseModal(event)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white rounded-t-2xl z-10">
+        <div>
+          <h3 class="font-display text-base text-gray-900">Transferência <span id="atr-modal-ref" class="font-mono text-emerald-600"></span></h3>
+          <p id="atr-modal-status-label" class="text-xs text-gray-400 mt-0.5"></p>
+        </div>
+        <button onclick="atrCloseModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="atr-modal-body" class="px-6 py-4 text-sm divide-y divide-gray-50"></div>
+      <div class="px-6 py-4 border-t border-gray-100 flex flex-wrap gap-2" id="atr-modal-actions"></div>
     </div>
   </div>
 
@@ -385,6 +449,7 @@
       document.getElementById('admin-content').classList.remove('hidden')
       await loadUsers()
       updateDepBadge()
+      loadTransferBadge()
     }
 
     async function adminSignIn() {
@@ -676,15 +741,17 @@
       document.getElementById('admin-section-messages').classList.toggle('hidden', name !== 'messages')
       document.getElementById('admin-section-deposits').classList.toggle('hidden', name !== 'deposits')
       document.getElementById('admin-section-documents').classList.toggle('hidden', name !== 'documents')
+      document.getElementById('admin-section-transfers').classList.toggle('hidden', name !== 'transfers')
       document.querySelectorAll('.admin-nav').forEach(a => {
         a.classList.remove('text-gray-700', 'bg-gray-100', 'font-medium')
         a.classList.add('text-gray-500')
       })
       const active = document.getElementById('admin-nav-' + name)
       if (active) { active.classList.remove('text-gray-500'); active.classList.add('text-gray-700', 'bg-gray-100', 'font-medium') }
-      if (name === 'messages') loadAdminThreadList()
-      if (name === 'deposits') loadAdminDeposits()
-      if (name === 'documents') loadAdminDocuments()
+      if (name === 'messages')   loadAdminThreadList()
+      if (name === 'deposits')   loadAdminDeposits()
+      if (name === 'documents')  loadAdminDocuments()
+      if (name === 'transfers')  loadAdminTransfers()
     }
 
     // ── Admin documents (KYC) ────────────────────────────────
@@ -1130,6 +1197,201 @@
 
     init()
     loadAnalytics()
+
+    // ── Admin: Transfers ────────────────────────────────────
+
+    const ATR_STATUS = {
+      submitted:    { label: 'Enviada',          cls: 'bg-yellow-100 text-yellow-800' },
+      under_review: { label: 'Em análise',       cls: 'bg-blue-100 text-blue-800' },
+      processing:   { label: 'Em processamento', cls: 'bg-indigo-100 text-indigo-800' },
+      completed:    { label: 'Concluída',        cls: 'bg-emerald-100 text-emerald-800' },
+      cancelled:    { label: 'Cancelada',        cls: 'bg-red-100 text-red-800' },
+    }
+
+    let _atrAll = []   // full list (cached)
+    let _atrFilter = 'all'
+
+    async function loadAdminTransfers() {
+      document.getElementById('atr-loading').classList.remove('hidden')
+      document.getElementById('atr-table').classList.add('hidden')
+      document.getElementById('atr-empty').classList.add('hidden')
+
+      // Also update badge (submitted count)
+      const { data, error } = await sb
+        .from('transfer_requests')
+        .select(`id, reference_code, direction, amount_source, currency_source,
+                 amount_target, currency_target, fx_rate_at_request, fee_pct, fee_brl,
+                 recipient_name, recipient_country, routing_type,
+                 iban, bic_swift, sort_code, account_number, ach_routing,
+                 bank_name, bank_address, recipient_tax_id,
+                 purpose_code, purpose_description, reference_note,
+                 status, created_at, user_id,
+                 profiles:user_id (full_name, email)`)
+        .order('created_at', { ascending: false })
+
+      document.getElementById('atr-loading').classList.add('hidden')
+      if (error) { document.getElementById('atr-empty').textContent = 'Erro: ' + error.message; document.getElementById('atr-empty').classList.remove('hidden'); return }
+
+      _atrAll = data || []
+      const pending = _atrAll.filter(t => t.status === 'submitted').length
+      const badge = document.getElementById('admin-tr-badge')
+      badge.textContent = pending
+      badge.classList.toggle('hidden', pending === 0)
+
+      atrRenderTable()
+    }
+
+    function adminTrFilter(status) {
+      _atrFilter = status
+      document.querySelectorAll('.atr-filter').forEach(b => {
+        const active = b.id === 'atr-f-' + status
+        b.classList.toggle('bg-gray-900', active)
+        b.classList.toggle('text-white', active)
+        b.classList.toggle('font-medium', active)
+        b.classList.toggle('text-gray-600', !active)
+        b.classList.toggle('hover:bg-gray-50', !active)
+      })
+      atrRenderTable()
+    }
+
+    function atrRenderTable() {
+      const rows = _atrFilter === 'all' ? _atrAll : _atrAll.filter(t => t.status === _atrFilter)
+      const tbody = document.getElementById('atr-tbody')
+      if (rows.length === 0) {
+        document.getElementById('atr-table').classList.add('hidden')
+        document.getElementById('atr-empty').classList.remove('hidden')
+        return
+      }
+      document.getElementById('atr-empty').classList.add('hidden')
+      document.getElementById('atr-table').classList.remove('hidden')
+
+      tbody.innerHTML = rows.map(t => {
+        const st   = ATR_STATUS[t.status] || { label: t.status, cls: 'bg-gray-100 text-gray-600' }
+        const date = new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+        const isOut = t.direction === 'outbound'
+        const amtStr = isOut ? brlA(t.amount_source) : fmtAdminCcy(t.amount_source, t.currency_source)
+        const profile = t.profiles || {}
+        const clientName = profile.full_name || profile.email || t.user_id?.slice(0,8) || '—'
+        const purpose = (t.purpose_code || '').replace(/_/g, ' ').toLowerCase()
+        return `<tr class="border-b border-gray-50 hover:bg-gray-50/50 cursor-pointer transition" onclick="atrOpenModal('${t.id}')">
+          <td class="px-4 py-3 font-mono text-xs text-gray-700">${esc(t.reference_code)}</td>
+          <td class="px-4 py-3 text-gray-700 max-w-[140px] truncate">${esc(clientName)}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center gap-1 text-xs ${isOut ? 'text-orange-600' : 'text-emerald-600'}">
+              <i class="fa-solid ${isOut ? 'fa-arrow-up-right' : 'fa-arrow-down-left'} text-[10px]"></i>
+              ${isOut ? 'Saída' : 'Entrada'}
+            </span>
+          </td>
+          <td class="px-4 py-3 font-medium text-gray-800">${esc(amtStr)}</td>
+          <td class="px-4 py-3 text-gray-500">${esc(isOut ? t.currency_target || '' : t.currency_source || '')}</td>
+          <td class="px-4 py-3 text-gray-500 capitalize text-xs max-w-[120px] truncate">${esc(purpose)}</td>
+          <td class="px-4 py-3"><span class="badge ${st.cls} text-xs">${st.label}</span></td>
+          <td class="px-4 py-3 text-gray-400 text-xs">${date}</td>
+          <td class="px-4 py-3 text-right"><button class="text-xs text-gray-400 hover:text-gray-700"><i class="fa-solid fa-chevron-right"></i></button></td>
+        </tr>`
+      }).join('')
+    }
+
+    function fmtAdminCcy(n, ccy) {
+      if (!n) return '—'
+      return Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + (ccy || '')
+    }
+
+    function atrOpenModal(id) {
+      const t = _atrAll.find(x => x.id === id)
+      if (!t) return
+      const st = ATR_STATUS[t.status] || { label: t.status, cls: 'bg-gray-100 text-gray-600' }
+      const isOut = t.direction === 'outbound'
+      const profile = t.profiles || {}
+      const clientName = profile.full_name || profile.email || t.user_id?.slice(0,8) || '—'
+      const clientEmail = profile.email || '—'
+
+      document.getElementById('atr-modal-ref').textContent = t.reference_code
+      document.getElementById('atr-modal-status-label').innerHTML =
+        `<span class="badge ${st.cls} text-xs">${st.label}</span> &nbsp;·&nbsp; ${new Date(t.created_at).toLocaleString('pt-BR')}`
+
+      const rows = [
+        ['Cliente',         clientName],
+        ['E-mail',          clientEmail],
+        ['Direção',         isOut ? 'Saída (outbound)' : 'Entrada (inbound)'],
+        ['Você ' + (isOut ? 'envia' : 'aguarda'),
+                            isOut ? brlA(t.amount_source) : fmtAdminCcy(t.amount_source, t.currency_source)],
+        ['Câmbio solicitado', t.fx_rate_at_request ? `1 ${isOut ? t.currency_target : t.currency_source} = ${brlA(t.fx_rate_at_request)}` : '—'],
+        ['Taxa (' + t.fee_pct + '%)', t.fee_brl ? brlA(t.fee_brl) : '—'],
+        [isOut ? 'Destinatário recebe ≈' : 'Cliente recebe ≈',
+                            isOut ? fmtAdminCcy(t.amount_target, t.currency_target) : brlA(t.amount_source)],
+        ['—', null],   // separator
+        [isOut ? 'Destinatário' : 'Remetente', t.recipient_name + (t.recipient_country ? ' · ' + t.recipient_country : '')],
+        ['Roteamento', (() => {
+          if (t.routing_type === 'iban')       return 'IBAN: ' + (t.iban || '—') + (t.bic_swift ? ' · BIC: ' + t.bic_swift : '')
+          if (t.routing_type === 'sort_code')  return 'Sort: ' + (t.sort_code || '—') + ' · Conta: ' + (t.account_number || '—')
+          if (t.routing_type === 'ach')        return 'ABA: ' + (t.ach_routing || '—') + ' · Conta: ' + (t.account_number || '—') + (t.bank_name ? ' · ' + t.bank_name : '')
+          return 'SWIFT: ' + (t.bic_swift || '—') + ' · Conta: ' + (t.account_number || '—') + (t.bank_name ? ' · ' + t.bank_name : '')
+        })()],
+        ...(t.recipient_tax_id ? [['Tax ID', t.recipient_tax_id]] : []),
+        ...(t.bank_address    ? [['Endereço banco', t.bank_address]] : []),
+        ['—', null],
+        ['Finalidade (BACEN)', t.purpose_description || t.purpose_code],
+        ...(t.reference_note ? [['Nota / Ref', t.reference_note]] : []),
+      ]
+
+      document.getElementById('atr-modal-body').innerHTML = rows.map(([k, v]) => {
+        if (v === null) return '<div class="border-t border-gray-50 my-1"></div>'
+        return `<div class="flex justify-between gap-4 py-2.5">
+          <span class="text-gray-400 shrink-0 w-44">${esc(k)}</span>
+          <span class="text-gray-800 font-medium text-right break-all">${esc(String(v ?? '—'))}</span>
+        </div>`
+      }).join('')
+
+      // Action buttons (Sprint F will flesh these out; stubs for now)
+      const actions = document.getElementById('atr-modal-actions')
+      actions.innerHTML = ''
+      if (t.status === 'submitted') {
+        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','under_review')" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">→ Em análise</button>`
+      }
+      if (t.status === 'under_review') {
+        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','processing')" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">→ Em processamento</button>`
+      }
+      if (['under_review','processing'].includes(t.status)) {
+        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','completed')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
+        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','cancelled')" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors ml-auto">✕ Cancelar</button>`
+      }
+
+      document.getElementById('atr-modal-overlay').classList.remove('hidden')
+      document.body.style.overflow = 'hidden'
+    }
+
+    function atrCloseModal(e) {
+      if (e && e.target !== document.getElementById('atr-modal-overlay')) return
+      document.getElementById('atr-modal-overlay').classList.add('hidden')
+      document.body.style.overflow = ''
+    }
+
+    // Lightweight status update (Sprint F will replace with full modals for complete/cancel)
+    async function atrSetStatus(id, newStatus) {
+      const { error } = await sb.from('transfer_requests').update({ status: newStatus }).eq('id', id)
+      if (error) { alert('Erro: ' + error.message); return }
+      // Update cache
+      const t = _atrAll.find(x => x.id === id)
+      if (t) t.status = newStatus
+      // Close modal and refresh
+      document.getElementById('atr-modal-overlay').classList.add('hidden')
+      document.body.style.overflow = ''
+      atrRenderTable()
+      // Refresh badge
+      const pending = _atrAll.filter(x => x.status === 'submitted').length
+      const badge = document.getElementById('admin-tr-badge')
+      badge.textContent = pending
+      badge.classList.toggle('hidden', pending === 0)
+    }
+
+    // Auto-load badge on page init
+    async function loadTransferBadge() {
+      const { count } = await sb.from('transfer_requests').select('id', { count: 'exact', head: true }).eq('status', 'submitted')
+      const badge = document.getElementById('admin-tr-badge')
+      if (count) { badge.textContent = count; badge.classList.remove('hidden') }
+    }
+
   </script>
 </body>
 </html>
