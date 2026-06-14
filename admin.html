@@ -353,6 +353,64 @@
     </div>
   </div>
 
+  <!-- Transfer: Complete modal -->
+  <div id="atr-complete-overlay" class="hidden fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4" onclick="atrCloseComplete(event)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 class="font-display text-base text-gray-900">Concluir transferência</h3>
+        <button onclick="atrCloseComplete()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Taxa real executada (BRL/moeda)</label>
+          <input id="atr-complete-rate" type="number" step="0.01" placeholder="ex: 5.87"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Valor real enviado / recebido</label>
+          <input id="atr-complete-amount" type="number" step="0.01" placeholder="ex: 1250.00"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Referência bancária / SWIFT ref</label>
+          <input id="atr-complete-bankref" type="text" placeholder="ex: SWIFT-20240613-001"
+            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <p id="atr-complete-err" class="text-xs text-red-500 min-h-[16px]"></p>
+      </div>
+      <div class="px-6 pb-5 flex gap-3">
+        <button onclick="atrCloseComplete()" class="flex-1 py-2.5 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
+        <button onclick="atrConfirmComplete()" id="atr-complete-btn" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">Concluir e notificar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Transfer: Cancel modal -->
+  <div id="atr-cancel-overlay" class="hidden fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4" onclick="atrCloseCancel(event)">
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 class="font-display text-base text-gray-900">Cancelar transferência</h3>
+        <button onclick="atrCloseCancel()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="px-6 py-5 space-y-4">
+        <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Motivo do cancelamento</label>
+        <select id="atr-cancel-reason" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 bg-white">
+          <option value="Documentação KYC incompleta ou inválida. Entre em contato para regularizar.">Documentação KYC incompleta</option>
+          <option value="Saldo BRL insuficiente para cobrir o valor solicitado mais as taxas.">Saldo insuficiente</option>
+          <option value="Dados bancários do destinatário incompletos ou inválidos. Verifique e submeta novamente.">Dados bancários inválidos</option>
+          <option value="Operação bloqueada por análise de compliance. Entre em contato para mais informações.">Bloqueio de compliance</option>
+          <option value="Solicitação cancelada a pedido do cliente.">Cancelamento a pedido do cliente</option>
+          <option value="Não foi possível processar a operação no momento. Tente novamente em breve.">Falha operacional temporária</option>
+        </select>
+        <p id="atr-cancel-err" class="text-xs text-red-500 min-h-[16px]"></p>
+      </div>
+      <div class="px-6 pb-5 flex gap-3">
+        <button onclick="atrCloseCancel()" class="flex-1 py-2.5 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">Voltar</button>
+        <button onclick="atrConfirmCancel()" id="atr-cancel-btn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">Cancelar e notificar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Transfer detail modal -->
   <div id="atr-modal-overlay" class="hidden fixed inset-0 bg-black/30 z-50 flex items-center justify-center p-4" onclick="atrCloseModal(event)">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
@@ -1353,8 +1411,8 @@
         actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','processing')" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">→ Em processamento</button>`
       }
       if (['under_review','processing'].includes(t.status)) {
-        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','completed')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
-        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','cancelled')" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors ml-auto">✕ Cancelar</button>`
+        actions.innerHTML += `<button onclick="atrOpenComplete('${t.id}')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
+        actions.innerHTML += `<button onclick="atrOpenCancel('${t.id}')" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors ml-auto">✕ Cancelar</button>`
       }
 
       document.getElementById('atr-modal-overlay').classList.remove('hidden')
@@ -1367,18 +1425,189 @@
       document.body.style.overflow = ''
     }
 
-    // Lightweight status update (Sprint F will replace with full modals for complete/cancel)
+    // Simple status advance (submitted→under_review, under_review→processing) + notify user
     async function atrSetStatus(id, newStatus) {
       const { error } = await sb.from('transfer_requests').update({ status: newStatus }).eq('id', id)
       if (error) { alert('Erro: ' + error.message); return }
-      // Update cache
       const t = _atrAll.find(x => x.id === id)
       if (t) t.status = newStatus
-      // Close modal and refresh
       document.getElementById('atr-modal-overlay').classList.add('hidden')
       document.body.style.overflow = ''
       atrRenderTable()
-      // Refresh badge
+      atrRefreshBadge()
+      // Notify user by email
+      if (t) atrSendStatusEmail(t, newStatus, null, null, null)
+    }
+
+    // ── Complete modal ──────────────────────────────────────
+
+    let _atrCompleteId = null
+
+    function atrOpenComplete(id) {
+      _atrCompleteId = id
+      document.getElementById('atr-complete-rate').value   = ''
+      document.getElementById('atr-complete-amount').value = ''
+      document.getElementById('atr-complete-bankref').value = ''
+      document.getElementById('atr-complete-err').textContent = ''
+      document.getElementById('atr-complete-btn').disabled = false
+      document.getElementById('atr-complete-overlay').classList.remove('hidden')
+    }
+
+    function atrCloseComplete(e) {
+      if (e && e.target !== document.getElementById('atr-complete-overlay')) return
+      document.getElementById('atr-complete-overlay').classList.add('hidden')
+    }
+
+    async function atrConfirmComplete() {
+      const rate    = parseFloat(document.getElementById('atr-complete-rate').value)
+      const amount  = parseFloat(document.getElementById('atr-complete-amount').value)
+      const bankref = document.getElementById('atr-complete-bankref').value.trim()
+      const err     = document.getElementById('atr-complete-err')
+      if (!rate || rate <= 0)   { err.textContent = 'Informe a taxa real executada.'; return }
+      if (!amount || amount <= 0) { err.textContent = 'Informe o valor real.'; return }
+      if (!bankref)              { err.textContent = 'Informe a referência bancária.'; return }
+
+      const btn = document.getElementById('atr-complete-btn')
+      btn.disabled = true; btn.textContent = 'Salvando…'
+
+      const { error } = await sb.from('transfer_requests').update({
+        status: 'completed',
+        actual_rate: rate,
+        actual_amount_target: amount,
+        bank_reference: bankref,
+        completed_at: new Date().toISOString(),
+        reviewed_by: currentAdmin?.email || 'admin',
+      }).eq('id', _atrCompleteId)
+
+      if (error) { err.textContent = 'Erro: ' + error.message; btn.disabled = false; btn.textContent = 'Concluir e notificar'; return }
+
+      const t = _atrAll.find(x => x.id === _atrCompleteId)
+      if (t) { t.status = 'completed'; t.actual_rate = rate; t.actual_amount_target = amount; t.bank_reference = bankref }
+
+      document.getElementById('atr-complete-overlay').classList.add('hidden')
+      document.getElementById('atr-modal-overlay').classList.add('hidden')
+      document.body.style.overflow = ''
+      atrRenderTable()
+      atrRefreshBadge()
+      if (t) atrSendStatusEmail(t, 'completed', rate, amount, bankref)
+    }
+
+    // ── Cancel modal ────────────────────────────────────────
+
+    let _atrCancelId = null
+
+    function atrOpenCancel(id) {
+      _atrCancelId = id
+      document.getElementById('atr-cancel-err').textContent = ''
+      document.getElementById('atr-cancel-btn').disabled = false
+      document.getElementById('atr-cancel-btn').textContent = 'Cancelar e notificar'
+      document.getElementById('atr-cancel-overlay').classList.remove('hidden')
+    }
+
+    function atrCloseCancel(e) {
+      if (e && e.target !== document.getElementById('atr-cancel-overlay')) return
+      document.getElementById('atr-cancel-overlay').classList.add('hidden')
+    }
+
+    async function atrConfirmCancel() {
+      const reason = document.getElementById('atr-cancel-reason').value
+      const btn    = document.getElementById('atr-cancel-btn')
+      btn.disabled = true; btn.textContent = 'Salvando…'
+
+      const { error } = await sb.from('transfer_requests').update({
+        status: 'cancelled',
+        cancellation_reason: reason,
+        reviewed_by: currentAdmin?.email || 'admin',
+      }).eq('id', _atrCancelId)
+
+      if (error) {
+        document.getElementById('atr-cancel-err').textContent = 'Erro: ' + error.message
+        btn.disabled = false; btn.textContent = 'Cancelar e notificar'; return
+      }
+
+      const t = _atrAll.find(x => x.id === _atrCancelId)
+      if (t) { t.status = 'cancelled'; t.cancellation_reason = reason }
+
+      document.getElementById('atr-cancel-overlay').classList.add('hidden')
+      document.getElementById('atr-modal-overlay').classList.add('hidden')
+      document.body.style.overflow = ''
+      atrRenderTable()
+      atrRefreshBadge()
+      if (t) atrSendStatusEmail(t, 'cancelled', null, null, null, reason)
+    }
+
+    // ── Shared: status email to user ────────────────────────
+
+    function atrSendStatusEmail(t, newStatus, actualRate, actualAmount, bankRef, cancelReason) {
+      const profile = t.profiles || {}
+      const toEmail = profile.email
+      if (!toEmail) return
+      const clientName  = (profile.full_name || toEmail).split(' ')[0]
+      const isOut       = t.direction === 'outbound'
+      const ccy         = isOut ? (t.currency_target || '') : (t.currency_source || '')
+
+      const statusCopy = {
+        under_review: { subject: `Transferência em análise — ${t.reference_code}`, headline: 'Sua transferência está em análise', body: 'Recebemos sua solicitação e nossa equipe está revisando os detalhes. Entraremos em contato caso precise de informações adicionais.' },
+        processing:   { subject: `Transferência em processamento — ${t.reference_code}`, headline: 'Transferência em processamento', body: 'Ótima notícia! Sua transferência foi aprovada e está sendo processada junto à nossa parceira bancária.' },
+        completed:    { subject: `Transferência concluída — ${t.reference_code}`, headline: 'Transferência concluída com sucesso ✓', body: '' },
+        cancelled:    { subject: `Transferência cancelada — ${t.reference_code}`, headline: 'Transferência cancelada', body: '' },
+      }
+      const copy = statusCopy[newStatus]
+      if (!copy) return
+
+      let detailBlock = ''
+      if (newStatus === 'completed' && actualRate && actualAmount) {
+        detailBlock = `
+          <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">Taxa executada</td><td style="padding:8px 12px;font-weight:600;color:#111;">1 ${ccy} = ${brlA(actualRate)}</td></tr>
+          <tr><td style="padding:8px 12px;color:#6b7280;">Valor ${isOut ? 'enviado' : 'recebido'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${isOut ? fmtAdminCcy(actualAmount, ccy) : brlA(actualAmount)}</td></tr>
+          ${bankRef ? `<tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Ref bancária</td><td style="padding:8px 12px;font-family:monospace;font-size:12px;color:#111;">${esc(bankRef)}</td></tr>` : ''}
+        `
+        copy.body = 'Sua transferência foi concluída com sucesso. Abaixo os detalhes finais da operação.'
+      }
+      if (newStatus === 'cancelled' && cancelReason) {
+        detailBlock = `<tr><td style="padding:8px 12px;color:#6b7280;">Motivo</td><td style="padding:8px 12px;color:#111;">${esc(cancelReason)}</td></tr>`
+        copy.body = 'Lamentamos informar que sua transferência foi cancelada. Veja o motivo abaixo e entre em contato caso precise de ajuda.'
+      }
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+  <tr><td style="background:#0B1120;padding:24px 32px;">
+    <span style="color:#10B981;font-size:18px;font-weight:700;letter-spacing:0.5px;">SISBRAPAG</span>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Ref: <strong style="color:#111;">${esc(t.reference_code)}</strong></p>
+    <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#111827;">${copy.headline}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">${copy.body}</p>
+    ${detailBlock ? `<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">${detailBlock}</table>` : ''}
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">Referência</td><td style="padding:8px 12px;font-weight:600;color:#111;font-family:monospace;">${esc(t.reference_code)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">Direção</td><td style="padding:8px 12px;color:#111;">${isOut ? 'Saída (outbound)' : 'Entrada (inbound)'}</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Valor solicitado</td><td style="padding:8px 12px;color:#111;">${isOut ? brlA(t.amount_source) : fmtAdminCcy(t.amount_source, t.currency_source)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário' : 'Remetente'}</td><td style="padding:8px 12px;color:#111;">${esc(t.recipient_name || '—')}</td></tr>
+    </table>
+    <p style="margin:0;font-size:13px;color:#9ca3af;">Dúvidas? <a href="https://wa.me/5521987128712" style="color:#10B981;">WhatsApp</a> ou atendimento@sisbrapag.com</p>
+  </td></tr>
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">SISBRAPAG · atendimento@sisbrapag.com</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ to: [toEmail], subject: copy.subject, html }),
+      }).catch(() => {})
+    }
+
+    // ── Badge helper ────────────────────────────────────────
+
+    function atrRefreshBadge() {
       const pending = _atrAll.filter(x => x.status === 'submitted').length
       const badge = document.getElementById('admin-tr-badge')
       badge.textContent = pending
