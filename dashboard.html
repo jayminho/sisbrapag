@@ -50,6 +50,9 @@
         <a href="#" onclick="showSection('deposit')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-deposit">
           <i class="fa-solid fa-money-bill-transfer w-4 text-gray-400"></i> Deposit
         </a>
+        <a href="#" onclick="showSection('transfers')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-transfers">
+          <i class="fa-solid fa-globe w-4 text-gray-400"></i> Transferências
+        </a>
         <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
         </a>
@@ -525,6 +528,101 @@
           <div id="dep-step-status" class="hidden max-w-xl"></div>
         </section>
 
+        <!-- ===== TRANSFERS (Phase 4) ===== -->
+        <section id="section-transfers" class="section hidden">
+          <div class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 class="font-display text-2xl text-gray-900">Transferências</h1>
+              <p class="text-gray-500 text-sm mt-1">Envie ou receba do exterior, com câmbio e taxa transparentes.</p>
+            </div>
+            <div class="bg-white border border-gray-100 rounded-xl px-5 py-3">
+              <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-0.5">Saldo disponível</p>
+              <p class="font-display text-xl text-gray-900"><span id="tr-balance">R$ 0,00</span></p>
+            </div>
+          </div>
+
+          <div id="tr-loading" class="text-sm text-gray-400 py-10">Carregando…</div>
+
+          <!-- STEP 1: direction -->
+          <div id="tr-step-direction" class="hidden max-w-xl">
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-3">O QUE VOCÊ QUER FAZER?</p>
+            <div class="grid sm:grid-cols-2 gap-4">
+              <button onclick="trPickDirection('outbound')" class="text-left bg-white border border-gray-200 hover:border-emerald-400 hover:ring-2 hover:ring-emerald-100 rounded-xl p-5 transition">
+                <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-paper-plane text-emerald-500"></i><span class="font-semibold text-gray-900">Enviar ao exterior</span></div>
+                <p class="text-sm text-gray-500">Pague em BRL do seu saldo. O destinatário recebe em USD, EUR ou GBP.</p>
+              </button>
+              <button onclick="trPickDirection('inbound')" class="text-left bg-white border border-gray-200 hover:border-emerald-400 hover:ring-2 hover:ring-emerald-100 rounded-xl p-5 transition">
+                <div class="flex items-center gap-2 mb-2"><i class="fa-solid fa-download text-gray-500"></i><span class="font-semibold text-gray-900">Receber do exterior</span></div>
+                <p class="text-sm text-gray-500">Alguém te envia USD, EUR ou GBP. Você recebe o valor em BRL no seu saldo.</p>
+              </button>
+            </div>
+          </div>
+
+          <!-- STEP 2: amount & currency -->
+          <div id="tr-step-amount" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="trGoto('direction')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+
+            <!-- OUTBOUND inputs -->
+            <div id="tr-amount-outbound" class="hidden">
+              <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">VOCÊ ENVIA (BRL)</p>
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-lg font-medium text-gray-400">R$</span>
+                <input id="tr-amount-out" type="number" min="1" step="0.01" placeholder="0,00"
+                  class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+              </div>
+              <div class="flex items-center justify-between mb-4">
+                <label class="text-sm text-gray-500">Destinatário recebe em</label>
+                <select id="tr-target-ccy" class="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-400">
+                  <option value="USD">USD — Dólar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — Libra</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- INBOUND inputs -->
+            <div id="tr-amount-inbound" class="hidden">
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-semibold tracking-widest text-gray-400">VALOR ESPERADO</p>
+                <select id="tr-source-ccy" class="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-400">
+                  <option value="USD">USD — Dólar</option>
+                  <option value="EUR">EUR — Euro</option>
+                  <option value="GBP">GBP — Libra</option>
+                </select>
+              </div>
+              <div class="flex items-center gap-3 mb-4">
+                <span id="tr-source-symbol" class="text-lg font-medium text-gray-400">$</span>
+                <input id="tr-amount-in" type="number" min="1" step="0.01" placeholder="0.00"
+                  class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+              </div>
+            </div>
+
+            <p id="tr-amount-err" class="text-xs text-red-500 min-h-[16px]"></p>
+
+            <!-- quote box -->
+            <div class="bg-gray-50 border border-gray-100 rounded-xl divide-y divide-gray-100 text-sm mb-3">
+              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa hoje</span><span id="tr-rate-line" class="font-medium text-gray-800">—</span></div>
+              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa SISBRAPAG (<span id="tr-fee-pct">3</span>%)</span><span id="tr-fee-line" class="font-medium text-gray-800">—</span></div>
+              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400" id="tr-result-label">Valor estimado</span><span id="tr-result-line" class="font-semibold text-emerald-700">—</span></div>
+            </div>
+            <p id="tr-rate-status" class="text-xs text-gray-400 mb-1"></p>
+            <p id="tr-balance-note" class="hidden text-xs mb-3"></p>
+
+            <button id="tr-amount-next" onclick="trAmountNext()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">Continuar →</button>
+            <p class="mt-3 text-xs text-gray-400 text-center">Valor estimado. A taxa de câmbio final é confirmada no momento da execução.</p>
+          </div>
+
+          <!-- STEP 3: recipient (built in Sprint C) -->
+          <div id="tr-step-recipient" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="trGoto('amount')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <div class="text-center py-8">
+              <i class="fa-solid fa-screwdriver-wrench text-gray-300 text-2xl mb-3"></i>
+              <p class="text-sm text-gray-500">Próxima etapa: dados do destinatário e finalidade.</p>
+              <p id="tr-summary-pre" class="text-xs text-gray-400 mt-3"></p>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -947,6 +1045,7 @@
       _origShowSection(name)
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
       if (name === 'documents') loadDocuments()
+      if (name === 'transfers') { if (!trReady) { setupTransfers(); trReady = true } loadTransfers() }
       if (name === 'deposit') loadDeposit()
       else depStopCountdown()
       if (name === 'messages') { loadUserMessages(true); startMsgPoll() }
@@ -954,6 +1053,144 @@
     }
 
     function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+    // ── Transfers (Phase 4 — Sprint B: direction + amount/rate/fee) ──────────
+    // Default fees (locked): 3% + flat per target currency. Flat is in the target currency.
+    const TR_CCYS = {
+      USD: { symbol: '$', name: 'Dólar', flat: 30 },
+      EUR: { symbol: '€', name: 'Euro',  flat: 1 },
+      GBP: { symbol: '£', name: 'Libra', flat: 1 },
+    }
+    let trState = { direction: null, ccy: 'USD', amount: 0, rate: null, feeBrl: 0, resultAmt: 0 }
+    let trBalance = 0
+    let trReady = false
+    let trRateTimer = null
+
+    const fmtCcy = (n, ccy) => (TR_CCYS[ccy]?.symbol || '') + ' ' +
+      Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+    function trShow(step) {
+      ['loading', 'step-direction', 'step-amount', 'step-recipient']
+        .forEach(s => document.getElementById('tr-' + s).classList.add('hidden'))
+      if (step) document.getElementById('tr-' + step).classList.remove('hidden')
+    }
+    function trGoto(step) { trShow('step-' + step) }
+
+    async function loadTransfers() {
+      trShow('loading')
+      document.getElementById('tr-fee-pct').textContent = String(effectiveFeePct)
+      try {
+        const { data } = await sb.from('deposits').select('amount')
+          .eq('user_id', currentUser.id).eq('status', 'credited')
+        trBalance = (data || []).reduce((s, d) => s + Number(d.amount), 0)
+      } catch (_) { trBalance = 0 }
+      document.getElementById('tr-balance').textContent = brl(trBalance)
+      trShow('step-direction')
+    }
+
+    function trPickDirection(dir) {
+      trState.direction = dir
+      document.getElementById('tr-amount-outbound').classList.toggle('hidden', dir !== 'outbound')
+      document.getElementById('tr-amount-inbound').classList.toggle('hidden', dir !== 'inbound')
+      document.getElementById('tr-result-label').textContent = dir === 'outbound' ? 'Destinatário recebe' : 'Você recebe'
+      document.getElementById('tr-amount-out').value = ''
+      document.getElementById('tr-amount-in').value = ''
+      document.getElementById('tr-amount-err').textContent = ''
+      document.getElementById('tr-balance-note').classList.add('hidden')
+      trState.rate = null; trState.resultAmt = 0
+      trResetQuote()
+      trGoto('amount')
+    }
+
+    function trResetQuote() {
+      document.getElementById('tr-rate-line').textContent = '—'
+      document.getElementById('tr-fee-line').textContent = '—'
+      document.getElementById('tr-result-line').textContent = '—'
+      document.getElementById('tr-rate-status').textContent = ''
+    }
+
+    function trCurrentCcy() {
+      return trState.direction === 'outbound'
+        ? document.getElementById('tr-target-ccy').value
+        : document.getElementById('tr-source-ccy').value
+    }
+    function trCurrentAmount() {
+      const el = trState.direction === 'outbound'
+        ? document.getElementById('tr-amount-out')
+        : document.getElementById('tr-amount-in')
+      return parseFloat(el.value) || 0
+    }
+
+    async function trRecompute() {
+      const ccy = trCurrentCcy(); trState.ccy = ccy
+      const amount = trCurrentAmount(); trState.amount = amount
+      const pct = effectiveFeePct
+      const flat = TR_CCYS[ccy]?.flat || 0
+      if (trState.direction === 'inbound')
+        document.getElementById('tr-source-symbol').textContent = TR_CCYS[ccy]?.symbol || ''
+      if (!amount || amount <= 0) { trResetQuote(); trState.resultAmt = 0; trState.rate = null; trUpdateBalanceNote(0); return }
+      document.getElementById('tr-rate-status').textContent = 'Buscando câmbio…'
+      const rateCcyToBrl = await cvGetRate(ccy, 'BRL') // 1 ccy = X BRL
+      if (!rateCcyToBrl) { document.getElementById('tr-rate-status').textContent = 'Não foi possível obter o câmbio.'; trState.rate = null; return }
+      trState.rate = rateCcyToBrl
+      document.getElementById('tr-rate-line').textContent = `1 ${ccy} = ${brl(rateCcyToBrl)}`
+      const flatNote = flat ? ` (${pct}% + ${fmtCcy(flat, ccy)})` : ` (${pct}%)`
+      if (trState.direction === 'outbound') {
+        const amountBrl = amount
+        const feeBrl = amountBrl * pct / 100 + flat * rateCcyToBrl
+        const netBrl = Math.max(0, amountBrl - feeBrl)
+        const est = netBrl / rateCcyToBrl
+        trState.feeBrl = feeBrl; trState.resultAmt = est
+        document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
+        document.getElementById('tr-result-line').textContent = `${fmtCcy(est, ccy)} ${ccy}`
+        trUpdateBalanceNote(amountBrl)
+      } else {
+        const grossBrl = amount * rateCcyToBrl
+        const feeBrl = grossBrl * pct / 100 + flat * rateCcyToBrl
+        const netBrl = Math.max(0, grossBrl - feeBrl)
+        trState.feeBrl = feeBrl; trState.resultAmt = netBrl
+        document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
+        document.getElementById('tr-result-line').textContent = brl(netBrl)
+      }
+      document.getElementById('tr-rate-status').textContent = 'Câmbio atualizado · APIs públicas'
+    }
+
+    function trUpdateBalanceNote(amountBrl) {
+      const note = document.getElementById('tr-balance-note')
+      const nextBtn = document.getElementById('tr-amount-next')
+      if (trState.direction !== 'outbound' || !amountBrl) { note.classList.add('hidden'); nextBtn.disabled = false; return }
+      note.classList.remove('hidden')
+      if (amountBrl > trBalance) {
+        note.className = 'text-xs mb-3 text-red-600'
+        note.innerHTML = `Saldo insuficiente (disponível ${brl(trBalance)}). <a href="#" onclick="showSection('deposit');return false" class="underline font-medium">Depositar agora</a>`
+        nextBtn.disabled = true
+      } else {
+        note.className = 'text-xs mb-3 text-emerald-600'
+        note.textContent = `Saldo suficiente (disponível ${brl(trBalance)}).`
+        nextBtn.disabled = false
+      }
+    }
+
+    function trAmountNext() {
+      const err = document.getElementById('tr-amount-err')
+      const amount = trCurrentAmount()
+      if (!amount || amount <= 0) { err.textContent = 'Informe um valor válido.'; return }
+      if (trState.direction === 'outbound' && amount > trBalance) { err.textContent = 'Saldo insuficiente. Faça um depósito primeiro.'; return }
+      if (!trState.rate) { err.textContent = 'Aguarde o câmbio carregar.'; return }
+      err.textContent = ''
+      document.getElementById('tr-summary-pre').textContent = trState.direction === 'outbound'
+        ? `${brl(amount)} → ~${fmtCcy(trState.resultAmt, trState.ccy)} ${trState.ccy}`
+        : `${fmtCcy(amount, trState.ccy)} ${trState.ccy} → ~${brl(trState.resultAmt)}`
+      trGoto('recipient')
+    }
+
+    function setupTransfers() {
+      const recompute = () => { clearTimeout(trRateTimer); trRateTimer = setTimeout(trRecompute, 300) }
+      document.getElementById('tr-amount-out').addEventListener('input', recompute)
+      document.getElementById('tr-amount-in').addEventListener('input', recompute)
+      document.getElementById('tr-target-ccy').addEventListener('change', recompute)
+      document.getElementById('tr-source-ccy').addEventListener('change', recompute)
+    }
 
     // ── Messaging ────────────────────────────────────────────
     async function loadUserMessages(markRead = false) {
