@@ -1181,6 +1181,19 @@
     // Effective fee rate for this user (%). Platform default 3.0; admin can override per-user.
     const DEFAULT_FEE_PCT = 3.0
     let effectiveFeePct = DEFAULT_FEE_PCT
+    // Per-user transaction limits in BRL. null = no limit.
+    let minTxBrl = null
+    let maxTxBrl = null
+
+    // Returns an error string if amount_brl violates the user's limits, otherwise null.
+    function checkTxLimit(amountBrl) {
+      const fmt = v => 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      if (minTxBrl !== null && amountBrl < minTxBrl)
+        return `Valor mínimo para esta operação: ${fmt(minTxBrl)}.`
+      if (maxTxBrl !== null && amountBrl > maxTxBrl)
+        return `Valor máximo para esta operação: ${fmt(maxTxBrl)}.`
+      return null
+    }
 
     async function init() {
       const { data: { session } } = await sb.auth.getSession()
@@ -1205,9 +1218,11 @@
       // Fetch real status from profiles table
       let realStatus = 'pending'
       try {
-        const { data: profile } = await sb.from('profiles').select('status, fee_pct_override').eq('id', user.id).single()
+        const { data: profile } = await sb.from('profiles').select('status, fee_pct_override, min_tx_brl, max_tx_brl').eq('id', user.id).single()
         if (profile?.status) realStatus = profile.status
         effectiveFeePct = (profile?.fee_pct_override ?? null) !== null ? Number(profile.fee_pct_override) : DEFAULT_FEE_PCT
+        minTxBrl = (profile?.min_tx_brl ?? null) !== null ? Number(profile.min_tx_brl) : null
+        maxTxBrl = (profile?.max_tx_brl ?? null) !== null ? Number(profile.max_tx_brl) : null
       } catch (_) {}
 
       const isActive = realStatus === 'active'
@@ -2075,6 +2090,8 @@
         err.textContent = 'Aceite os Termos de Uso para continuar.'
         return
       }
+      const limitErr = checkTxLimit(trState.amount)
+      if (limitErr) { err.textContent = limitErr; err.classList.remove('hidden'); return }
       const btn = document.getElementById('tr-submit-btn')
       btn.disabled = true; btn.textContent = 'Enviando…'
       err.textContent = ''
@@ -2499,6 +2516,8 @@
       const err = document.getElementById('dep-amount-err')
       const amt = parseFloat(document.getElementById('dep-amount').value)
       if (!amt || amt <= 0) { err.textContent = 'Informe um valor válido.'; return }
+      const limitErr = checkTxLimit(amt)
+      if (limitErr) { err.textContent = limitErr; return }
       err.textContent = ''
       const btn = document.getElementById('dep-amount-next'); btn.disabled = true
 
@@ -2911,6 +2930,8 @@
     async function cxSubmitBuy() {
       const btn = document.getElementById('cx-buy-submit-btn')
       const errEl = document.getElementById('cx-buy-submit-err')
+      const limitErr = checkTxLimit(cxState.brlAmount)
+      if (limitErr) { errEl.textContent = limitErr; errEl.classList.remove('hidden'); return }
       btn.disabled = true; btn.textContent = 'Enviando…'
       const s = cxState; s.refCode = cxRefCode()
       const { error } = await sb.from('crypto_orders').insert({
@@ -3014,6 +3035,9 @@
     async function cxSubmitSell() {
       const btn = document.getElementById('cx-sell-submit-btn')
       const errEl = document.getElementById('cx-sell-submit-err')
+      const grossBrl = cxState.brlAmount + cxState.feeBrl
+      const limitErr = checkTxLimit(grossBrl)
+      if (limitErr) { errEl.textContent = limitErr; errEl.classList.remove('hidden'); return }
       btn.disabled = true; btn.textContent = 'Enviando…'
       const s = cxState; s.refCode = cxRefCode()
       const { error } = await sb.from('crypto_orders').insert({
