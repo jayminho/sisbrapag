@@ -2686,7 +2686,7 @@
           headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
           body: JSON.stringify({
             name,
-            amount: d.amount_brl?.toFixed(2),
+            amount: (d.amount ?? d.amount_brl)?.toFixed(2),
             method: d.method,
             ref: d.reference_code
           })
