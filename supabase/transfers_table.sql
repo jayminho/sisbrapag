@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS public.transfer_requests (
   cancelled_reason      text,
 
   -- Admin fields
-  reviewed_by           text,
+  reviewed_by           uuid references auth.users,   -- admin user id (matches deposits.reviewed_by)
   reviewed_at           timestamptz,
   processing_started_at timestamptz,
   completed_at          timestamptz,
