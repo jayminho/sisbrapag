@@ -869,14 +869,96 @@
             <button onclick="trRecipientNext()" class="w-full mt-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Continuar →</button>
           </div>
 
-          <!-- STEP 4: purpose (built in Sprint D) -->
+          <!-- STEP 4: purpose -->
           <div id="tr-step-purpose" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
             <button onclick="trGoto('recipient')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
-            <div class="text-center py-8">
-              <i class="fa-solid fa-screwdriver-wrench text-gray-300 text-2xl mb-3"></i>
-              <p class="text-sm text-gray-500">Sprint D: finalidade BACEN + confirmação.</p>
+            <div class="bg-gray-50 rounded-xl px-4 py-2.5 mb-5 text-sm text-gray-600 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+              <span id="tr-purpose-summary" class="font-medium"></span>
+            </div>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-4">FINALIDADE DA OPERAÇÃO (BACEN)</p>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Natureza da operação *</label>
+                <select id="tr-purpose-code" onchange="trPurposeCodeChange()"
+                  class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                  <option value="">Selecione a finalidade…</option>
+                  <option value="SERVICOS">Pagamento de serviços ao exterior</option>
+                  <option value="IMPORTACAO">Importação de mercadorias</option>
+                  <option value="REMESSA_PF">Remessa pessoal ao exterior</option>
+                  <option value="MANUTENCAO">Manutenção de residente no exterior</option>
+                  <option value="INVESTIMENTO">Investimento no exterior</option>
+                  <option value="DIVIDENDOS">Remessa de dividendos e lucros</option>
+                  <option value="ROYALTIES">Royalties e licenças</option>
+                  <option value="OUTROS">Outros (descrever abaixo)</option>
+                </select>
+                <p id="tr-purpose-code-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+              </div>
+              <div id="tr-purpose-desc-wrap" class="hidden">
+                <label class="block text-xs font-medium text-gray-600 mb-1">Descrição *</label>
+                <input id="tr-purpose-desc" type="text" placeholder="Descreva a finalidade da transferência"
+                  class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                <p id="tr-purpose-desc-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Nota / Referência <span class="text-gray-400">(opcional — invoice, contrato, etc.)</span></label>
+                <input id="tr-purpose-note" type="text" placeholder="Ex: Invoice #2024-042"
+                  class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+              </div>
+            </div>
+            <p id="tr-purpose-err" class="text-xs text-red-500 mt-4 min-h-[16px]"></p>
+            <button onclick="trPurposeNext()" class="w-full mt-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Continuar →</button>
+          </div>
+
+          <!-- STEP 5: confirm -->
+          <div id="tr-step-confirm" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="trGoto('purpose')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <div class="bg-gray-50 rounded-xl px-4 py-2.5 mb-5 text-sm text-gray-600 flex items-center gap-2">
+              <i class="fa-solid fa-receipt text-emerald-500 text-xs"></i>
+              <span id="tr-confirm-summary" class="font-medium font-mono"></span>
+            </div>
+            <p class="text-xs font-semibold tracking-widest text-gray-400 mb-4">CONFIRMAR SOLICITAÇÃO</p>
+            <div id="tr-confirm-body"></div>
+            <label class="flex items-start gap-2.5 mt-2 mb-4 cursor-pointer">
+              <input type="checkbox" id="tr-terms-check" class="mt-0.5 accent-emerald-600">
+              <span class="text-xs text-gray-500">Li e concordo com os <a href="/terms.html" target="_blank" class="underline text-emerald-600">Termos de Uso</a> e autorizo a SISBRAPAG a processar esta solicitação.</span>
+            </label>
+            <p id="tr-confirm-err" class="text-xs text-red-500 mb-3 min-h-[16px]"></p>
+            <button onclick="trSubmit()" id="tr-submit-btn"
+              class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition">
+              Enviar solicitação →
+            </button>
+          </div>
+
+          <!-- STEP 6: status -->
+          <div id="tr-step-status" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <div class="flex items-center gap-3 mb-5">
+              <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-check text-emerald-600"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Solicitação enviada!</p>
+                <p class="text-xs text-gray-500">Ref: <span id="tr-status-ref" class="font-mono font-medium text-gray-700"></span></p>
+              </div>
+            </div>
+            <div class="bg-gray-50 rounded-xl px-4 py-2.5 mb-5 text-sm text-gray-600">
+              <span id="tr-status-amount" class="font-medium"></span>
+            </div>
+            <div id="tr-status-timeline" class="mb-5"></div>
+            <p class="text-xs text-gray-400 mb-5">Nossa equipe entrará em contato em até 1 dia útil. Você também receberá um e-mail de confirmação.</p>
+            <button onclick="loadTransfers()" class="w-full py-2.5 border border-gray-200 hover:border-gray-300 text-gray-600 text-sm font-medium rounded-xl transition">
+              + Nova transferência
+            </button>
+          </div>
+
+          <!-- History -->
+          <div class="mt-8 max-w-xl">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Minhas transferências</h3>
+            <div id="tr-history-list" class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+              <p class="text-sm text-gray-400 py-6 text-center">Carregando…</p>
             </div>
           </div>
+
         </section>
 
       </div>
@@ -1326,7 +1408,7 @@
       Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     function trShow(step) {
-      ['loading', 'step-direction', 'step-amount', 'step-recipient', 'step-purpose']
+      ['loading', 'step-direction', 'step-amount', 'step-recipient', 'step-purpose', 'step-confirm', 'step-status']
         .forEach(s => document.getElementById('tr-' + s).classList.add('hidden'))
       if (step) document.getElementById('tr-' + step).classList.remove('hidden')
     }
@@ -1342,6 +1424,7 @@
       } catch (_) { trBalance = 0 }
       document.getElementById('tr-balance').textContent = brl(trBalance)
       trShow('step-direction')
+      loadTransferHistory()
     }
 
     function trPickDirection(dir) {
@@ -1681,6 +1764,328 @@
       document.getElementById('tr-amount-in').addEventListener('input', recompute)
       document.getElementById('tr-target-ccy').addEventListener('change', recompute)
       document.getElementById('tr-source-ccy').addEventListener('change', recompute)
+    }
+
+    // ── Transfer Step 4: Purpose ────────────────────────────
+
+    const BACEN_LABELS = {
+      SERVICOS:     'Pagamento de serviços ao exterior',
+      IMPORTACAO:   'Importação de mercadorias',
+      REMESSA_PF:   'Remessa pessoal ao exterior',
+      MANUTENCAO:   'Manutenção de residente no exterior',
+      INVESTIMENTO: 'Investimento no exterior',
+      DIVIDENDOS:   'Remessa de dividendos e lucros',
+      ROYALTIES:    'Royalties e licenças',
+      OUTROS:       'Outros',
+    }
+
+    function trPurposeCodeChange() {
+      const code = document.getElementById('tr-purpose-code').value
+      document.getElementById('tr-purpose-desc-wrap').classList.toggle('hidden', code !== 'OUTROS')
+      document.getElementById('tr-purpose-code-err').textContent = ''
+    }
+
+    function trPurposeNext() {
+      const code = document.getElementById('tr-purpose-code').value
+      const desc = document.getElementById('tr-purpose-desc').value.trim()
+      const note = document.getElementById('tr-purpose-note').value.trim()
+      const codeErr = document.getElementById('tr-purpose-code-err')
+      const descErr = document.getElementById('tr-purpose-desc-err')
+      if (descErr) descErr.textContent = ''
+      codeErr.textContent = code ? '' : 'Selecione a finalidade da operação.'
+      if (!code) return
+      if (code === 'OUTROS') {
+        if (descErr) descErr.textContent = desc ? '' : 'Descreva a finalidade quando selecionar "Outros".'
+        if (!desc) return
+      }
+      trState.purpose = {
+        purpose_code: code,
+        purpose_description: BACEN_LABELS[code] + (code === 'OUTROS' && desc ? ` — ${desc}` : ''),
+        reference_note: note,
+      }
+      trBuildConfirm()
+      trGoto('confirm')
+    }
+
+    // ── Transfer Step 5: Confirm ────────────────────────────
+
+    function trBuildConfirm() {
+      const s = trState
+      const isOut = s.direction === 'outbound'
+      const ccy   = s.ccy
+
+      // Generate reference code (6-digit numeric, TR- prefix)
+      s.refCode = 'TR-' + String(Math.floor(100000 + Math.random() * 900000))
+
+      const r = s.recipient
+      const rows = [
+        ['Referência',          s.refCode],
+        ['Direção',             isOut ? 'Envio (outbound)' : 'Recebimento (inbound)'],
+        ['Você ' + (isOut ? 'envia' : 'aguarda'), isOut ? brl(s.amount) : fmtCcy(s.amount, ccy) + ' ' + ccy],
+        ['Câmbio estimado',     `1 ${ccy} = ${brl(s.rate)}`],
+        ['Taxa SISBRAPAG (' + effectiveFeePct + '%)', brl(s.feeBrl)],
+        [isOut ? 'Destinatário recebe ≈' : 'Você recebe ≈', isOut ? fmtCcy(s.resultAmt, ccy) + ' ' + ccy : brl(s.resultAmt)],
+      ]
+
+      if (isOut) {
+        rows.push(['Destinatário', r.recipient_name + ' · ' + r.recipient_country])
+        if (r.routing_type === 'iban')      { rows.push(['IBAN', r.iban], ['BIC/SWIFT', r.bic_swift]) }
+        else if (r.routing_type === 'sort_code') { rows.push(['Sort Code', r.sort_code], ['Conta', r.account_number]) }
+        else if (r.routing_type === 'ach')  { rows.push(['ABA Routing', r.ach_routing], ['Conta', r.account_number], ['Banco', r.bank_name]) }
+        else                                { rows.push(['BIC/SWIFT', r.bic_swift], ['Conta', r.account_number], ['Banco', r.bank_name]) }
+      } else {
+        rows.push(['Remetente', r.senderName + ' · ' + r.senderCountry])
+        rows.push(['Método', r.method?.toUpperCase()])
+      }
+
+      rows.push(['Finalidade', s.purpose.purpose_description])
+      if (s.purpose.reference_note) rows.push(['Nota / Ref', s.purpose.reference_note])
+
+      document.getElementById('tr-confirm-body').innerHTML =
+        `<div class="divide-y divide-gray-50 rounded-xl border border-gray-100 overflow-hidden text-sm mb-4">
+          ${rows.map(([k, v]) => `
+            <div class="flex justify-between gap-4 px-4 py-2.5 odd:bg-gray-50/50">
+              <span class="text-gray-500 shrink-0">${k}</span>
+              <span class="text-gray-800 font-medium text-right break-all">${esc(String(v ?? ''))}</span>
+            </div>`).join('')}
+        </div>
+        <p class="text-xs text-gray-400 mb-4">Valor estimado. A taxa de câmbio final é confirmada no momento da execução pela parceira bancária.</p>`
+
+      document.getElementById('tr-confirm-summary').textContent = s.refCode
+      document.getElementById('tr-terms-check').checked = false
+      document.getElementById('tr-confirm-err').textContent = ''
+
+      // Populate purpose summary bar (step 4 → 5 transition bar)
+      const r2 = s.recipient
+      const recipLabel = isOut ? (r2.recipient_name || 'Destinatário') : (r2.senderName || 'Remetente')
+      document.getElementById('tr-purpose-summary').textContent = `${recipLabel} · ${isOut ? brl(s.amount) : fmtCcy(s.amount, ccy) + ' ' + ccy}`
+    }
+
+    async function trSubmit() {
+      const err = document.getElementById('tr-confirm-err')
+      if (!document.getElementById('tr-terms-check').checked) {
+        err.textContent = 'Aceite os Termos de Uso para continuar.'
+        return
+      }
+      const btn = document.getElementById('tr-submit-btn')
+      btn.disabled = true; btn.textContent = 'Enviando…'
+      err.textContent = ''
+
+      const s = trState
+      const isOut = s.direction === 'outbound'
+      const r = s.recipient
+
+      const row = {
+        user_id:            currentUser.id,
+        reference_code:     s.refCode,
+        direction:          s.direction,
+        amount_source:      isOut ? s.amount : s.amount,
+        currency_source:    isOut ? 'BRL' : s.ccy,
+        amount_target:      isOut ? s.resultAmt : null,
+        currency_target:    isOut ? s.ccy : 'BRL',
+        fx_rate_at_request: s.rate,
+        fee_pct:            effectiveFeePct,
+        fee_brl:            s.feeBrl,
+        // recipient / sender
+        recipient_name:     isOut ? r.recipient_name    : r.senderName,
+        recipient_country:  isOut ? r.recipient_country : r.senderCountry,
+        routing_type:       r.routing_type || r.method  || 'swift',
+        iban:               r.iban          || null,
+        bic_swift:          r.bic_swift     || null,
+        sort_code:          r.sort_code     || null,
+        account_number:     r.account_number|| null,
+        ach_routing:        r.ach_routing   || null,
+        bank_name:          r.bank_name     || null,
+        bank_address:       r.bank_address  || null,
+        recipient_tax_id:   r.recipient_tax_id || null,
+        // purpose
+        purpose_code:        s.purpose.purpose_code,
+        purpose_description: s.purpose.purpose_description,
+        reference_note:      s.purpose.reference_note || null,
+        status:              'submitted',
+      }
+
+      const { error: dbErr } = await sb.from('transfer_requests').insert(row)
+      if (dbErr) {
+        err.textContent = 'Erro ao enviar: ' + dbErr.message
+        btn.disabled = false; btn.textContent = 'Enviar solicitação →'
+        return
+      }
+
+      // Non-blocking notifications
+      const meta = currentUser.user_metadata || {}
+      const userName = meta.full_name || currentUser.email
+      trNotifySubmit(s, userName, r, isOut)
+
+      trGoto('status')
+      trRenderStatusTimeline()
+      loadTransferHistory()
+    }
+
+    function trNotifySubmit(s, userName, r, isOut) {
+      const ccy = s.ccy
+      const recipLabel = isOut ? r.recipient_name : r.senderName
+      const bankLabel  = r.bank_name || r.method?.toUpperCase() || r.routing_type?.toUpperCase() || ''
+      const dirStr     = isOut
+        ? `Saída: ${brl(s.amount)} → ${ccy}`
+        : `Entrada esperada: ${fmtCcy(s.amount, ccy)} ${ccy}`
+
+      // User confirmation email
+      const emailHtml = trBuildSubmitEmailHtml(s, userName, r, isOut)
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [currentUser.email],
+          subject: `Solicitação de transferência recebida — ${s.refCode}`,
+          html: emailHtml,
+        })
+      }).catch(() => {})
+
+      // Telegram admin notification
+      fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          type: 'transfer',
+          userName,
+          userEmail: currentUser.email,
+          direction: dirStr,
+          recipient: recipLabel,
+          bank: bankLabel,
+          purpose: s.purpose.purpose_description,
+          refCode: s.refCode,
+        })
+      }).catch(() => {})
+    }
+
+    function trBuildSubmitEmailHtml(s, userName, r, isOut) {
+      const ccy  = s.ccy
+      const firstName = userName.split(' ')[0]
+      const amtSend = isOut ? brl(s.amount) : `${fmtCcy(s.amount, ccy)} ${ccy}`
+      const amtRecv = isOut ? `~${fmtCcy(s.resultAmt, ccy)} ${ccy}` : `~${brl(s.resultAmt)}`
+      const recipName = isOut ? r.recipient_name : r.senderName
+      const routingStr = (() => {
+        if (!isOut) return `Método: ${r.method?.toUpperCase()}`
+        if (r.routing_type === 'iban')       return `IBAN: ${r.iban}`
+        if (r.routing_type === 'sort_code')  return `Sort Code: ${r.sort_code} · Conta: ${r.account_number}`
+        if (r.routing_type === 'ach')        return `ABA: ${r.ach_routing} · Conta: ${r.account_number}`
+        return `BIC/SWIFT: ${r.bic_swift} · Conta: ${r.account_number}`
+      })()
+      return `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+  <tr><td style="background:#0B1120;padding:24px 32px;">
+    <span style="color:#10B981;font-size:18px;font-weight:700;letter-spacing:0.5px;">SISBRAPAG</span>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Ref: <strong style="color:#111;">${esc(s.refCode)}</strong></p>
+    <h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111827;">Solicitação recebida, ${esc(firstName)}!</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">Recebemos sua solicitação de transferência. Nossa equipe entrará em contato em até <strong style="color:#111;">1 dia útil</strong>.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">Você ${isOut ? 'envia' : 'aguarda'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtSend)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário recebe ≈' : 'Você recebe ≈'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtRecv)}</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Câmbio estimado</td><td style="padding:8px 12px;color:#111;">1 ${ccy} = ${brl(s.rate)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">Taxa SISBRAPAG</td><td style="padding:8px 12px;color:#111;">${brl(s.feeBrl)} (${effectiveFeePct}%)</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário' : 'Remetente'}</td><td style="padding:8px 12px;color:#111;">${esc(recipName)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">Roteamento</td><td style="padding:8px 12px;color:#111;font-family:monospace;font-size:12px;">${esc(routingStr)}</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Finalidade</td><td style="padding:8px 12px;color:#111;">${esc(s.purpose.purpose_description)}</td></tr>
+      ${s.purpose.reference_note ? `<tr><td style="padding:8px 12px;color:#6b7280;">Nota / Ref</td><td style="padding:8px 12px;color:#111;">${esc(s.purpose.reference_note)}</td></tr>` : ''}
+    </table>
+    <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Dúvidas? Fale conosco pelo <a href="https://wa.me/5521987128712" style="color:#10B981;">WhatsApp</a> ou responda este e-mail.</p>
+  </td></tr>
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">SISBRAPAG · atendimento@sisbrapag.com</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+    }
+
+    // ── Transfer Step 6: Status timeline ───────────────────
+
+    function trRenderStatusTimeline() {
+      const s = trState
+      const isOut = s.direction === 'outbound'
+      const ccy = s.ccy
+      document.getElementById('tr-status-ref').textContent = s.refCode
+      document.getElementById('tr-status-amount').textContent = isOut
+        ? `${brl(s.amount)} → ~${fmtCcy(s.resultAmt, ccy)} ${ccy}`
+        : `${fmtCcy(s.amount, ccy)} ${ccy} aguardado → ~${brl(s.resultAmt)}`
+
+      const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      const steps = [
+        { label: 'Solicitação recebida', done: true,  date: today },
+        { label: 'Em análise',           done: false, date: '' },
+        { label: 'Em processamento',     done: false, date: '' },
+        { label: 'Concluída',            done: false, date: '' },
+      ]
+      document.getElementById('tr-status-timeline').innerHTML = `
+        <div class="space-y-3">
+          ${steps.map((step, i) => `
+            <div class="flex items-start gap-3">
+              <div class="flex flex-col items-center shrink-0">
+                <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${step.done ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-400'}">
+                  ${step.done ? '<i class="fa-solid fa-check text-[10px]"></i>' : `<span class="text-[10px]">${i + 1}</span>`}
+                </div>
+                ${i < steps.length - 1 ? `<div class="w-px h-4 mt-1 ${step.done ? 'bg-emerald-200' : 'bg-gray-100'}"></div>` : ''}
+              </div>
+              <div class="pb-1">
+                <p class="text-sm ${step.done ? 'font-semibold text-gray-900' : 'text-gray-400'}">${step.label}</p>
+                ${step.date ? `<p class="text-xs text-gray-400">${step.date}</p>` : ''}
+              </div>
+            </div>`).join('')}
+        </div>`
+    }
+
+    // ── Transfer history list ───────────────────────────────
+
+    async function loadTransferHistory() {
+      const list = document.getElementById('tr-history-list')
+      if (!list || !currentUser) return
+      const { data, error } = await sb
+        .from('transfer_requests')
+        .select('id, reference_code, direction, amount_source, currency_source, amount_target, currency_target, status, created_at')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error || !data || data.length === 0) {
+        list.innerHTML = '<p class="text-sm text-gray-400 py-6 text-center">Nenhuma transferência ainda.</p>'
+        return
+      }
+
+      const ST = {
+        submitted:    { label: 'Enviada',          cls: 'bg-yellow-100 text-yellow-800' },
+        under_review: { label: 'Em análise',       cls: 'bg-blue-100 text-blue-800' },
+        processing:   { label: 'Em processamento', cls: 'bg-indigo-100 text-indigo-800' },
+        completed:    { label: 'Concluída',        cls: 'bg-emerald-100 text-emerald-800' },
+        cancelled:    { label: 'Cancelada',        cls: 'bg-red-100 text-red-800' },
+      }
+
+      list.innerHTML = data.map(t => {
+        const st   = ST[t.status] || { label: t.status, cls: 'bg-gray-100 text-gray-600' }
+        const date = new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        const isOut = t.direction === 'outbound'
+        const amtStr = isOut
+          ? `${brl(t.amount_source)} → ${t.currency_target}`
+          : `${t.currency_source} → ${brl(t.amount_source ?? 0)}`
+        return `<div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-lg ${isOut ? 'bg-orange-50' : 'bg-emerald-50'} flex items-center justify-center shrink-0">
+              <i class="fa-solid ${isOut ? 'fa-arrow-up-right text-orange-500' : 'fa-arrow-down-left text-emerald-500'} text-xs"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-800 font-mono">${esc(t.reference_code)}</p>
+              <p class="text-xs text-gray-400 truncate">${amtStr} · ${date}</p>
+            </div>
+          </div>
+          <span class="badge ${st.cls} ml-3 shrink-0 text-xs">${st.label}</span>
+        </div>`
+      }).join('')
     }
 
     // ── Messaging ────────────────────────────────────────────
