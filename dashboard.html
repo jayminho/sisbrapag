@@ -612,13 +612,269 @@
             <p class="mt-3 text-xs text-gray-400 text-center">Valor estimado. A taxa de câmbio final é confirmada no momento da execução.</p>
           </div>
 
-          <!-- STEP 3: recipient (built in Sprint C) -->
+          <!-- STEP 3: recipient -->
           <div id="tr-step-recipient" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
             <button onclick="trGoto('amount')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+
+            <!-- Summary bar -->
+            <div class="bg-gray-50 rounded-xl px-4 py-2.5 mb-5 text-sm text-gray-600 flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-500 text-xs"></i>
+              <span id="tr-recipient-summary" class="font-medium"></span>
+            </div>
+
+            <!-- ─── OUTBOUND FORM ─── -->
+            <div id="tr-form-outbound" class="hidden">
+              <p class="text-xs font-semibold tracking-widest text-gray-400 mb-4">DADOS DO DESTINATÁRIO</p>
+              <div class="space-y-4">
+
+                <!-- Name -->
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Nome completo do destinatário *</label>
+                  <input id="tr-rec-name" type="text" placeholder="Nome legal completo"
+                    class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                  <p id="tr-rec-name-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                </div>
+
+                <!-- Country -->
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">País *</label>
+                  <select id="tr-rec-country"
+                    class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <option value="">Selecione o país…</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="ES">Spain</option>
+                    <option value="IT">Italy</option>
+                    <option value="NL">Netherlands</option>
+                    <option value="PT">Portugal</option>
+                    <option value="BE">Belgium</option>
+                    <option value="CH">Switzerland</option>
+                    <option value="AT">Austria</option>
+                    <option value="SE">Sweden</option>
+                    <option value="NO">Norway</option>
+                    <option value="DK">Denmark</option>
+                    <option value="IE">Ireland</option>
+                    <option value="CA">Canada</option>
+                    <option value="AU">Australia</option>
+                    <option value="JP">Japan</option>
+                    <option value="SG">Singapore</option>
+                    <option value="AE">United Arab Emirates</option>
+                    <option value="OTHER">Outro país</option>
+                  </select>
+                  <p id="tr-rec-country-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                </div>
+
+                <!-- ── EUR: IBAN + SWIFT ── -->
+                <div id="tr-form-iban" class="hidden space-y-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">IBAN *</label>
+                    <div class="relative">
+                      <input id="tr-iban" type="text" maxlength="34" placeholder="DE89 3704 0044 0532 0130 00"
+                        oninput="trValidateIBANLive()"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono uppercase">
+                      <span id="tr-iban-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-iban-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">BIC / SWIFT *</label>
+                    <div class="relative">
+                      <input id="tr-iban-bic" type="text" maxlength="11" placeholder="DEUTDEDB"
+                        oninput="trValidateSWIFTLive('tr-iban-bic','tr-iban-bic-icon','tr-iban-bic-err')"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono uppercase">
+                      <span id="tr-iban-bic-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-iban-bic-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome do banco <span class="text-gray-400">(opcional)</span></label>
+                    <input id="tr-iban-bank" type="text" placeholder="Deutsche Bank"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                  </div>
+                </div>
+
+                <!-- ── GBP: Sort Code + Account ── -->
+                <div id="tr-form-sort" class="hidden space-y-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Sort Code *</label>
+                    <div class="relative">
+                      <input id="tr-sort-code" type="text" maxlength="8" placeholder="20-00-00"
+                        oninput="trAutoFormatSortCode(this)"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono">
+                      <span id="tr-sort-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-sort-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Número da conta * <span class="text-gray-400">(8 dígitos)</span></label>
+                    <div class="relative">
+                      <input id="tr-sort-account" type="text" maxlength="8" placeholder="12345678"
+                        oninput="trValidateSortAccountLive()"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono">
+                      <span id="tr-sort-account-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-sort-account-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">BIC / SWIFT <span class="text-gray-400">(opcional)</span></label>
+                    <div class="relative">
+                      <input id="tr-sort-bic" type="text" maxlength="11" placeholder="NWBKGB2L"
+                        oninput="trValidateSWIFTLive('tr-sort-bic','tr-sort-bic-icon','tr-sort-bic-err')"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono uppercase">
+                      <span id="tr-sort-bic-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-sort-bic-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                </div>
+
+                <!-- ── USD: ACH + Account ── -->
+                <div id="tr-form-ach" class="hidden space-y-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">ABA Routing Number * <span class="text-gray-400">(9 dígitos)</span></label>
+                    <div class="relative">
+                      <input id="tr-ach-routing" type="text" maxlength="9" placeholder="021000021"
+                        oninput="trValidateACHLive()"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono">
+                      <span id="tr-ach-routing-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-ach-routing-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Número da conta *</label>
+                    <input id="tr-ach-account" type="text" placeholder="Número da conta bancária"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition font-mono">
+                    <p id="tr-ach-account-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Tipo de conta *</label>
+                    <select id="tr-ach-type"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                      <option value="checking">Checking (Corrente)</option>
+                      <option value="savings">Savings (Poupança)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome do banco *</label>
+                    <input id="tr-ach-bank" type="text" placeholder="JPMorgan Chase"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-ach-bank-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">SWIFT / BIC <span class="text-gray-400">(opcional — wire internacional)</span></label>
+                    <div class="relative">
+                      <input id="tr-ach-bic" type="text" maxlength="11" placeholder="CHASUS33"
+                        oninput="trValidateSWIFTLive('tr-ach-bic','tr-ach-bic-icon','tr-ach-bic-err')"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono uppercase">
+                      <span id="tr-ach-bic-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-ach-bic-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                </div>
+
+                <!-- ── Generic SWIFT (fallback) ── -->
+                <div id="tr-form-swift" class="hidden space-y-4">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">BIC / SWIFT *</label>
+                    <div class="relative">
+                      <input id="tr-swift-bic" type="text" maxlength="11" placeholder="AAAABBCC"
+                        oninput="trValidateSWIFTLive('tr-swift-bic','tr-swift-bic-icon','tr-swift-bic-err')"
+                        class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 pr-10 outline-none transition font-mono uppercase">
+                      <span id="tr-swift-bic-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
+                    </div>
+                    <p id="tr-swift-bic-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">IBAN / Número da conta *</label>
+                    <input id="tr-swift-account" type="text" placeholder="IBAN ou número da conta"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition font-mono">
+                    <p id="tr-swift-account-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome do banco *</label>
+                    <input id="tr-swift-bank" type="text" placeholder="Nome do banco receptor"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-swift-bank-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Endereço do banco *</label>
+                    <input id="tr-swift-bank-addr" type="text" placeholder="Endereço completo do banco"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-swift-bank-addr-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">CPF / CNPJ ou ID fiscal do destinatário *</label>
+                    <input id="tr-swift-tax-id" type="text" placeholder="ID fiscal"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-swift-tax-id-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                </div>
+
+              </div><!-- end space-y-4 -->
+            </div><!-- end tr-form-outbound -->
+
+            <!-- ─── INBOUND FORM ─── -->
+            <div id="tr-form-inbound" class="hidden">
+              <p class="text-xs font-semibold tracking-widest text-gray-400 mb-4">DADOS DO REMETENTE</p>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Nome do remetente *</label>
+                  <input id="tr-in-sender" type="text" placeholder="Nome legal do remetente"
+                    class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                  <p id="tr-in-sender-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">País do remetente *</label>
+                  <select id="tr-in-country"
+                    class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <option value="">Selecione o país…</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="ES">Spain</option>
+                    <option value="IT">Italy</option>
+                    <option value="NL">Netherlands</option>
+                    <option value="PT">Portugal</option>
+                    <option value="OTHER">Outro país</option>
+                  </select>
+                  <p id="tr-in-country-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-600 mb-1">Método de envio que o remetente usará *</label>
+                  <select id="tr-in-method" onchange="trRenderInboundDetails()"
+                    class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <option value="ach">ACH (EUA — doméstico)</option>
+                    <option value="wire">Wire Transfer</option>
+                    <option value="swift">SWIFT Internacional</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- SISBRAPAG receiving account details -->
+              <div class="mt-5 rounded-xl border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-4 py-2.5 border-b border-gray-200 flex items-center justify-between">
+                  <p class="text-xs font-semibold text-gray-600">DADOS PARA ENVIAR AO REMETENTE</p>
+                  <button onclick="trCopyInboundDetails()" class="text-xs text-emerald-600 hover:text-emerald-700 font-medium transition">
+                    <i class="fa-solid fa-copy mr-1"></i> Copiar tudo
+                  </button>
+                </div>
+                <div id="tr-inbound-details" class="p-4 space-y-3"></div>
+              </div>
+              <p class="text-xs text-gray-400 mt-2">Compartilhe esses dados com quem vai te enviar a transferência.</p>
+            </div>
+
+            <p id="tr-recipient-err" class="text-xs text-red-500 mt-4 min-h-[16px]"></p>
+            <button onclick="trRecipientNext()" class="w-full mt-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Continuar →</button>
+          </div>
+
+          <!-- STEP 4: purpose (built in Sprint D) -->
+          <div id="tr-step-purpose" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
+            <button onclick="trGoto('recipient')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
             <div class="text-center py-8">
               <i class="fa-solid fa-screwdriver-wrench text-gray-300 text-2xl mb-3"></i>
-              <p class="text-sm text-gray-500">Próxima etapa: dados do destinatário e finalidade.</p>
-              <p id="tr-summary-pre" class="text-xs text-gray-400 mt-3"></p>
+              <p class="text-sm text-gray-500">Sprint D: finalidade BACEN + confirmação.</p>
             </div>
           </div>
         </section>
@@ -1070,7 +1326,7 @@
       Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
     function trShow(step) {
-      ['loading', 'step-direction', 'step-amount', 'step-recipient']
+      ['loading', 'step-direction', 'step-amount', 'step-recipient', 'step-purpose']
         .forEach(s => document.getElementById('tr-' + s).classList.add('hidden'))
       if (step) document.getElementById('tr-' + step).classList.remove('hidden')
     }
@@ -1178,10 +1434,245 @@
       if (trState.direction === 'outbound' && amount > trBalance) { err.textContent = 'Saldo insuficiente. Faça um depósito primeiro.'; return }
       if (!trState.rate) { err.textContent = 'Aguarde o câmbio carregar.'; return }
       err.textContent = ''
-      document.getElementById('tr-summary-pre').textContent = trState.direction === 'outbound'
-        ? `${brl(amount)} → ~${fmtCcy(trState.resultAmt, trState.ccy)} ${trState.ccy}`
-        : `${fmtCcy(amount, trState.ccy)} ${trState.ccy} → ~${brl(trState.resultAmt)}`
+      trRenderRecipientForm()
       trGoto('recipient')
+    }
+
+    // ── Transfer Step 3: Recipient ──────────────────────────
+
+    const SISBRAPAG_ACCOUNTS = {
+      ach:   { label: 'ACH',   routingLabel: 'ACH Routing', routing: '026073150', account: '8897802943', bank: 'Community Federal Savings Bank', addr: '5 Penn Plz FL 14, New York, NY 10001-1810' },
+      wire:  { label: 'Wire',  routingLabel: 'Wire Routing', routing: '026073008', account: '8897802943', bank: 'Community Federal Savings Bank', addr: '5 Penn Plz FL 14, New York, NY 10001-1810' },
+      swift: { label: 'SWIFT', routingLabel: 'SWIFT / BIC',  routing: 'CMFGUS33',  account: '8897802943', bank: 'Community Federal Savings Bank', addr: '5 Penn Plz FL 14, New York, NY 10001-1810' },
+    }
+
+    function trRenderRecipientForm() {
+      const isOut = trState.direction === 'outbound'
+      document.getElementById('tr-form-outbound').classList.toggle('hidden', !isOut)
+      document.getElementById('tr-form-inbound').classList.toggle('hidden', isOut)
+
+      // Summary bar
+      const ccy = trState.ccy, amt = trState.amount, res = trState.resultAmt
+      const dirLabel = isOut ? 'Envio:' : 'Recebimento esperado:'
+      const amtStr = isOut
+        ? `${brl(amt)} → ~${fmtCcy(res, ccy)} ${ccy}`
+        : `${fmtCcy(amt, ccy)} ${ccy} → ~${brl(res)}`
+      document.getElementById('tr-recipient-summary').textContent = `${dirLabel} ${amtStr}`
+
+      if (isOut) {
+        // Show the right routing sub-form based on currency
+        ;['iban', 'sort', 'ach', 'swift'].forEach(f =>
+          document.getElementById('tr-form-' + f).classList.add('hidden'))
+        const map = { EUR: 'iban', GBP: 'sort', USD: 'ach' }
+        document.getElementById('tr-form-' + (map[ccy] || 'swift')).classList.remove('hidden')
+      } else {
+        trRenderInboundDetails()
+      }
+      // Clear errors from previous visit
+      document.getElementById('tr-recipient-err').textContent = ''
+    }
+
+    function trRenderInboundDetails() {
+      const method = document.getElementById('tr-in-method')?.value || 'ach'
+      const a = SISBRAPAG_ACCOUNTS[method]
+      if (!a) return
+      const rows = [
+        { label: 'Beneficiário',   value: 'SISBRAPAG' },
+        { label: a.routingLabel,   value: a.routing },
+        { label: 'Número da conta', value: a.account },
+        { label: 'Banco',           value: a.bank },
+        { label: 'Endereço',        value: a.addr },
+      ]
+      document.getElementById('tr-inbound-details').innerHTML = rows.map(r => `
+        <div class="flex items-start justify-between gap-3">
+          <span class="text-gray-500 text-xs shrink-0 w-32">${r.label}</span>
+          <div class="flex items-center gap-1.5 min-w-0">
+            <span class="font-mono text-xs text-gray-900 break-all">${r.value}</span>
+            <button onclick="trCopyField('${r.value}')" class="shrink-0 text-gray-400 hover:text-emerald-600 transition text-xs" title="Copiar">
+              <i class="fa-solid fa-copy"></i>
+            </button>
+          </div>
+        </div>`).join('')
+    }
+
+    function trCopyField(text) {
+      navigator.clipboard.writeText(text).catch(() => {})
+    }
+
+    function trCopyInboundDetails() {
+      const method = document.getElementById('tr-in-method')?.value || 'ach'
+      const a = SISBRAPAG_ACCOUNTS[method]
+      if (!a) return
+      const text = [
+        'Beneficiário: SISBRAPAG',
+        `${a.routingLabel}: ${a.routing}`,
+        `Conta: ${a.account}`,
+        `Banco: ${a.bank}`,
+        `Endereço: ${a.addr}`,
+      ].join('\n')
+      navigator.clipboard.writeText(text).catch(() => {})
+    }
+
+    // ── Validators ─────────────────────────────────────────
+
+    function trFieldStatus(iconId, errId, ok, msg) {
+      const icon = document.getElementById(iconId)
+      const err  = document.getElementById(errId)
+      if (icon) icon.textContent = ok ? '✅' : (msg ? '⚠️' : '')
+      if (err) {
+        err.textContent = msg || ''
+        err.className = 'text-xs mt-1 min-h-[16px] ' + (ok ? 'text-emerald-600' : 'text-orange-500')
+      }
+    }
+
+    function trValidateIBAN(val) {
+      const v = val.replace(/\s/g, '').toUpperCase()
+      if (!v) return { ok: false, msg: '' }
+      if (!/^[A-Z]{2}/.test(v)) return { ok: false, msg: 'IBAN deve começar com o código do país (ex: DE, FR, GB)' }
+      if (v.length < 15 || v.length > 34) return { ok: false, msg: `Tamanho inválido (${v.length} chars; esperado 15–34)` }
+      if (!/^[A-Z0-9]+$/.test(v)) return { ok: false, msg: 'Apenas letras e números permitidos' }
+      return { ok: true, msg: '' }
+    }
+
+    function trValidateIBANLive() {
+      const el = document.getElementById('tr-iban')
+      el.value = el.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '')
+      const { ok, msg } = trValidateIBAN(el.value)
+      if (el.value.trim()) trFieldStatus('tr-iban-icon', 'tr-iban-err', ok, msg)
+      else trFieldStatus('tr-iban-icon', 'tr-iban-err', false, '')
+    }
+
+    function trValidateSWIFT(val) {
+      const v = val.replace(/\s/g, '').toUpperCase()
+      if (!v) return { ok: false, msg: '' }
+      if (!/^[A-Z0-9]{8}([A-Z0-9]{3})?$/.test(v))
+        return { ok: false, msg: 'BIC/SWIFT deve ter 8 ou 11 caracteres alfanuméricos' }
+      return { ok: true, msg: '' }
+    }
+
+    function trValidateSWIFTLive(inputId, iconId, errId) {
+      const el = document.getElementById(inputId)
+      el.value = el.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+      const { ok, msg } = trValidateSWIFT(el.value)
+      if (el.value) trFieldStatus(iconId, errId, ok, msg)
+      else trFieldStatus(iconId, errId, false, '')
+    }
+
+    function trAutoFormatSortCode(el) {
+      const digits = el.value.replace(/\D/g, '').slice(0, 6)
+      let fmt = digits
+      if (digits.length > 4) fmt = digits.slice(0,2) + '-' + digits.slice(2,4) + '-' + digits.slice(4)
+      else if (digits.length > 2) fmt = digits.slice(0,2) + '-' + digits.slice(2)
+      el.value = fmt
+      if (digits.length === 6) trFieldStatus('tr-sort-icon', 'tr-sort-err', true, '')
+      else if (digits.length > 0) trFieldStatus('tr-sort-icon', 'tr-sort-err', false, `${digits.length}/6 dígitos`)
+      else trFieldStatus('tr-sort-icon', 'tr-sort-err', false, '')
+    }
+
+    function trValidateSortAccountLive() {
+      const digits = document.getElementById('tr-sort-account').value.replace(/\D/g, '')
+      if (digits.length === 8) trFieldStatus('tr-sort-account-icon', 'tr-sort-account-err', true, '')
+      else if (digits.length > 0) trFieldStatus('tr-sort-account-icon', 'tr-sort-account-err', false, `${digits.length}/8 dígitos`)
+      else trFieldStatus('tr-sort-account-icon', 'tr-sort-account-err', false, '')
+    }
+
+    function trValidateACH(val) {
+      const v = val.replace(/\D/g, '')
+      if (!v) return { ok: false, msg: '' }
+      if (v.length !== 9) return { ok: false, msg: `ABA Routing deve ter 9 dígitos (${v.length} informados)` }
+      // ABA MOD10 weighted checksum: weights 3,7,1 repeating
+      const w = [3,7,1,3,7,1,3,7,1]
+      const sum = v.split('').reduce((acc, d, i) => acc + Number(d) * w[i], 0)
+      if (sum % 10 !== 0) return { ok: false, msg: 'ABA Routing inválido (dígito verificador incorreto)' }
+      return { ok: true, msg: '' }
+    }
+
+    function trValidateACHLive() {
+      const el = document.getElementById('tr-ach-routing')
+      el.value = el.value.replace(/\D/g, '').slice(0, 9)
+      const { ok, msg } = trValidateACH(el.value)
+      if (el.value) trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', ok, msg)
+      else trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', false, '')
+    }
+
+    function trRecipientNext() {
+      const errEl = document.getElementById('tr-recipient-err')
+      errEl.textContent = ''
+
+      if (trState.direction === 'inbound') {
+        const sender  = document.getElementById('tr-in-sender').value.trim()
+        const country = document.getElementById('tr-in-country').value
+        document.getElementById('tr-in-sender-err').textContent  = sender  ? '' : 'Informe o nome do remetente.'
+        document.getElementById('tr-in-country-err').textContent = country ? '' : 'Selecione o país.'
+        if (!sender || !country) return
+        trState.recipient = {
+          senderName: sender, senderCountry: country,
+          method: document.getElementById('tr-in-method').value
+        }
+        trGoto('purpose'); return
+      }
+
+      // Outbound — common fields
+      const name    = document.getElementById('tr-rec-name').value.trim()
+      const country = document.getElementById('tr-rec-country').value
+      document.getElementById('tr-rec-name-err').textContent    = name    ? '' : 'Informe o nome do destinatário.'
+      document.getElementById('tr-rec-country-err').textContent = country ? '' : 'Selecione o país.'
+      if (!name || !country) return
+
+      const ccy = trState.ccy
+      let routing = {}
+
+      if (ccy === 'EUR') {
+        const iban = document.getElementById('tr-iban').value.trim()
+        const bic  = document.getElementById('tr-iban-bic').value.trim()
+        const bank = document.getElementById('tr-iban-bank').value.trim()
+        const iv = trValidateIBAN(iban), sv = trValidateSWIFT(bic)
+        document.getElementById('tr-iban-err').textContent     = iv.ok ? '' : (iv.msg || 'IBAN obrigatório.')
+        document.getElementById('tr-iban-bic-err').textContent = sv.ok ? '' : (sv.msg || 'BIC/SWIFT obrigatório.')
+        if (!iv.ok || !sv.ok) return
+        routing = { routing_type: 'iban', iban: iban.replace(/\s/g,'').toUpperCase(), bic_swift: bic, bank_name: bank }
+
+      } else if (ccy === 'GBP') {
+        const sortDigits = document.getElementById('tr-sort-code').value.replace(/\D/g,'')
+        const acct = document.getElementById('tr-sort-account').value.replace(/\D/g,'')
+        const bic  = document.getElementById('tr-sort-bic').value.trim()
+        document.getElementById('tr-sort-err').textContent         = sortDigits.length === 6 ? '' : 'Sort code deve ter 6 dígitos.'
+        document.getElementById('tr-sort-account-err').textContent = acct.length === 8 ? '' : 'Conta deve ter 8 dígitos.'
+        if (sortDigits.length !== 6 || acct.length !== 8) return
+        if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-sort-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
+        routing = { routing_type: 'sort_code', sort_code: `${sortDigits.slice(0,2)}-${sortDigits.slice(2,4)}-${sortDigits.slice(4)}`, account_number: acct, bic_swift: bic }
+
+      } else if (ccy === 'USD') {
+        const achNum = document.getElementById('tr-ach-routing').value
+        const acct   = document.getElementById('tr-ach-account').value.trim()
+        const bank   = document.getElementById('tr-ach-bank').value.trim()
+        const bic    = document.getElementById('tr-ach-bic').value.trim()
+        const av = trValidateACH(achNum)
+        document.getElementById('tr-ach-routing-err').textContent = av.ok ? '' : (av.msg || 'ABA Routing obrigatório.')
+        document.getElementById('tr-ach-account-err').textContent = acct  ? '' : 'Informe o número da conta.'
+        document.getElementById('tr-ach-bank-err').textContent    = bank  ? '' : 'Informe o nome do banco.'
+        if (!av.ok || !acct || !bank) return
+        if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-ach-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
+        routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bic_swift: bic }
+
+      } else {
+        const bic      = document.getElementById('tr-swift-bic').value.trim()
+        const acct     = document.getElementById('tr-swift-account').value.trim()
+        const bank     = document.getElementById('tr-swift-bank').value.trim()
+        const bankAddr = document.getElementById('tr-swift-bank-addr').value.trim()
+        const taxId    = document.getElementById('tr-swift-tax-id').value.trim()
+        const sv = trValidateSWIFT(bic)
+        document.getElementById('tr-swift-bic-err').textContent       = sv.ok    ? '' : (sv.msg || 'BIC/SWIFT obrigatório.')
+        document.getElementById('tr-swift-account-err').textContent   = acct     ? '' : 'Informe o número da conta ou IBAN.'
+        document.getElementById('tr-swift-bank-err').textContent      = bank     ? '' : 'Informe o nome do banco.'
+        document.getElementById('tr-swift-bank-addr-err').textContent = bankAddr ? '' : 'Informe o endereço do banco.'
+        document.getElementById('tr-swift-tax-id-err').textContent    = taxId    ? '' : 'Informe o ID fiscal do destinatário.'
+        if (!sv.ok || !acct || !bank || !bankAddr || !taxId) return
+        routing = { routing_type: 'swift', bic_swift: bic, account_number: acct, bank_name: bank, bank_address: bankAddr, recipient_tax_id: taxId }
+      }
+
+      trState.recipient = { recipient_name: name, recipient_country: country, ...routing }
+      trGoto('purpose')
     }
 
     function setupTransfers() {
