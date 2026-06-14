@@ -143,6 +143,38 @@
             <p class="text-xs text-gray-400 mt-5 text-center">Typically within <strong class="text-gray-600">1 business day</strong> · We'll email <span id="pending-email" class="text-gray-600"></span></p>
           </div>
 
+          <!-- Balance card -->
+          <div class="bg-white rounded-xl border border-gray-100 px-5 py-5 mb-6">
+            <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Available Balance</p>
+            <p class="font-display text-3xl text-gray-900 mb-3" id="ov-balance">R$ —</p>
+            <button onclick="showSection('deposit')" class="text-sm text-emerald-600 font-medium hover:text-emerald-700 transition">+ Add funds</button>
+          </div>
+
+          <!-- Transaction history -->
+          <div>
+            <h2 class="font-display text-base text-gray-900 mb-4">Transaction history</h2>
+            <div id="ov-tx-loading" class="bg-white rounded-xl border border-gray-100 px-5 py-10 text-center">
+              <p class="text-sm text-gray-400">Loading…</p>
+            </div>
+            <div id="ov-tx-empty" class="hidden bg-white rounded-xl border border-gray-100 px-5 py-10 text-center">
+              <p class="text-sm text-gray-400">No transactions yet.</p>
+            </div>
+            <div id="ov-tx-table" class="hidden bg-white rounded-xl border border-gray-100 overflow-hidden">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b border-gray-100">
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Date</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Type</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Ref</th>
+                    <th class="text-right px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Amount</th>
+                    <th class="text-left px-5 py-3 text-xs font-medium text-gray-400 uppercase tracking-wide">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="ov-tx-body"></tbody>
+              </table>
+            </div>
+          </div>
+
         </section>
 
         <!-- PROFILE -->
@@ -1167,6 +1199,9 @@
       document.getElementById('p-country').value = meta.country || ''
       document.getElementById('p-company').value = meta.company || ''
       document.getElementById('p-use').value = meta.primary_use || ''
+
+      // Load overview data on initial page open
+      setTimeout(loadOverview, 0)
     }
 
     function showSection(name) {
@@ -1516,6 +1551,7 @@
     const _origShowSection = showSection
     window.showSection = function(name) {
       _origShowSection(name)
+      if (name === 'overview') loadOverview()
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
       if (name === 'documents') loadDocuments()
       if (name === 'transfers') { if (!trReady) { setupTransfers(); trReady = true } loadTransfers() }
@@ -1527,6 +1563,108 @@
     }
 
     function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+
+    // ── Overview (balance + transaction history) ──────────────────────────────
+    async function loadOverview() {
+      // Reset state
+      document.getElementById('ov-tx-loading').classList.remove('hidden')
+      document.getElementById('ov-tx-empty').classList.add('hidden')
+      document.getElementById('ov-tx-table').classList.add('hidden')
+
+      // Balance: sum of credited deposits
+      const { data: cred } = await sb.from('deposits').select('amount')
+        .eq('user_id', currentUser.id).eq('status', 'credited')
+      const bal = (cred || []).reduce((s, r) => s + Number(r.amount), 0)
+      document.getElementById('ov-balance').textContent = brl(bal)
+
+      // Fetch all transaction sources in parallel
+      const [depRes, trRes, cxRes] = await Promise.all([
+        sb.from('deposits').select('id,reference_code,method,amount,status,created_at')
+          .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
+        sb.from('transfer_requests').select('id,reference_code,direction,amount_source,currency_source,status,created_at')
+          .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
+        sb.from('crypto_orders').select('id,reference_code,order_type,asset,amount_brl,status,created_at')
+          .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
+      ])
+
+      const rows = []
+
+      for (const d of (depRes.data || [])) {
+        const methodLabel = (d.method || 'pix').toUpperCase()
+        rows.push({
+          date: d.created_at,
+          type: methodLabel + ' Deposit',
+          ref: d.reference_code || '—',
+          amount: '+' + brl(d.amount || 0),
+          sign: 1,
+          status: d.status,
+        })
+      }
+
+      for (const t of (trRes.data || [])) {
+        const isOut = (t.direction || '').toLowerCase().includes('outbound') || (t.direction || '').toLowerCase().includes('brl_to')
+        rows.push({
+          date: t.created_at,
+          type: 'Transfer ' + (isOut ? '↑ Out' : '↓ In'),
+          ref: t.reference_code || '—',
+          amount: (isOut ? '−' : '+') + brl(t.amount_source || 0) + ' ' + (t.currency_source || 'BRL'),
+          sign: isOut ? -1 : 1,
+          status: t.status,
+        })
+      }
+
+      for (const c of (cxRes.data || [])) {
+        const labels = { buy: 'Crypto Buy', sell: 'Crypto Sell', withdraw: 'Crypto Withdraw' }
+        const isBuy = c.order_type === 'buy'
+        rows.push({
+          date: c.created_at,
+          type: (labels[c.order_type] || 'Crypto') + ' ' + (c.asset || ''),
+          ref: c.reference_code || '—',
+          amount: (isBuy ? '−' : (c.order_type === 'sell' ? '+' : '−')) + brl(c.amount_brl || 0),
+          sign: isBuy ? -1 : 1,
+          status: c.status,
+        })
+      }
+
+      rows.sort((a, b) => new Date(b.date) - new Date(a.date))
+
+      document.getElementById('ov-tx-loading').classList.add('hidden')
+
+      if (!rows.length) {
+        document.getElementById('ov-tx-empty').classList.remove('hidden')
+        return
+      }
+
+      const STATUS_BADGE = {
+        credited:      '<span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Credited</span>',
+        pending:       '<span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>Pending</span>',
+        pending_review:'<span class="inline-flex items-center gap-1 text-xs font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>In review</span>',
+        completed:     '<span class="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Completed</span>',
+        processing:    '<span class="inline-flex items-center gap-1 text-xs font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span>Processing</span>',
+        expired:       '<span class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>Expired</span>',
+        rejected:      '<span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Rejected</span>',
+        cancelled:     '<span class="inline-flex items-center gap-1 text-xs font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>Cancelled</span>',
+        failed:        '<span class="inline-flex items-center gap-1 text-xs font-medium text-red-700 bg-red-50 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>Failed</span>',
+      }
+
+      const fmtDate = iso => {
+        const d = new Date(iso)
+        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+      }
+
+      const body = document.getElementById('ov-tx-body')
+      body.innerHTML = rows.map((r, i) => `
+        <tr class="${i < rows.length - 1 ? 'border-b border-gray-50' : ''}">
+          <td class="px-5 py-3.5 text-gray-500 whitespace-nowrap text-xs">${fmtDate(r.date)}</td>
+          <td class="px-5 py-3.5 text-gray-700 font-medium">${esc(r.type)}</td>
+          <td class="px-5 py-3.5 text-gray-400 font-mono text-xs">${esc(r.ref)}</td>
+          <td class="px-5 py-3.5 text-right font-medium whitespace-nowrap ${r.sign >= 0 ? 'text-emerald-600' : 'text-gray-700'}">${esc(r.amount)}</td>
+          <td class="px-5 py-3.5">${STATUS_BADGE[r.status] || `<span class="text-xs text-gray-400">${esc(r.status || '—')}</span>`}</td>
+        </tr>
+      `).join('')
+
+      document.getElementById('ov-tx-table').classList.remove('hidden')
+    }
 
     // ── Transfers (Phase 4 — Sprint B: direction + amount/rate/fee) ──────────
     // Default fees (locked): 3% + flat per target currency. Flat is in the target currency.
