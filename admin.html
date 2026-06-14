@@ -884,12 +884,16 @@
       renderTable(filtered)
     }
 
-    let modalUserId = null
+    let modalUserId   = null
+    let modalUserEmail = null
+    let modalUserName  = null
 
     function openModal(id) {
       const u = allUsers.find(u => u.id === id)
       if (!u) return
-      modalUserId = id
+      modalUserId    = id
+      modalUserEmail = u.email  || null
+      modalUserName  = u.full_name || u.email || null
       document.getElementById('modal-name').textContent = u.full_name || u.email || 'User'
       const joined = u.created_at
         ? new Date(u.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -1030,6 +1034,60 @@
       fb.textContent = (_adjType === 'credit' ? 'Crédito' : 'Débito') + ' aplicado ✓'
       fb.classList.remove('hidden')
       setTimeout(() => fb.classList.add('hidden'), 3000)
+      // Send notification email to client
+      sendAdjustmentEmail(signedAmount, note)
+    }
+
+    async function sendAdjustmentEmail(signedAmount, note) {
+      if (!modalUserEmail) return
+      const isCredit = signedAmount >= 0
+      const absStr   = 'R$ ' + Math.abs(signedAmount).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      const subject  = isCredit
+        ? `Crédito aplicado à sua conta — ${absStr}`
+        : `Débito aplicado à sua conta — ${absStr}`
+      const typeLabel = isCredit ? 'Crédito' : 'Débito'
+      const accentColor = isCredit ? '#10B981' : '#EF4444'
+      const symbol = isCredit ? '+' : '−'
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [modalUserEmail],
+          subject,
+          replyTo: 'atendimento@sisbrapag.com',
+          html: `<div style="font-family:sans-serif;max-width:560px;margin:0 auto">
+            <div style="background:#0B1120;padding:20px 28px">
+              <span style="color:#10B981;font-weight:700;font-size:16px">SISBRA</span><span style="color:#fff;font-weight:700;font-size:16px">PAG</span>
+            </div>
+            <div style="padding:28px;background:#fff;border:1px solid #e2e8f0">
+              <p style="margin:0 0 6px;font-size:13px;color:#64748b">Olá${modalUserName ? ', ' + modalUserName : ''},</p>
+              <p style="margin:0 0 20px;font-size:14px;color:#334155;line-height:1.6">
+                Um ajuste foi realizado na sua conta SISBRAPAG.
+              </p>
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px 24px;margin-bottom:20px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                  <span style="font-size:13px;color:#64748b">Tipo</span>
+                  <span style="font-size:13px;font-weight:600;color:${accentColor}">${typeLabel}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:10px;border-top:1px solid #e2e8f0;padding-top:10px">
+                  <span style="font-size:13px;color:#64748b">Valor</span>
+                  <span style="font-size:15px;font-weight:700;color:${accentColor}">${symbol}${absStr}</span>
+                </div>
+                <div style="border-top:1px solid #e2e8f0;padding-top:10px">
+                  <span style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">Descrição</span>
+                  <span style="font-size:13px;color:#334155">${note.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</span>
+                </div>
+              </div>
+              <p style="margin:0;font-size:13px;color:#64748b;line-height:1.6">
+                Seu saldo foi atualizado e a operação já aparece no seu extrato. Em caso de dúvidas, entre em contato com nossa equipe.
+              </p>
+            </div>
+            <div style="padding:16px 28px;background:#f8fafc;border:1px solid #e2e8f0;border-top:none;text-align:center">
+              <span style="font-size:11px;color:#94a3b8">SISBRAPAG · atendimento@sisbrapag.com · sisbrapag.com</span>
+            </div>
+          </div>`
+        })
+      }).catch(() => {})
     }
 
     function closeModal(e) {
