@@ -2301,8 +2301,6 @@
           ['Operação',               typeLabel],
           ['Ativo',                  o.asset + (o.network && o.network !== o.asset ? ' (' + o.network + ')' : '')],
           ['Valor BRL',              fmtBRL(o.amount_brl)],
-          ['Cotação solicitada',     o.rate_at_request ? fmtBRL(o.rate_at_request) + ' / ' + o.asset : '—'],
-          ['Cotação real executada', o.actual_rate     ? fmtBRL(o.actual_rate)     + ' / ' + o.asset : '—'],
           ['Quantidade real',        fmtCrypto(o.actual_amount_crypto || o.amount_crypto)],
           ['Taxa SISBRAPAG (' + (o.fee_pct || 3) + '%)', o.fee_brl ? fmtBRL(o.fee_brl) : (o.fee_crypto ? fmtCrypto(o.fee_crypto) : '—')],
           ['ID Binance',             o.binance_order_id || '—'],
@@ -2365,7 +2363,6 @@
       <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">Operação</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(typeLabel)} · ${esc(o.asset)}</td></tr>
       <tr><td style="padding:8px 12px;color:#6b7280;">Valor BRL</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(brlA(o.amount_brl))}</td></tr>
       <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Quantidade real</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(fmtCrypto(o.actual_amount_crypto || o.amount_crypto))}</td></tr>
-      <tr><td style="padding:8px 12px;color:#6b7280;">Cotação real</td><td style="padding:8px 12px;color:#111;">${esc(fmtRate(o.actual_rate))}</td></tr>
       ${o.order_type === 'withdraw' && o.txhash ? `<tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">TxHash</td><td style="padding:8px 12px;font-family:monospace;font-size:11px;color:#111;word-break:break-all;">${esc(o.txhash)}</td></tr>` : ''}
     </table>
     <p style="margin:0;font-size:13px;color:#9ca3af;">Dúvidas? <a href="https://wa.me/5521987128712" style="color:#10B981;">WhatsApp</a> ou atendimento@sisbrapag.com</p>
