@@ -13,24 +13,41 @@ Full manual deposit flow tested end-to-end in production and all follow-ups ship
 - [x] Portuguese polish on entire customer deposit flow
 - [x] `atendimento@` alias wired across site + reply-to on customer emails (clean Gmail filtering)
 
-## ▶ START HERE NEXT SESSION — Phase 4 + 5 planning
+## ▶ START HERE NEXT SESSION — Phase 4 + 5 BUILD
 
-**All 3 Gmail filters confirmed working. Telegram bot live. Deposit flow 100% complete.**
+**Design complete ✅ 2026-06-13. Full spec → `docs/phase4-5-design.md`**
 
-### Next: Design before build (open a dedicated session)
-1. **Phase 4 — International Transfers** (the core product — DESIGN FIRST)
-   - Transfer form: IBAN (EU/€), Sort Code (UK/£), ACH Routing (US/$), SWIFT (rest of world)
-   - Validator/checker for each routing format (green ✅ / warning ⚠️)
-   - FX swap from BRL balance → target currency (rate + 3% fee shown)
-   - Admin receives request → executes manually → clicks "Done" → receipt auto-sent to client
-   - Interconnects: balance, live FX rate, fee calc, invoice/receipt, Telegram notify to admin
-   - Reference sites for clean form UX in `/Downloads/sisbrapagwebsite` folder
+### ✅ All open questions resolved 2026-06-13 — see `docs/phase4-5-design.md` addendum for full details
 
-2. **Phase 5 — Crypto (BRL → USDC/etc → wallet withdrawal)** (DESIGN FIRST)
-   - Manual flow: client deposits BRL → requests swap → admin credits USDC display → buys on Binance
-   - Client requests withdrawal to wallet address → admin sends from Binance → client notified
-   - Dream: self-custody wallet generation (ERC20/TRC20/SOL) integrated into platform
-   - Binance Business account already registered for SISBRAPAG
+### Phase 0 — Fee tiers (build first, shared by Phase 4 + 5)
+- [ ] `ALTER TABLE profiles` → add `fee_pct_override numeric(5,2)` + `fee_note text` columns
+- [ ] Admin modal → add "Taxa personalizada" field + save
+- [ ] Dashboard → load effective fee rate at session start, use in all wizards
+
+### Phase 4 — International Transfers (build sprints)
+- [ ] **Sprint A:** DB migration — `transfer_requests` table + RLS
+- [ ] **Sprint B:** Dashboard — Transferências nav + direction + amount + FX fee calc
+- [ ] **Sprint C:** Dashboard — routing forms (IBAN/Sort Code/ACH/SWIFT) + validators
+- [ ] **Sprint D:** Dashboard — purpose dropdown (BACEN) + review + submit → DB + Telegram + email
+- [ ] **Sprint E:** Dashboard — status timeline + transfer history
+- [ ] **Sprint F:** Admin — Transferências tab + list + detail modal
+- [ ] **Sprint G:** Admin — Concluir modal (actual rate/amounts) + Cancelar modal
+- [ ] **Sprint H:** jsPDF transfer receipt + attach to completion email
+
+### Phase 5 — Crypto (build sprints, after or parallel to Phase 4)
+- [ ] **Sprint A:** DB migration — `crypto_holdings` + `crypto_orders` tables + RLS
+- [ ] **Sprint B:** Dashboard — Cripto nav + portfolio view (balances + BRL value via CoinGecko)
+- [ ] **Sprint C:** Dashboard — Buy flow (asset → amount → rate → submit)
+- [ ] **Sprint D:** Dashboard — Sell flow
+- [ ] **Sprint E:** Dashboard — Withdraw flow (asset → network → address → WARNING → submit)
+- [ ] **Sprint F:** Dashboard — Orders history
+- [ ] **Sprint G:** Admin — Cripto tab + orders table + detail modal
+- [ ] **Sprint H:** Admin — Concluir (credits crypto_holdings) + Falhou modals
+- [ ] **Sprint I:** jsPDF crypto receipt + attach to completion email
+
+### Backlog (unchanged)
+- **TED holiday calendar** — grey out national/ANBIMA holidays (low urgency)
+- **Real Inter PIX cash-in API** — BLOCKED awaiting credentials
 
 3. **TED holiday calendar** — grey out national/ANBIMA holidays (backlog, low urgency)
 4. **Real Inter PIX cash-in API** — BLOCKED awaiting credentials (backlog)
