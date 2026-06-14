@@ -53,6 +53,9 @@
         <a href="#" onclick="showSection('transfers')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-transfers">
           <i class="fa-solid fa-globe w-4 text-gray-400"></i> Transferências
         </a>
+        <a href="#" onclick="showSection('crypto')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-crypto">
+          <i class="fa-solid fa-coins w-4 text-gray-400"></i> Cripto
+        </a>
         <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
         </a>
@@ -961,6 +964,210 @@
 
         </section>
 
+        <!-- ===== CRIPTO (Phase 5) ===== -->
+        <section id="section-crypto" class="section hidden">
+          <div class="mb-6">
+            <h1 class="font-display text-2xl text-gray-900">Cripto</h1>
+            <p class="text-gray-500 text-sm mt-1">Compre, venda e saque criptomoedas com segurança.</p>
+          </div>
+
+          <!-- Portfolio view -->
+          <div id="cx-view-portfolio">
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 max-w-lg">
+              <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-gray-900">💼 Portfólio Cripto</h2>
+                <span class="text-xs text-gray-400">via CoinGecko</span>
+              </div>
+              <div id="cx-holdings-table" class="space-y-3 mb-4">
+                <p class="text-sm text-gray-400 text-center py-4">Carregando…</p>
+              </div>
+              <div class="border-t border-gray-100 pt-3 flex justify-between items-center mb-5">
+                <span class="text-sm text-gray-500">Total estimado</span>
+                <span id="cx-total-brl" class="font-display text-xl text-gray-900">—</span>
+              </div>
+              <div class="flex gap-2 flex-wrap">
+                <button id="cx-btn-buy" onclick="cxStartBuy()" class="flex-1 min-w-[90px] py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl transition">Comprar</button>
+                <button id="cx-btn-sell" onclick="cxStartSell()" class="flex-1 min-w-[90px] py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition">Vender</button>
+                <button id="cx-btn-wd" onclick="cxStartWithdraw()" class="flex-1 min-w-[90px] py-2.5 border border-gray-300 hover:border-gray-400 text-gray-700 text-sm font-semibold rounded-xl transition">Sacar</button>
+              </div>
+              <p class="text-xs text-gray-400 mt-3 text-center">Custódia via Binance Business · Taxa SISBRAPAG: <strong id="cx-fee-label">3%</strong></p>
+            </div>
+          </div>
+
+          <!-- Wizard area -->
+          <div id="cx-view-wizard" class="hidden max-w-lg">
+
+            <!-- BUY step 1: select asset -->
+            <div id="cx-buy-1" class="hidden">
+              <button onclick="cxShowPortfolio()" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Comprar — Selecione o ativo</h2>
+              <div id="cx-buy-asset-list" class="space-y-2 mb-5"></div>
+              <button onclick="cxBuyStep2()" id="cx-buy-1-next" disabled class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Continuar</button>
+            </div>
+
+            <!-- BUY step 2: enter BRL amount -->
+            <div id="cx-buy-2" class="hidden">
+              <button onclick="cxShow('buy-1')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-1">Comprar <span id="cx-buy-asset-name"></span></h2>
+              <p class="text-sm text-gray-500 mb-4">Saldo disponível: <span id="cx-buy-balance-display" class="font-medium text-gray-700">—</span></p>
+              <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Pagar (BRL)</label>
+                  <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">R$</span>
+                    <input id="cx-buy-brl" type="number" min="10" step="0.01" placeholder="0,00" oninput="cxComputeBuy()"
+                      class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 text-gray-900" />
+                  </div>
+                </div>
+                <div id="cx-buy-preview" class="hidden space-y-2 text-sm">
+                  <div class="flex justify-between text-gray-500"><span>Cotação</span><span id="cx-buy-rate-line">—</span></div>
+                  <div class="flex justify-between text-gray-500"><span>Taxa SISBRAPAG (<span id="cx-buy-fee-pct">3</span>%)</span><span id="cx-buy-fee-brl">—</span></div>
+                  <div class="flex justify-between font-semibold text-gray-900"><span>Você recebe</span><span id="cx-buy-crypto-est">—</span></div>
+                </div>
+                <p id="cx-buy-balance-warn" class="hidden text-sm text-red-500"></p>
+                <p id="cx-buy-rate-status" class="text-xs text-gray-400"></p>
+              </div>
+              <button onclick="cxBuyStep3()" id="cx-buy-2-next" disabled class="mt-4 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Revisar</button>
+            </div>
+
+            <!-- BUY step 3: confirm -->
+            <div id="cx-buy-3" class="hidden">
+              <button onclick="cxShow('buy-2')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Confirmar compra</h2>
+              <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-3 text-sm mb-4">
+                <div id="cx-buy-confirm-lines"></div>
+                <p class="text-xs text-amber-600 bg-amber-50 rounded-lg p-3 mt-2">⚠️ A cotação real será a vigente no momento da execução. Valor final confirmado por e-mail.</p>
+              </div>
+              <p id="cx-buy-submit-err" class="text-sm text-red-500 mb-2 hidden"></p>
+              <button onclick="cxSubmitBuy()" id="cx-buy-submit-btn" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition">Confirmar compra</button>
+            </div>
+
+            <!-- SELL step 1: select asset -->
+            <div id="cx-sell-1" class="hidden">
+              <button onclick="cxShowPortfolio()" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Vender — Selecione o ativo</h2>
+              <div id="cx-sell-asset-list" class="space-y-2 mb-5"></div>
+              <button onclick="cxSellStep2()" id="cx-sell-1-next" disabled class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Continuar</button>
+            </div>
+
+            <!-- SELL step 2: enter amount -->
+            <div id="cx-sell-2" class="hidden">
+              <button onclick="cxShow('sell-1')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-1">Vender <span id="cx-sell-asset-name"></span></h2>
+              <p class="text-sm text-gray-500 mb-4">Saldo: <span id="cx-sell-balance-display" class="font-medium text-gray-700">—</span></p>
+              <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Vender (quantidade)</label>
+                  <div class="relative">
+                    <input id="cx-sell-amount" type="number" min="0" step="any" placeholder="0.00000000" oninput="cxComputeSell()"
+                      class="w-full pr-16 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-900" />
+                    <span id="cx-sell-asset-unit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium"></span>
+                  </div>
+                </div>
+                <div id="cx-sell-preview" class="hidden space-y-2 text-sm">
+                  <div class="flex justify-between text-gray-500"><span>Cotação</span><span id="cx-sell-rate-line">—</span></div>
+                  <div class="flex justify-between text-gray-500"><span>Taxa SISBRAPAG (<span id="cx-sell-fee-pct">3</span>%)</span><span id="cx-sell-fee-brl">—</span></div>
+                  <div class="flex justify-between font-semibold text-gray-900"><span>Você recebe</span><span id="cx-sell-brl-est">—</span></div>
+                </div>
+                <p id="cx-sell-balance-warn" class="hidden text-sm text-red-500"></p>
+                <p id="cx-sell-rate-status" class="text-xs text-gray-400"></p>
+              </div>
+              <button onclick="cxSellStep3()" id="cx-sell-2-next" disabled class="mt-4 w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Revisar</button>
+            </div>
+
+            <!-- SELL step 3: confirm -->
+            <div id="cx-sell-3" class="hidden">
+              <button onclick="cxShow('sell-2')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Confirmar venda</h2>
+              <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-3 text-sm mb-4">
+                <div id="cx-sell-confirm-lines"></div>
+                <p class="text-xs text-amber-600 bg-amber-50 rounded-lg p-3 mt-2">⚠️ Cotação real confirmada no momento da execução. BRL creditado em até 1 dia útil.</p>
+              </div>
+              <p id="cx-sell-submit-err" class="text-sm text-red-500 mb-2 hidden"></p>
+              <button onclick="cxSubmitSell()" id="cx-sell-submit-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition">Confirmar venda</button>
+            </div>
+
+            <!-- WITHDRAW step 1: select asset -->
+            <div id="cx-wd-1" class="hidden">
+              <button onclick="cxShowPortfolio()" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Sacar — Selecione o ativo</h2>
+              <div id="cx-wd-asset-list" class="space-y-2 mb-5"></div>
+              <button onclick="cxWdStep2()" id="cx-wd-1-next" disabled class="w-full py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Continuar</button>
+            </div>
+
+            <!-- WITHDRAW step 2: select network (USDT only) -->
+            <div id="cx-wd-2" class="hidden">
+              <button onclick="cxShow('wd-1')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Sacar <span id="cx-wd-asset-name"></span> — Selecione a rede</h2>
+              <div id="cx-wd-network-list" class="space-y-2 mb-5"></div>
+              <button onclick="cxWdStep3()" id="cx-wd-2-next" disabled class="w-full py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Continuar</button>
+            </div>
+
+            <!-- WITHDRAW step 3: address + amount -->
+            <div id="cx-wd-3" class="hidden">
+              <button onclick="cxWdBack3()" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-1">Sacar <span id="cx-wd-asset-name2"></span></h2>
+              <p class="text-sm text-gray-500 mb-4">Rede: <span id="cx-wd-network-label" class="font-medium text-gray-700"></span> · Saldo: <span id="cx-wd-balance-display" class="font-medium text-gray-700">—</span></p>
+              <div class="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Endereço da carteira</label>
+                  <input id="cx-wd-address" type="text" placeholder="Endereço destino…" oninput="cxComputeWd()"
+                    class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 text-gray-900 font-mono text-sm" />
+                  <p class="text-xs text-red-500 mt-1">⚠️ Endereços incorretos resultam em perda permanente de fundos.</p>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-gray-500 mb-1">Valor</label>
+                  <div class="relative">
+                    <input id="cx-wd-amount" type="number" min="0" step="any" placeholder="0.00000000" oninput="cxComputeWd()"
+                      class="w-full pr-16 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 text-gray-900" />
+                    <span id="cx-wd-asset-unit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium"></span>
+                  </div>
+                </div>
+                <div id="cx-wd-preview" class="hidden space-y-2 text-sm">
+                  <div class="flex justify-between text-gray-500"><span>Taxa SISBRAPAG (<span id="cx-wd-fee-pct">3</span>%)</span><span id="cx-wd-fee-crypto">—</span></div>
+                  <div class="flex justify-between font-semibold text-gray-900"><span>Você envia</span><span id="cx-wd-net-crypto">—</span></div>
+                </div>
+                <p id="cx-wd-balance-warn" class="hidden text-sm text-red-500"></p>
+              </div>
+              <button onclick="cxWdStep4()" id="cx-wd-3-next" disabled class="mt-4 w-full py-3 border border-gray-800 hover:bg-gray-900 hover:text-white text-gray-900 font-semibold rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed">Revisar</button>
+            </div>
+
+            <!-- WITHDRAW step 4: confirm -->
+            <div id="cx-wd-4" class="hidden">
+              <button onclick="cxShow('wd-3')" class="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"><i class="fa-solid fa-arrow-left text-xs"></i> Voltar</button>
+              <h2 class="font-semibold text-gray-900 mb-4">Confirmar saque</h2>
+              <div class="bg-white border border-red-100 rounded-2xl p-5 space-y-3 text-sm mb-4">
+                <div id="cx-wd-confirm-lines"></div>
+                <div class="bg-red-50 border border-red-200 rounded-xl p-3 mt-2">
+                  <p class="text-xs text-red-700 font-semibold mb-1">⚠️ Atenção — leia antes de confirmar</p>
+                  <p class="text-xs text-red-600">Verifique o endereço com cuidado. Transações blockchain são irreversíveis. Endereço errado = fundos perdidos permanentemente.</p>
+                </div>
+              </div>
+              <p id="cx-wd-submit-err" class="text-sm text-red-500 mb-2 hidden"></p>
+              <button onclick="cxSubmitWd()" id="cx-wd-submit-btn" class="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition">Confirmar saque</button>
+            </div>
+
+            <!-- SUCCESS -->
+            <div id="cx-submitted" class="hidden text-center py-10">
+              <div class="w-14 h-14 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-check text-emerald-500 text-2xl"></i>
+              </div>
+              <h2 class="font-display text-2xl text-gray-900 mb-2">Solicitação enviada</h2>
+              <p id="cx-submitted-msg" class="text-gray-500 text-sm mb-1"></p>
+              <p id="cx-submitted-ref" class="text-xs text-gray-400 mb-6"></p>
+              <button onclick="cxShowPortfolio()" class="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-700 transition">Voltar ao portfólio</button>
+            </div>
+          </div>
+
+          <!-- Order history -->
+          <div class="mt-8 max-w-xl">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Histórico de ordens</h3>
+            <div id="cx-history-list" class="bg-white border border-gray-100 rounded-xl overflow-hidden">
+              <p class="text-sm text-gray-400 py-6 text-center">Carregando…</p>
+            </div>
+          </div>
+        </section>
+
       </div>
     </main>
   </div>
@@ -1384,6 +1591,7 @@
       if (name === 'converter' && !cvReady) { setupConverter(); cvReady = true }
       if (name === 'documents') loadDocuments()
       if (name === 'transfers') { if (!trReady) { setupTransfers(); trReady = true } loadTransfers() }
+      if (name === 'crypto') { loadCryptoPortfolio(); cxShowPortfolio() }
       if (name === 'deposit') loadDeposit()
       else depStopCountdown()
       if (name === 'messages') { loadUserMessages(true); startMsgPoll() }
@@ -2523,6 +2731,510 @@
             </div></div>`
         })
       }).catch(() => {})
+    }
+
+    // ── CRYPTO (Phase 5) ────────────────────────────────────────────────────────
+
+    const CX_ASSETS = [
+      { id: 'BTC',  label: 'Bitcoin',  symbol: '₿', cgId: 'bitcoin',  networks: ['BTC'] },
+      { id: 'ETH',  label: 'Ethereum', symbol: 'Ξ', cgId: 'ethereum', networks: ['ETH'] },
+      { id: 'USDT', label: 'Tether',   symbol: '₮', cgId: 'tether',   networks: ['TRC20','ERC20'] },
+      { id: 'USDC', label: 'USD Coin', symbol: '◎', cgId: 'usd-coin', networks: ['ERC20'] },
+    ]
+
+    let cxHoldings = { btc_balance: 0, eth_balance: 0, usdt_balance: 0, usdc_balance: 0 }
+    let cxRates = {}   // { BTC: brl_price, ETH: brl_price, ... }
+    let cxBalance = 0  // user BRL balance (credited deposits)
+    let cxState = { asset: null, network: null, brlAmount: 0, cryptoAmount: 0, rate: 0,
+      feePct: 3, feeBrl: 0, feeCrypto: 0, address: '', refCode: '' }
+
+    function cxRefCode() { return 'CX-' + Math.floor(100000 + Math.random() * 900000) }
+    function cxHoldingAmt(asset) {
+      return Number(cxHoldings[{ BTC:'btc_balance', ETH:'eth_balance', USDT:'usdt_balance', USDC:'usdc_balance' }[asset]] || 0)
+    }
+    function cxCryptoFmt(n, asset) {
+      if (n == null) return '—'
+      return Number(n).toFixed(['BTC','ETH'].includes(asset) ? 8 : 6) + ' ' + asset
+    }
+
+    function cxShow(step) {
+      ['buy-1','buy-2','buy-3','sell-1','sell-2','sell-3','wd-1','wd-2','wd-3','wd-4','submitted']
+        .forEach(s => document.getElementById('cx-' + s)?.classList.add('hidden'))
+      if (step) document.getElementById('cx-' + step)?.classList.remove('hidden')
+      document.getElementById('cx-view-wizard').classList.remove('hidden')
+      document.getElementById('cx-view-portfolio').classList.add('hidden')
+    }
+
+    function cxShowPortfolio() {
+      document.getElementById('cx-view-wizard').classList.add('hidden')
+      document.getElementById('cx-view-portfolio').classList.remove('hidden')
+      loadCryptoHistory()
+    }
+
+    async function loadCryptoPortfolio() {
+      // Holdings
+      try {
+        const { data } = await sb.from('crypto_holdings').select('*').eq('user_id', currentUser.id).single()
+        if (data) cxHoldings = data
+      } catch (_) {}
+
+      // BRL balance
+      try {
+        const { data } = await sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status','credited')
+        cxBalance = (data || []).reduce((s, d) => s + Number(d.amount), 0)
+      } catch (_) { cxBalance = 0 }
+
+      // CoinGecko rates
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,tether,usd-coin&vs_currencies=brl')
+        const p = await res.json()
+        cxRates = { BTC: p['bitcoin']?.brl||0, ETH: p['ethereum']?.brl||0, USDT: p['tether']?.brl||0, USDC: p['usd-coin']?.brl||0 }
+      } catch (_) { cxRates = { BTC: 500000, ETH: 15000, USDT: 5.65, USDC: 5.65 } }
+
+      // Render holdings table
+      let totalBrl = 0
+      const rows = [
+        { asset:'BTC', symbol:'₿', label:'Bitcoin' }, { asset:'ETH', symbol:'Ξ', label:'Ethereum' },
+        { asset:'USDT', symbol:'₮', label:'Tether' }, { asset:'USDC', symbol:'◎', label:'USD Coin' },
+      ]
+      document.getElementById('cx-holdings-table').innerHTML = rows.map(r => {
+        const bal = cxHoldingAmt(r.asset)
+        const brlVal = bal * (cxRates[r.asset] || 0)
+        totalBrl += brlVal
+        return `<div class="flex items-center justify-between py-1">
+          <div class="flex items-center gap-2">
+            <span class="text-lg w-6 text-center">${r.symbol}</span>
+            <div><p class="text-sm font-medium text-gray-900">${r.asset}</p><p class="text-xs text-gray-400">${r.label}</p></div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-mono text-gray-900">${cxCryptoFmt(bal, r.asset)}</p>
+            <p class="text-xs text-gray-400">≈ ${brl(brlVal)}</p>
+          </div>
+        </div>`
+      }).join('')
+      document.getElementById('cx-total-brl').textContent = brl(totalBrl)
+      document.getElementById('cx-fee-label').textContent = effectiveFeePct + '%'
+    }
+
+    async function cxLoadRate(asset) {
+      if (cxRates[asset]) return cxRates[asset]
+      const a = CX_ASSETS.find(x => x.id === asset)
+      if (!a) return 0
+      try {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${a.cgId}&vs_currencies=brl`)
+        const p = await res.json()
+        cxRates[asset] = p[a.cgId]?.brl || 0
+        return cxRates[asset]
+      } catch (_) { return 0 }
+    }
+
+    // ── BUY ──────────────────────────────────────────────────────────────────────
+
+    function cxStartBuy() {
+      cxState = { asset: null, network: null, brlAmount: 0, cryptoAmount: 0, rate: 0, feePct: effectiveFeePct, feeBrl: 0, feeCrypto: 0, address: '', refCode: '' }
+      const opts = [
+        { id:'BTC',      label:'Bitcoin (BTC)',        network:'BTC',   asset:'BTC'  },
+        { id:'ETH',      label:'Ethereum (ETH)',        network:'ETH',   asset:'ETH'  },
+        { id:'USDT_TRC', label:'Tether USDT (TRC20)',   network:'TRC20', asset:'USDT' },
+        { id:'USDT_ERC', label:'Tether USDT (ERC20)',   network:'ERC20', asset:'USDT' },
+        { id:'USDC',     label:'USD Coin (ERC20)',       network:'ERC20', asset:'USDC' },
+      ]
+      document.getElementById('cx-buy-asset-list').innerHTML = opts.map(o => `
+        <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 has-[:checked]:border-emerald-400 has-[:checked]:bg-emerald-50">
+          <input type="radio" name="cx-buy-asset" value="${o.id}" data-network="${o.network}" data-realasset="${o.asset}" onchange="cxBuyAssetPick(this)" class="accent-emerald-600" />
+          <span class="text-sm font-medium text-gray-800">${o.label}</span>
+        </label>`).join('')
+      document.getElementById('cx-buy-1-next').disabled = true
+      cxShow('buy-1')
+    }
+
+    function cxBuyAssetPick(el) {
+      cxState.asset = el.dataset.realasset
+      cxState.network = el.dataset.network
+      document.getElementById('cx-buy-1-next').disabled = false
+    }
+
+    async function cxBuyStep2() {
+      if (!cxState.asset) return
+      document.getElementById('cx-buy-asset-name').textContent = cxState.asset + (cxState.network !== cxState.asset ? ' (' + cxState.network + ')' : '')
+      document.getElementById('cx-buy-balance-display').textContent = brl(cxBalance)
+      document.getElementById('cx-buy-fee-pct').textContent = effectiveFeePct
+      document.getElementById('cx-buy-brl').value = ''
+      document.getElementById('cx-buy-preview').classList.add('hidden')
+      document.getElementById('cx-buy-2-next').disabled = true
+      document.getElementById('cx-buy-balance-warn').classList.add('hidden')
+      document.getElementById('cx-buy-rate-status').textContent = 'Buscando cotação…'
+      cxShow('buy-2')
+      await cxLoadRate(cxState.asset)
+      document.getElementById('cx-buy-rate-status').textContent = ''
+    }
+
+    async function cxComputeBuy() {
+      const brlInput = parseFloat(document.getElementById('cx-buy-brl').value) || 0
+      cxState.brlAmount = brlInput
+      const nextBtn = document.getElementById('cx-buy-2-next')
+      const preview = document.getElementById('cx-buy-preview')
+      const warnEl = document.getElementById('cx-buy-balance-warn')
+      if (!brlInput || brlInput <= 0) { preview.classList.add('hidden'); nextBtn.disabled = true; warnEl.classList.add('hidden'); return }
+      const rate = await cxLoadRate(cxState.asset)
+      if (!rate) { document.getElementById('cx-buy-rate-status').textContent = 'Não foi possível obter cotação.'; return }
+      cxState.rate = rate
+      const feeBrl = brlInput * (effectiveFeePct / 100)
+      const cryptoEst = (brlInput - feeBrl) / rate
+      cxState.feeBrl = feeBrl; cxState.feePct = effectiveFeePct; cxState.cryptoAmount = cryptoEst
+      document.getElementById('cx-buy-rate-line').textContent = `1 ${cxState.asset} = ${brl(rate)}`
+      document.getElementById('cx-buy-fee-brl').textContent = brl(feeBrl)
+      document.getElementById('cx-buy-crypto-est').textContent = `~${cxCryptoFmt(cryptoEst, cxState.asset)}`
+      preview.classList.remove('hidden')
+      document.getElementById('cx-buy-rate-status').textContent = 'Cotação CoinGecko (tempo real)'
+      if (brlInput > cxBalance) {
+        warnEl.innerHTML = `Saldo insuficiente (disponível ${brl(cxBalance)}). <a href="#" onclick="showSection('deposit');return false" class="underline font-medium">Depositar agora</a>`
+        warnEl.classList.remove('hidden'); nextBtn.disabled = true
+      } else { warnEl.classList.add('hidden'); nextBtn.disabled = false }
+    }
+
+    function cxBuyStep3() {
+      const s = cxState
+      const lines = [
+        ['Ativo', `${s.asset}${s.network !== s.asset ? ' (' + s.network + ')' : ''}`],
+        ['Você paga', brl(s.brlAmount)],
+        ['Taxa SISBRAPAG (' + s.feePct + '%)', brl(s.feeBrl)],
+        ['Cripto estimada', `~${cxCryptoFmt(s.cryptoAmount, s.asset)}`],
+        ['Cotação estimada', `1 ${s.asset} = ${brl(s.rate)}`],
+      ]
+      document.getElementById('cx-buy-confirm-lines').innerHTML = lines.map(([k,v]) =>
+        `<div class="flex justify-between"><span class="text-gray-500">${k}</span><span class="font-medium text-gray-900">${v}</span></div>`).join('')
+      document.getElementById('cx-buy-submit-err').classList.add('hidden')
+      cxShow('buy-3')
+    }
+
+    async function cxSubmitBuy() {
+      const btn = document.getElementById('cx-buy-submit-btn')
+      const errEl = document.getElementById('cx-buy-submit-err')
+      btn.disabled = true; btn.textContent = 'Enviando…'
+      const s = cxState; s.refCode = cxRefCode()
+      const { error } = await sb.from('crypto_orders').insert({
+        user_id: currentUser.id, reference_code: s.refCode, order_type: 'buy',
+        asset: s.asset, network: s.network, amount_crypto: s.cryptoAmount,
+        amount_brl: s.brlAmount, rate_at_request: s.rate,
+        fee_pct: s.feePct, fee_brl: s.feeBrl, status: 'pending',
+      })
+      if (error) {
+        errEl.textContent = 'Erro: ' + error.message; errEl.classList.remove('hidden')
+        btn.disabled = false; btn.textContent = 'Confirmar compra'; return
+      }
+      cxNotifyTelegram({ orderType: 'buy', ref: s.refCode, asset: s.asset, network: s.network,
+        amountBrl: brl(s.brlAmount), amountCrypto: cxCryptoFmt(s.cryptoAmount, s.asset), rate: brl(s.rate) })
+      cxEmailUser('buy', s)
+      document.getElementById('cx-submitted-msg').textContent = `Compra de ${s.asset} solicitada! Executaremos na Binance e confirmaremos por e-mail.`
+      document.getElementById('cx-submitted-ref').textContent = `Referência: ${s.refCode}`
+      cxShow('submitted')
+    }
+
+    // ── SELL ─────────────────────────────────────────────────────────────────────
+
+    function cxStartSell() {
+      cxState = { asset: null, network: null, brlAmount: 0, cryptoAmount: 0, rate: 0, feePct: effectiveFeePct, feeBrl: 0, feeCrypto: 0, address: '', refCode: '' }
+      document.getElementById('cx-sell-asset-list').innerHTML = CX_ASSETS.map(a => {
+        const bal = cxHoldingAmt(a.id); const has = bal > 0
+        return `<label class="flex items-center justify-between p-3 border rounded-xl cursor-pointer hover:bg-gray-50 has-[:checked]:border-blue-400 has-[:checked]:bg-blue-50 ${!has ? 'opacity-50' : ''}">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="cx-sell-asset" value="${a.id}" ${!has ? 'disabled' : ''} onchange="cxSellAssetPick(this)" class="accent-blue-600" />
+            <span class="text-sm font-medium text-gray-800">${a.label} (${a.id})</span>
+          </div>
+          <span class="text-xs text-gray-500">${cxCryptoFmt(bal, a.id)}</span>
+        </label>`
+      }).join('')
+      document.getElementById('cx-sell-1-next').disabled = true
+      cxShow('sell-1')
+    }
+
+    function cxSellAssetPick(el) {
+      cxState.asset = el.value
+      cxState.network = CX_ASSETS.find(x => x.id === el.value)?.networks[0] || el.value
+      document.getElementById('cx-sell-1-next').disabled = false
+    }
+
+    async function cxSellStep2() {
+      if (!cxState.asset) return
+      const bal = cxHoldingAmt(cxState.asset)
+      document.getElementById('cx-sell-asset-name').textContent = cxState.asset
+      document.getElementById('cx-sell-asset-unit').textContent = cxState.asset
+      document.getElementById('cx-sell-balance-display').textContent = cxCryptoFmt(bal, cxState.asset)
+      document.getElementById('cx-sell-fee-pct').textContent = effectiveFeePct
+      document.getElementById('cx-sell-amount').value = ''
+      document.getElementById('cx-sell-preview').classList.add('hidden')
+      document.getElementById('cx-sell-2-next').disabled = true
+      document.getElementById('cx-sell-balance-warn').classList.add('hidden')
+      document.getElementById('cx-sell-rate-status').textContent = 'Buscando cotação…'
+      cxShow('sell-2')
+      await cxLoadRate(cxState.asset)
+      document.getElementById('cx-sell-rate-status').textContent = ''
+    }
+
+    async function cxComputeSell() {
+      const amt = parseFloat(document.getElementById('cx-sell-amount').value) || 0
+      const bal = cxHoldingAmt(cxState.asset)
+      const nextBtn = document.getElementById('cx-sell-2-next')
+      const preview = document.getElementById('cx-sell-preview')
+      const warnEl = document.getElementById('cx-sell-balance-warn')
+      if (!amt || amt <= 0) { preview.classList.add('hidden'); nextBtn.disabled = true; warnEl.classList.add('hidden'); return }
+      const rate = await cxLoadRate(cxState.asset)
+      if (!rate) { document.getElementById('cx-sell-rate-status').textContent = 'Não foi possível obter cotação.'; return }
+      cxState.rate = rate; cxState.cryptoAmount = amt
+      const grossBrl = amt * rate
+      const feeBrl = grossBrl * (effectiveFeePct / 100)
+      cxState.feeBrl = feeBrl; cxState.feePct = effectiveFeePct; cxState.brlAmount = grossBrl - feeBrl
+      document.getElementById('cx-sell-rate-line').textContent = `1 ${cxState.asset} = ${brl(rate)}`
+      document.getElementById('cx-sell-fee-brl').textContent = brl(feeBrl)
+      document.getElementById('cx-sell-brl-est').textContent = `≈ ${brl(cxState.brlAmount)}`
+      document.getElementById('cx-sell-fee-pct').textContent = effectiveFeePct
+      preview.classList.remove('hidden')
+      document.getElementById('cx-sell-rate-status').textContent = 'Cotação CoinGecko (tempo real)'
+      if (amt > bal) {
+        warnEl.textContent = `Saldo insuficiente (disponível ${cxCryptoFmt(bal, cxState.asset)})`
+        warnEl.classList.remove('hidden'); nextBtn.disabled = true
+      } else { warnEl.classList.add('hidden'); nextBtn.disabled = false }
+    }
+
+    function cxSellStep3() {
+      const s = cxState
+      const lines = [
+        ['Ativo', s.asset], ['Você vende', cxCryptoFmt(s.cryptoAmount, s.asset)],
+        ['Cotação estimada', `1 ${s.asset} = ${brl(s.rate)}`],
+        ['Taxa SISBRAPAG (' + s.feePct + '%)', brl(s.feeBrl)],
+        ['Você recebe', `≈ ${brl(s.brlAmount)}`],
+      ]
+      document.getElementById('cx-sell-confirm-lines').innerHTML = lines.map(([k,v]) =>
+        `<div class="flex justify-between"><span class="text-gray-500">${k}</span><span class="font-medium text-gray-900">${v}</span></div>`).join('')
+      document.getElementById('cx-sell-submit-err').classList.add('hidden')
+      cxShow('sell-3')
+    }
+
+    async function cxSubmitSell() {
+      const btn = document.getElementById('cx-sell-submit-btn')
+      const errEl = document.getElementById('cx-sell-submit-err')
+      btn.disabled = true; btn.textContent = 'Enviando…'
+      const s = cxState; s.refCode = cxRefCode()
+      const { error } = await sb.from('crypto_orders').insert({
+        user_id: currentUser.id, reference_code: s.refCode, order_type: 'sell',
+        asset: s.asset, network: s.network, amount_crypto: s.cryptoAmount,
+        amount_brl: s.brlAmount, rate_at_request: s.rate,
+        fee_pct: s.feePct, fee_brl: s.feeBrl, status: 'pending',
+      })
+      if (error) {
+        errEl.textContent = 'Erro: ' + error.message; errEl.classList.remove('hidden')
+        btn.disabled = false; btn.textContent = 'Confirmar venda'; return
+      }
+      cxNotifyTelegram({ orderType: 'sell', ref: s.refCode, asset: s.asset,
+        amountCrypto: cxCryptoFmt(s.cryptoAmount, s.asset), rate: brl(s.rate), amountBrl: `≈ ${brl(s.brlAmount)}` })
+      cxEmailUser('sell', s)
+      document.getElementById('cx-submitted-msg').textContent = `Venda de ${s.asset} solicitada! BRL creditado após execução.`
+      document.getElementById('cx-submitted-ref').textContent = `Referência: ${s.refCode}`
+      cxShow('submitted')
+    }
+
+    // ── WITHDRAW ─────────────────────────────────────────────────────────────────
+
+    function cxStartWithdraw() {
+      cxState = { asset: null, network: null, brlAmount: 0, cryptoAmount: 0, rate: 0, feePct: effectiveFeePct, feeBrl: 0, feeCrypto: 0, address: '', refCode: '' }
+      document.getElementById('cx-wd-asset-list').innerHTML = CX_ASSETS.map(a => {
+        const bal = cxHoldingAmt(a.id); const has = bal > 0
+        return `<label class="flex items-center justify-between p-3 border rounded-xl cursor-pointer hover:bg-gray-50 has-[:checked]:border-gray-600 has-[:checked]:bg-gray-50 ${!has ? 'opacity-50' : ''}">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="cx-wd-asset" value="${a.id}" ${!has ? 'disabled' : ''} onchange="cxWdAssetPick(this)" class="accent-gray-700" />
+            <span class="text-sm font-medium text-gray-800">${a.label} (${a.id})</span>
+          </div>
+          <span class="text-xs text-gray-500">${cxCryptoFmt(bal, a.id)}</span>
+        </label>`
+      }).join('')
+      document.getElementById('cx-wd-1-next').disabled = true
+      cxShow('wd-1')
+    }
+
+    function cxWdAssetPick(el) {
+      cxState.asset = el.value; cxState.network = null
+      document.getElementById('cx-wd-1-next').disabled = false
+    }
+
+    function cxWdBack3() {
+      const a = CX_ASSETS.find(x => x.id === cxState.asset)
+      if (a?.networks?.length === 1) cxShow('wd-1'); else cxShow('wd-2')
+    }
+
+    function cxWdStep2() {
+      if (!cxState.asset) return
+      const a = CX_ASSETS.find(x => x.id === cxState.asset)
+      document.getElementById('cx-wd-asset-name').textContent = cxState.asset
+      if (a.networks.length === 1) { cxState.network = a.networks[0]; cxWdStep3(); return }
+      document.getElementById('cx-wd-network-list').innerHTML = a.networks.map(net => {
+        const desc = net === 'TRC20' ? 'Tron — menor taxa de rede' : 'Ethereum — maior compatibilidade'
+        return `<label class="flex items-start gap-3 p-3 border rounded-xl cursor-pointer hover:bg-gray-50 has-[:checked]:border-gray-600 has-[:checked]:bg-gray-50">
+          <input type="radio" name="cx-wd-network" value="${net}" onchange="cxWdNetworkPick(this)" class="mt-0.5 accent-gray-700" />
+          <div><p class="text-sm font-medium text-gray-800">${net}</p><p class="text-xs text-gray-400">${desc}</p></div>
+        </label>`
+      }).join('')
+      document.getElementById('cx-wd-2-next').disabled = true
+      cxShow('wd-2')
+    }
+
+    function cxWdNetworkPick(el) {
+      cxState.network = el.value
+      document.getElementById('cx-wd-2-next').disabled = false
+    }
+
+    function cxWdStep3() {
+      const bal = cxHoldingAmt(cxState.asset)
+      document.getElementById('cx-wd-asset-name2').textContent = cxState.asset
+      document.getElementById('cx-wd-network-label').textContent = cxState.network
+      document.getElementById('cx-wd-asset-unit').textContent = cxState.asset
+      document.getElementById('cx-wd-balance-display').textContent = cxCryptoFmt(bal, cxState.asset)
+      document.getElementById('cx-wd-fee-pct').textContent = effectiveFeePct
+      document.getElementById('cx-wd-address').value = ''
+      document.getElementById('cx-wd-amount').value = ''
+      document.getElementById('cx-wd-preview').classList.add('hidden')
+      document.getElementById('cx-wd-3-next').disabled = true
+      document.getElementById('cx-wd-balance-warn').classList.add('hidden')
+      cxShow('wd-3')
+    }
+
+    function cxComputeWd() {
+      const addr = document.getElementById('cx-wd-address').value.trim()
+      const amt = parseFloat(document.getElementById('cx-wd-amount').value) || 0
+      const bal = cxHoldingAmt(cxState.asset)
+      const nextBtn = document.getElementById('cx-wd-3-next')
+      const preview = document.getElementById('cx-wd-preview')
+      const warnEl = document.getElementById('cx-wd-balance-warn')
+      cxState.address = addr; cxState.cryptoAmount = amt
+      if (!addr || !amt || amt <= 0) { preview.classList.add('hidden'); nextBtn.disabled = true; return }
+      const feeCrypto = amt * (effectiveFeePct / 100)
+      cxState.feeCrypto = feeCrypto; cxState.feePct = effectiveFeePct
+      document.getElementById('cx-wd-fee-crypto').textContent = cxCryptoFmt(feeCrypto, cxState.asset)
+      document.getElementById('cx-wd-net-crypto').textContent = cxCryptoFmt(amt - feeCrypto, cxState.asset)
+      preview.classList.remove('hidden')
+      if (amt > bal) {
+        warnEl.textContent = `Saldo insuficiente (disponível ${cxCryptoFmt(bal, cxState.asset)})`
+        warnEl.classList.remove('hidden'); nextBtn.disabled = true
+      } else if (addr.length < 10) {
+        warnEl.textContent = 'Endereço inválido'; warnEl.classList.remove('hidden'); nextBtn.disabled = true
+      } else { warnEl.classList.add('hidden'); nextBtn.disabled = false }
+    }
+
+    function cxWdStep4() {
+      const s = cxState
+      const netCrypto = s.cryptoAmount - s.feeCrypto
+      const addrShort = s.address.length > 16 ? s.address.slice(0,8) + '…' + s.address.slice(-6) : s.address
+      const lines = [
+        ['Ativo', s.asset], ['Rede', s.network],
+        ['Endereço destino', `<span class="font-mono text-xs break-all">${addrShort}</span>`],
+        ['Valor solicitado', cxCryptoFmt(s.cryptoAmount, s.asset)],
+        ['Taxa SISBRAPAG (' + s.feePct + '%)', cxCryptoFmt(s.feeCrypto, s.asset)],
+        ['Você recebe', `~${cxCryptoFmt(netCrypto, s.asset)}`],
+      ]
+      document.getElementById('cx-wd-confirm-lines').innerHTML = lines.map(([k,v]) =>
+        `<div class="flex justify-between gap-4"><span class="text-gray-500 shrink-0">${k}</span><span class="font-medium text-gray-900 text-right">${v}</span></div>`).join('')
+      document.getElementById('cx-wd-submit-err').classList.add('hidden')
+      cxShow('wd-4')
+    }
+
+    async function cxSubmitWd() {
+      const btn = document.getElementById('cx-wd-submit-btn')
+      const errEl = document.getElementById('cx-wd-submit-err')
+      btn.disabled = true; btn.textContent = 'Enviando…'
+      const s = cxState; s.refCode = cxRefCode()
+      const { error } = await sb.from('crypto_orders').insert({
+        user_id: currentUser.id, reference_code: s.refCode, order_type: 'withdraw',
+        asset: s.asset, network: s.network, amount_crypto: s.cryptoAmount,
+        fee_pct: s.feePct, fee_crypto: s.feeCrypto,
+        destination_address: s.address, status: 'pending',
+      })
+      if (error) {
+        errEl.textContent = 'Erro: ' + error.message; errEl.classList.remove('hidden')
+        btn.disabled = false; btn.textContent = 'Confirmar saque'; return
+      }
+      cxNotifyTelegram({ orderType: 'withdraw', ref: s.refCode, asset: s.asset, network: s.network,
+        amountCrypto: cxCryptoFmt(s.cryptoAmount, s.asset),
+        address: s.address.slice(0,8) + '…' + s.address.slice(-6) })
+      cxEmailUser('withdraw', s)
+      document.getElementById('cx-submitted-msg').textContent = `Saque de ${s.asset} solicitado! Enviaremos da Binance após confirmação.`
+      document.getElementById('cx-submitted-ref').textContent = `Referência: ${s.refCode}`
+      cxShow('submitted')
+    }
+
+    // ── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+
+    function cxNotifyTelegram(data) {
+      const name = currentUser.user_metadata?.full_name || currentUser.email || 'Desconhecido'
+      fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({ type: 'crypto', name, ...data })
+      }).catch(() => {})
+    }
+
+    function cxEmailUser(orderType, s) {
+      const name = (currentUser.user_metadata?.full_name || currentUser.email || '').split(' ')[0] || 'Cliente'
+      const typeLabel = { buy: 'Compra', sell: 'Venda', withdraw: 'Saque' }[orderType] || orderType
+      const valueRow = orderType === 'buy'
+        ? `~${cxCryptoFmt(s.cryptoAmount, s.asset)}`
+        : orderType === 'sell' ? `≈ ${brl(s.brlAmount)} BRL` : cxCryptoFmt(s.cryptoAmount, s.asset)
+      const html = `<div style="font-family:sans-serif;max-width:540px;margin:auto">
+        <div style="background:#1a2e44;padding:20px 28px;border-radius:12px 12px 0 0"><p style="color:#fff;font-size:20px;font-weight:700;margin:0">SISBRAPAG</p></div>
+        <div style="background:#f8fafc;padding:28px;border-radius:0 0 12px 12px">
+          <p style="font-size:16px;color:#111;margin:0 0 16px">Olá, ${name}!</p>
+          <p style="font-size:14px;color:#334155;margin:0 0 20px">Sua solicitação de <strong>${typeLabel} de ${s.asset}</strong> foi recebida.</p>
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:20px">
+            <table style="width:100%;font-size:14px;border-collapse:collapse">
+              <tr><td style="color:#6b7280;padding:5px 0">Referência</td><td style="text-align:right;font-weight:600">${s.refCode}</td></tr>
+              <tr><td style="color:#6b7280;padding:5px 0">Tipo</td><td style="text-align:right">${typeLabel}</td></tr>
+              <tr><td style="color:#6b7280;padding:5px 0">Ativo</td><td style="text-align:right">${s.asset}${s.network ? ' (' + s.network + ')' : ''}</td></tr>
+              <tr><td style="color:#6b7280;padding:5px 0">Valor</td><td style="text-align:right">${valueRow}</td></tr>
+              ${orderType === 'withdraw' ? `<tr><td style="color:#6b7280;padding:5px 0">Endereço</td><td style="text-align:right;font-family:monospace;font-size:12px">${(s.address||'').slice(0,12)}…${(s.address||'').slice(-6)}</td></tr>` : ''}
+            </table>
+          </div>
+          <p style="font-size:13px;color:#64748b">Em caso de dúvidas, acesse app.sisbrapag.com ou responda este e-mail.</p>
+        </div></div>`
+      const subjectMap = { buy: 'Compra solicitada', sell: 'Venda solicitada', withdraw: 'Saque solicitado' }
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [currentUser.email],
+          subject: `${subjectMap[orderType] || 'Ordem cripto'} — ${s.refCode}`,
+          html, replyTo: 'atendimento@sisbrapag.com',
+        })
+      }).catch(() => {})
+    }
+
+    // ── HISTORY ───────────────────────────────────────────────────────────────────
+
+    async function loadCryptoHistory() {
+      const el = document.getElementById('cx-history-list')
+      if (!el) return
+      const { data, error } = await sb.from('crypto_orders').select('*')
+        .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(20)
+      if (error || !data?.length) {
+        el.innerHTML = '<p class="text-sm text-gray-400 py-6 text-center">Nenhuma ordem ainda.</p>'; return
+      }
+      const badge = { pending:'bg-amber-100 text-amber-700', processing:'bg-blue-100 text-blue-700',
+        completed:'bg-emerald-100 text-emerald-700', failed:'bg-red-100 text-red-700' }
+      const typeLabel = { buy:'Compra', sell:'Venda', withdraw:'Saque' }
+      el.innerHTML = `<table class="w-full text-sm">
+        <thead><tr class="border-b border-gray-100">
+          <th class="text-left py-2.5 px-3 text-xs text-gray-500 font-medium">Ref</th>
+          <th class="text-left py-2.5 px-3 text-xs text-gray-500 font-medium">Tipo</th>
+          <th class="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">Valor</th>
+          <th class="text-right py-2.5 px-3 text-xs text-gray-500 font-medium">Status</th>
+        </tr></thead>
+        <tbody>${data.map(o => `<tr class="border-b border-gray-50 hover:bg-gray-50">
+          <td class="py-2.5 px-3 font-mono text-xs text-gray-600">${o.reference_code}</td>
+          <td class="py-2.5 px-3 text-gray-700">${typeLabel[o.order_type]||o.order_type} <span class="text-gray-400">${o.asset}</span></td>
+          <td class="py-2.5 px-3 text-right text-gray-700">${cxCryptoFmt(o.amount_crypto, o.asset)}</td>
+          <td class="py-2.5 px-3 text-right">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${badge[o.status]||'bg-gray-100 text-gray-500'}">${o.status}</span>
+          </td>
+        </tr>`).join('')}</tbody>
+      </table>`
     }
 
     // Badge poll — check for unread every 60s regardless of active section
