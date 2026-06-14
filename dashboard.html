@@ -44,9 +44,6 @@
         <a href="#" onclick="showSection('profile')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-profile">
           <i class="fa-solid fa-user w-4 text-gray-400"></i> My Profile
         </a>
-        <a href="#" onclick="showSection('services')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-services">
-          <i class="fa-solid fa-arrow-right-arrow-left w-4 text-gray-400"></i> Services
-        </a>
         <a href="#" onclick="showSection('deposit')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-deposit">
           <i class="fa-solid fa-money-bill-transfer w-4 text-gray-400"></i> Deposit
         </a>
@@ -233,57 +230,6 @@
                 <button type="submit" class="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">Save profile</button>
               </div>
             </form>
-          </div>
-        </section>
-
-        <!-- SERVICES -->
-        <section id="section-services" class="section hidden">
-          <div class="mb-8">
-            <h1 class="font-display text-2xl text-gray-900">Services</h1>
-            <p class="text-gray-500 text-sm mt-1">Request access to SISBRAPAG services.</p>
-          </div>
-          <!-- Locked state -->
-          <div id="services-locked" class="bg-white rounded-xl border border-gray-100 p-8 text-center max-w-md mx-auto">
-            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"><i class="fa-solid fa-lock text-gray-400"></i></div>
-            <h3 class="font-display text-base text-gray-900 mb-2">Complete your profile first</h3>
-            <p class="text-sm text-gray-400 leading-relaxed mb-5">Fill in your details and our team will reach out within 1 business day.</p>
-            <button onclick="showSection('profile')" class="px-5 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">Complete profile</button>
-          </div>
-          <!-- Ready state -->
-          <div id="services-ready" class="hidden">
-            <div class="bg-emerald-50 border border-emerald-100 rounded-xl px-5 py-4 flex items-start gap-4 mb-6">
-              <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
-              <div>
-                <p class="text-sm font-medium text-emerald-900">Profile complete</p>
-                <p class="text-sm text-emerald-700 mt-0.5">Our team will contact you within 1 business day to activate your services.</p>
-              </div>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
-                <div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-earth-americas text-emerald-500 text-sm"></i></div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">International Remittances</h3>
-                <p class="text-xs text-gray-400 leading-relaxed mb-3">Send and receive funds globally with competitive FX rates.</p>
-                <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-full">Pending activation</span>
-              </div>
-              <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
-                <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-ship text-blue-500 text-sm"></i></div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">Import &amp; Export</h3>
-                <p class="text-xs text-gray-400 leading-relaxed mb-3">Trade finance and currency settlement for commercial operations.</p>
-                <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-full">Pending activation</span>
-              </div>
-              <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
-                <div class="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-brands fa-bitcoin text-purple-500 text-sm"></i></div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">Crypto Settlement</h3>
-                <p class="text-xs text-gray-400 leading-relaxed mb-3">Crypto-enabled cross-border payments and conversions.</p>
-                <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-full">Pending activation</span>
-              </div>
-              <div class="bg-white rounded-xl border border-gray-100 px-5 py-4">
-                <div class="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center mb-3"><i class="fa-solid fa-building-columns text-orange-500 text-sm"></i></div>
-                <h3 class="text-sm font-semibold text-gray-900 mb-1">FX Exchange</h3>
-                <p class="text-xs text-gray-400 leading-relaxed mb-3">Real-time currency exchange for BRL, USD, EUR and more.</p>
-                <span class="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-full">Pending activation</span>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -1230,22 +1176,16 @@
       if (!profileComplete) {
         document.getElementById('profile-banner').classList.remove('hidden')
         document.getElementById('pending-timeline').classList.add('hidden')
-        document.getElementById('services-locked').classList.remove('hidden')
-        document.getElementById('services-ready').classList.add('hidden')
       } else if (isActive) {
         document.getElementById('profile-banner').classList.add('hidden')
         document.getElementById('pending-timeline').classList.add('hidden')
         document.getElementById('status-badge').innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active'
         document.getElementById('status-badge').className = 'badge badge-active'
-        document.getElementById('services-locked').classList.add('hidden')
-        document.getElementById('services-ready').classList.remove('hidden')
       } else {
         // Profile complete but pending activation
         document.getElementById('profile-banner').classList.add('hidden')
         document.getElementById('pending-timeline').classList.remove('hidden')
         document.getElementById('pending-email').textContent = user.email
-        document.getElementById('services-locked').classList.add('hidden')
-        document.getElementById('services-ready').classList.remove('hidden')
       }
 
       document.getElementById('p-name').value = name
