@@ -1062,6 +1062,103 @@
       }).catch(() => {})
     }
 
+    // ── Transfer receipt PDF ─────────────────────────────────
+    // Returns base64 string (no data-URI prefix) or null on failure.
+    function buildTransferReceiptPdf(t, actualRate, actualAmount, bankRef) {
+      try {
+        const { jsPDF } = window.jspdf
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+        const W = doc.internal.pageSize.getWidth()
+        const M = 56
+        const navy  = [15, 23, 42], muted = [100, 116, 139], line = [226, 232, 240]
+        const green = [16, 185, 129]
+        const isOut = t.direction === 'outbound'
+        const ccy   = isOut ? (t.currency_target || '') : (t.currency_source || '')
+        const profile = t.profiles || {}
+
+        const fmtDT = ts => ts ? new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+        const fmtN  = (n, decimals = 2) => Number(n).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+
+        // ── Header ──
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(...navy)
+        doc.text('SISBRA', M, 64)
+        const w1 = doc.getTextWidth('SISBRA')
+        doc.setTextColor(...green); doc.text('PAG', M + w1, 64)
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...muted)
+        doc.text('Sistema Brasil Pagamentos Digitais · CNPJ 32.742.398/0001-28', M, 78)
+        doc.setFontSize(8.5)
+        doc.text([
+          `Comprovante Nº ${t.reference_code}`,
+          `Emitido em ${fmtDT(t.completed_at || Date.now())}`,
+          `ID ${t.id || ''}`,
+        ], W - M, 56, { align: 'right' })
+        doc.setDrawColor(...line); doc.setLineWidth(1.2); doc.line(M, 92, W - M, 92)
+
+        // ── Status banner ──
+        doc.setFillColor(...green); doc.roundedRect(M, 112, W - 2 * M, 52, 8, 8, 'F')
+        doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(22)
+        doc.text('✓', M + 22, 145)
+        doc.setFontSize(14)
+        doc.text('Transferência Concluída', M + 50, 138)
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5)
+        doc.text(isOut ? 'Sua remessa foi processada com sucesso.' : 'O recebimento foi processado com sucesso.', M + 50, 154)
+
+        // ── Amount hero ──
+        doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
+        doc.text(isOut ? 'VALOR ENVIADO (BRL)' : `VALOR RECEBIDO (${ccy})`, W / 2, 206, { align: 'center' })
+        doc.setTextColor(...navy); doc.setFont('helvetica', 'bold'); doc.setFontSize(30)
+        doc.text(isOut ? brlA(t.amount_source) : fmtN(actualAmount) + ' ' + ccy, W / 2, 236, { align: 'center' })
+
+        // ── Details table ──
+        const rows = [
+          ['Cliente',              profile.full_name || '—'],
+          ['Direção',              isOut ? 'Saída (outbound)' : 'Entrada (inbound)'],
+          ['Valor solicitado',     isOut ? brlA(t.amount_source) : fmtN(t.amount_source) + ' ' + ccy],
+          ['Taxa SISBRAPAG (' + t.fee_pct + '%)', brlA(t.fee_brl)],
+          ['Taxa de câmbio real',  actualRate ? '1 ' + ccy + ' = ' + brlA(actualRate) : '—'],
+          [isOut ? 'Valor real enviado' : 'Valor real recebido',
+            isOut ? fmtN(actualAmount) + ' ' + ccy : brlA(actualAmount)],
+          [isOut ? 'Destinatário' : 'Remetente',
+            (t.recipient_name || '—') + (t.recipient_country ? ' · ' + t.recipient_country : '')],
+          ['Roteamento',           (() => {
+            if (t.routing_type === 'iban')      return 'IBAN: ' + (t.iban || '—')
+            if (t.routing_type === 'sort_code') return 'Sort: ' + (t.sort_code || '—') + ' / Conta: ' + (t.account_number || '—')
+            if (t.routing_type === 'ach')       return 'ABA: ' + (t.ach_routing || '—') + ' / Conta: ' + (t.account_number || '—')
+            return 'SWIFT: ' + (t.bic_swift || '—') + (t.account_number ? ' / Conta: ' + t.account_number : '')
+          })()],
+          ['Finalidade (BACEN)',   t.purpose_description || t.purpose_code || '—'],
+          ['Ref bancária',         bankRef || '—'],
+          ['Data de solicitação',  fmtDT(t.created_at)],
+          ['Data de conclusão',    fmtDT(t.completed_at)],
+        ]
+
+        let y = 276
+        doc.setFontSize(10)
+        rows.forEach(([k, v]) => {
+          const lines = doc.splitTextToSize(String(v), (W - 2 * M) * 0.52)
+          const rowH  = Math.max(30, lines.length * 14 + 16)
+          doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.text(k, M, y + 14)
+          doc.setTextColor(...navy); doc.setFont('helvetica', 'bold')
+          doc.text(lines, W - M, y + 14, { align: 'right' })
+          doc.setDrawColor(...line); doc.setLineWidth(0.7); doc.line(M, y + rowH, W - M, y + rowH)
+          y += rowH
+          // New page if needed
+          if (y > doc.internal.pageSize.getHeight() - 100) {
+            doc.addPage(); y = 60
+          }
+        })
+
+        // ── Footer ──
+        const fy = doc.internal.pageSize.getHeight() - 56
+        doc.setDrawColor(...line); doc.setLineWidth(0.7); doc.line(M, fy, W - M, fy)
+        doc.setTextColor(...muted); doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
+        doc.text('Documento gerado eletronicamente por SISBRAPAG · Pagamentos Digitais.', M, fy + 16)
+        doc.text('sisbrapag.com', W - M, fy + 16, { align: 'right' })
+
+        return doc.output('datauristring').split(',')[1]
+      } catch (e) { console.warn('Transfer PDF failed:', e); return null }
+    }
+
     // ── Admin messaging ──────────────────────────────────────
     let adminSelectedUserId   = null
     let adminSelectedUserName = null
@@ -1489,7 +1586,7 @@
       document.body.style.overflow = ''
       atrRenderTable()
       atrRefreshBadge()
-      if (t) atrSendStatusEmail(t, 'completed', rate, amount, bankref)
+      if (t) atrSendCompletionEmail(t, rate, amount, bankref)
     }
 
     // ── Cancel modal ────────────────────────────────────────
@@ -1534,6 +1631,69 @@
       atrRenderTable()
       atrRefreshBadge()
       if (t) atrSendStatusEmail(t, 'cancelled', null, null, null, reason)
+    }
+
+    // ── Completion email with PDF receipt attached ──────────
+
+    function atrSendCompletionEmail(t, actualRate, actualAmount, bankRef) {
+      const profile = t.profiles || {}
+      const toEmail = profile.email
+      if (!toEmail) return
+      const isOut = t.direction === 'outbound'
+      const ccy   = isOut ? (t.currency_target || '') : (t.currency_source || '')
+      const clientFirst = (profile.full_name || toEmail).split(' ')[0]
+
+      // Stamp completed_at onto the object so PDF uses correct date
+      if (!t.completed_at) t.completed_at = new Date().toISOString()
+
+      const pdf64 = buildTransferReceiptPdf(t, actualRate, actualAmount, bankRef)
+      const attachments = pdf64
+        ? [{ filename: `comprovante-${t.reference_code}.pdf`, content: pdf64 }]
+        : undefined
+
+      const amtSend = isOut ? brlA(t.amount_source) : (Number(t.amount_source).toFixed(2) + ' ' + ccy)
+      const amtRecv = isOut ? (Number(actualAmount).toFixed(2) + ' ' + ccy) : brlA(actualAmount)
+
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f3f4f6;font-family:Inter,system-ui,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:40px 0;">
+<tr><td align="center">
+<table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+  <tr><td style="background:#0B1120;padding:24px 32px;">
+    <span style="color:#10B981;font-size:18px;font-weight:700;letter-spacing:0.5px;">SISBRAPAG</span>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Ref: <strong style="color:#111;">${esc(t.reference_code)}</strong></p>
+    <h1 style="margin:0 0 16px;font-size:20px;font-weight:700;color:#111827;">Transferência concluída, ${esc(clientFirst)}! ✓</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">Sua ${isOut ? 'remessa foi enviada' : 'recebimento foi processado'} com sucesso. O comprovante em PDF está anexado a este e-mail.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">${isOut ? 'Você enviou' : 'Você aguardou'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtSend)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário recebeu' : 'Você recebeu'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtRecv)}</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">Taxa executada</td><td style="padding:8px 12px;color:#111;">1 ${ccy} = ${brlA(actualRate)}</td></tr>
+      <tr><td style="padding:8px 12px;color:#6b7280;">Ref bancária</td><td style="padding:8px 12px;font-family:monospace;font-size:12px;color:#111;">${esc(bankRef)}</td></tr>
+      <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário' : 'Remetente'}</td><td style="padding:8px 12px;color:#111;">${esc(t.recipient_name || '—')}</td></tr>
+    </table>
+    <p style="margin:0;font-size:13px;color:#9ca3af;">Dúvidas? <a href="https://wa.me/5521987128712" style="color:#10B981;">WhatsApp</a> ou atendimento@sisbrapag.com</p>
+  </td></tr>
+  <tr><td style="padding:16px 32px;border-top:1px solid #f3f4f6;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">SISBRAPAG · atendimento@sisbrapag.com</p>
+  </td></tr>
+</table>
+</td></tr>
+</table>
+</body></html>`
+
+      fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+        body: JSON.stringify({
+          to: [toEmail],
+          subject: `Transferência concluída — ${t.reference_code}`,
+          html,
+          attachments,
+          replyTo: 'atendimento@sisbrapag.com',
+        }),
+      }).catch(() => {})
     }
 
     // ── Shared: status email to user ────────────────────────
