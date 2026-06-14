@@ -1568,17 +1568,19 @@
     // ── SHARED BALANCE HELPER ─────────────────────────────────────────────────
     // Available BRL = credited deposits − completed crypto buys − completed outbound transfers
     async function getAvailableBalance() {
-      const [dep, buys, sells, transfers] = await Promise.all([
+      const [dep, buys, sells, transfers, adjs] = await Promise.all([
         sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status', 'credited'),
         sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'buy'),
         sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'sell'),
-        sb.from('transfer_requests').select('amount_source').eq('user_id', currentUser.id).eq('status', 'completed').eq('direction', 'outbound')
+        sb.from('transfer_requests').select('amount_source').eq('user_id', currentUser.id).eq('status', 'completed').eq('direction', 'outbound'),
+        sb.from('manual_adjustments').select('amount').eq('user_id', currentUser.id),
       ])
       const deposited   = (dep.data       || []).reduce((s, r) => s + Number(r.amount),        0)
       const spentBuy    = (buys.data      || []).reduce((s, r) => s + Number(r.amount_brl),     0)
       const earnedSell  = (sells.data     || []).reduce((s, r) => s + Number(r.amount_brl),     0)
       const spentXfer   = (transfers.data || []).reduce((s, r) => s + Number(r.amount_source),  0)
-      return Math.max(0, deposited - spentBuy + earnedSell - spentXfer)
+      const adjTotal    = (adjs.data      || []).reduce((s, r) => s + Number(r.amount),         0)
+      return Math.max(0, deposited - spentBuy + earnedSell - spentXfer + adjTotal)
     }
 
     async function loadOverview() {
@@ -1592,12 +1594,14 @@
       document.getElementById('ov-balance').textContent = brl(bal)
 
       // Fetch all transaction sources in parallel
-      const [depRes, trRes, cxRes] = await Promise.all([
+      const [depRes, trRes, cxRes, adjRes] = await Promise.all([
         sb.from('deposits').select('id,reference_code,method,amount,status,created_at')
           .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
         sb.from('transfer_requests').select('id,reference_code,direction,amount_source,currency_source,status,created_at')
           .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
         sb.from('crypto_orders').select('id,reference_code,order_type,asset,amount_brl,status,created_at')
+          .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
+        sb.from('manual_adjustments').select('id,amount,note,created_at')
           .eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100),
       ])
 
@@ -1637,6 +1641,18 @@
           amount: (isBuy ? '−' : (c.order_type === 'sell' ? '+' : '−')) + brl(c.amount_brl || 0),
           sign: isBuy ? -1 : 1,
           status: c.status,
+        })
+      }
+
+      for (const a of (adjRes.data || [])) {
+        const isCredit = Number(a.amount) >= 0
+        rows.push({
+          date: a.created_at,
+          type: 'Ajuste',
+          ref: a.note || '—',
+          amount: (isCredit ? '+' : '−') + brl(Math.abs(Number(a.amount))),
+          sign: isCredit ? 1 : -1,
+          status: 'completed',
         })
       }
 

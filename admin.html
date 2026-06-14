@@ -554,8 +554,12 @@
           Info
         </button>
         <button id="tab-settings-btn" onclick="switchModalTab('settings')"
-          class="text-xs font-medium pb-2.5 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors">
+          class="text-xs font-medium pb-2.5 mr-5 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors">
           Settings
+        </button>
+        <button id="tab-adj-btn" onclick="switchModalTab('adj')"
+          class="text-xs font-medium pb-2.5 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition-colors">
+          Ajuste
         </button>
       </div>
 
@@ -632,6 +636,45 @@
               Save limits
             </button>
           </div>
+        </div>
+      </div>
+
+      <!-- Tab: Ajuste -->
+      <div id="tab-adj" class="hidden px-6 py-5 space-y-4">
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-3">Tipo de Ajuste</label>
+          <div class="flex gap-2">
+            <button id="adj-type-credit" onclick="setAdjType('credit')"
+              class="flex-1 py-2 text-sm font-medium rounded-lg border-2 border-emerald-500 bg-emerald-50 text-emerald-700 transition-colors">
+              + Crédito
+            </button>
+            <button id="adj-type-debit" onclick="setAdjType('debit')"
+              class="flex-1 py-2 text-sm font-medium rounded-lg border-2 border-gray-200 bg-white text-gray-500 transition-colors">
+              − Débito
+            </button>
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Valor (BRL)</label>
+          <div class="flex items-center gap-1.5">
+            <span class="text-sm text-gray-400">R$</span>
+            <input id="adj-amount" type="number" step="0.01" min="0.01" inputmode="decimal"
+              class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 text-gray-800 placeholder-gray-300"
+              placeholder="0,00">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Nota (obrigatória)</label>
+          <textarea id="adj-note" rows="2"
+            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 resize-none text-gray-800 placeholder-gray-300"
+            placeholder="Ex: Bônus de boas-vindas, correção de taxa, devolução…"></textarea>
+        </div>
+        <div class="flex items-center justify-between">
+          <span id="adj-feedback" class="text-xs text-emerald-600 hidden">Ajuste aplicado ✓</span>
+          <button id="adj-save-btn" onclick="saveAdjustment()"
+            class="ml-auto px-4 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Aplicar ajuste
+          </button>
         </div>
       </div>
 
@@ -874,6 +917,12 @@
       document.getElementById('modal-min-tx').value = u.min_tx_brl ?? ''
       document.getElementById('modal-max-tx').value = u.max_tx_brl ?? ''
       document.getElementById('limits-feedback').classList.add('hidden')
+      // Reset adjustment tab
+      document.getElementById('adj-amount').value = ''
+      document.getElementById('adj-note').value = ''
+      document.getElementById('adj-feedback').classList.add('hidden')
+      _adjType = 'credit'
+      setAdjType('credit')
       document.getElementById('modal-overlay').classList.remove('hidden')
     }
 
@@ -952,6 +1001,37 @@
       setTimeout(() => fb.classList.add('hidden'), 2500)
     }
 
+    async function saveAdjustment() {
+      if (!modalUserId) return
+      const rawAmt = document.getElementById('adj-amount').value.trim()
+      const note   = document.getElementById('adj-note').value.trim()
+      const btn    = document.getElementById('adj-save-btn')
+      if (!rawAmt || isNaN(parseFloat(rawAmt)) || parseFloat(rawAmt) <= 0) {
+        alert('Informe um valor válido.'); return
+      }
+      if (!note) { alert('A nota é obrigatória.'); return }
+      const absAmount  = parseFloat(rawAmt)
+      const signedAmount = _adjType === 'credit' ? absAmount : -absAmount
+      btn.disabled = true
+      btn.textContent = 'Aplicando…'
+      const { data: { user } } = await sb.auth.getUser()
+      const { error } = await sb.from('manual_adjustments').insert({
+        user_id:    modalUserId,
+        amount:     signedAmount,
+        note:       note,
+        created_by: user?.id || null,
+      })
+      btn.disabled = false
+      btn.textContent = 'Aplicar ajuste'
+      if (error) { alert('Erro ao aplicar ajuste: ' + error.message); return }
+      document.getElementById('adj-amount').value = ''
+      document.getElementById('adj-note').value = ''
+      const fb = document.getElementById('adj-feedback')
+      fb.textContent = (_adjType === 'credit' ? 'Crédito' : 'Débito') + ' aplicado ✓'
+      fb.classList.remove('hidden')
+      setTimeout(() => fb.classList.add('hidden'), 3000)
+    }
+
     function closeModal(e) {
       if (!e || e.target === document.getElementById('modal-overlay')) {
         document.getElementById('modal-overlay').classList.add('hidden')
@@ -960,18 +1040,25 @@
       }
     }
 
+    let _adjType = 'credit'
+    function setAdjType(type) {
+      _adjType = type
+      const isCredit = type === 'credit'
+      document.getElementById('adj-type-credit').className = `flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${isCredit ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-200 bg-white text-gray-500'}`
+      document.getElementById('adj-type-debit').className  = `flex-1 py-2 text-sm font-medium rounded-lg border-2 transition-colors ${!isCredit ? 'border-red-400 bg-red-50 text-red-700' : 'border-gray-200 bg-white text-gray-500'}`
+    }
+
     function switchModalTab(tab) {
-      const isInfo = tab === 'info'
-      document.getElementById('tab-info').classList.toggle('hidden', !isInfo)
-      document.getElementById('tab-settings').classList.toggle('hidden', isInfo)
-      document.getElementById('tab-info-btn').classList.toggle('border-gray-900', isInfo)
-      document.getElementById('tab-info-btn').classList.toggle('text-gray-900', isInfo)
-      document.getElementById('tab-info-btn').classList.toggle('border-transparent', !isInfo)
-      document.getElementById('tab-info-btn').classList.toggle('text-gray-400', !isInfo)
-      document.getElementById('tab-settings-btn').classList.toggle('border-gray-900', !isInfo)
-      document.getElementById('tab-settings-btn').classList.toggle('text-gray-900', !isInfo)
-      document.getElementById('tab-settings-btn').classList.toggle('border-transparent', isInfo)
-      document.getElementById('tab-settings-btn').classList.toggle('text-gray-400', isInfo)
+      const tabs = ['info', 'settings', 'adj']
+      tabs.forEach(t => {
+        const isActive = t === tab
+        document.getElementById('tab-' + t).classList.toggle('hidden', !isActive)
+        const btn = document.getElementById('tab-' + t + '-btn')
+        btn.classList.toggle('border-gray-900', isActive)
+        btn.classList.toggle('text-gray-900', isActive)
+        btn.classList.toggle('border-transparent', !isActive)
+        btn.classList.toggle('text-gray-400', !isActive)
+      })
     }
 
     function esc(s) {
