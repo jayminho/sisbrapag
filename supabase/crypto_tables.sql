@@ -33,7 +33,7 @@ CREATE TRIGGER set_updated_at_crypto_holdings
 -- Transaction log for buy / sell / withdraw orders
 CREATE TABLE IF NOT EXISTS public.crypto_orders (
   id                     uuid primary key default gen_random_uuid(),
-  user_id                uuid references auth.users not null,
+  user_id                uuid references auth.users not null references public.profiles(id),
   reference_code         text unique not null,           -- e.g. "CX-391847"
   order_type             text not null                   -- 'buy' | 'sell' | 'withdraw'
                            CHECK (order_type IN ('buy','sell','withdraw')),
