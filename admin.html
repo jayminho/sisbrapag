@@ -326,6 +326,27 @@
           </button>
         </div>
       </div>
+      <!-- Fee Tier -->
+      <div class="mt-5 pt-5 border-t border-gray-100">
+        <label class="text-xs font-medium text-gray-400 uppercase tracking-wide block mb-2">Fee Tier</label>
+        <p class="text-xs text-gray-400 mb-2">Platform default: <span class="font-medium text-gray-600">3%</span>. Leave blank to use default.</p>
+        <div class="flex items-center gap-2 mb-2">
+          <input id="modal-fee-override" type="number" step="0.01" min="0" max="100" inputmode="decimal"
+            class="w-24 px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 text-gray-800 placeholder-gray-300"
+            placeholder="3.0">
+          <span class="text-sm text-gray-500">% override for this user</span>
+        </div>
+        <input id="modal-fee-note" type="text"
+          class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 text-gray-800 placeholder-gray-300"
+          placeholder="Internal memo, e.g. Corporate rate — agreed 2026-06">
+        <div class="flex items-center justify-between mt-2">
+          <span id="fee-feedback" class="text-xs text-emerald-600 hidden">Saved ✓</span>
+          <button id="fee-save-btn" onclick="saveFeeTier()"
+            class="ml-auto px-4 py-1.5 text-xs font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            Save fee tier
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -555,7 +576,36 @@
         </div>` : '').join('')
       document.getElementById('modal-notes').value = u.notes || ''
       document.getElementById('notes-feedback').classList.add('hidden')
+      document.getElementById('modal-fee-override').value = (u.fee_pct_override ?? '') === null ? '' : (u.fee_pct_override ?? '')
+      document.getElementById('modal-fee-note').value = u.fee_note || ''
+      document.getElementById('fee-feedback').classList.add('hidden')
       document.getElementById('modal-overlay').classList.remove('hidden')
+    }
+
+    async function saveFeeTier() {
+      if (!modalUserId) return
+      const raw = document.getElementById('modal-fee-override').value.trim()
+      const feeNote = document.getElementById('modal-fee-note').value
+      const btn = document.getElementById('fee-save-btn')
+      let fee_pct_override = null
+      if (raw !== '') {
+        fee_pct_override = parseFloat(raw)
+        if (isNaN(fee_pct_override) || fee_pct_override < 0 || fee_pct_override > 100) {
+          alert('Fee override must be a number between 0 and 100, or blank for default.'); return
+        }
+      }
+      btn.disabled = true
+      btn.textContent = 'Saving…'
+      const { error } = await sb.from('profiles')
+        .update({ fee_pct_override, fee_note: feeNote || null }).eq('id', modalUserId)
+      btn.disabled = false
+      btn.textContent = 'Save fee tier'
+      if (error) { alert('Error saving fee tier: ' + error.message); return }
+      const u = allUsers.find(u => u.id === modalUserId)
+      if (u) { u.fee_pct_override = fee_pct_override; u.fee_note = feeNote || null }
+      const fb = document.getElementById('fee-feedback')
+      fb.classList.remove('hidden')
+      setTimeout(() => fb.classList.add('hidden'), 2500)
     }
 
     async function saveNotes() {

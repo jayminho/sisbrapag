@@ -535,6 +535,9 @@
     const { createClient } = supabase
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     let currentUser = null
+    // Effective fee rate for this user (%). Platform default 3.0; admin can override per-user.
+    const DEFAULT_FEE_PCT = 3.0
+    let effectiveFeePct = DEFAULT_FEE_PCT
 
     async function init() {
       const { data: { session } } = await sb.auth.getSession()
@@ -559,8 +562,9 @@
       // Fetch real status from profiles table
       let realStatus = 'pending'
       try {
-        const { data: profile } = await sb.from('profiles').select('status').eq('id', user.id).single()
+        const { data: profile } = await sb.from('profiles').select('status, fee_pct_override').eq('id', user.id).single()
         if (profile?.status) realStatus = profile.status
+        effectiveFeePct = (profile?.fee_pct_override ?? null) !== null ? Number(profile.fee_pct_override) : DEFAULT_FEE_PCT
       } catch (_) {}
 
       const isActive = realStatus === 'active'
