@@ -1568,15 +1568,17 @@
     // ── SHARED BALANCE HELPER ─────────────────────────────────────────────────
     // Available BRL = credited deposits − completed crypto buys − completed outbound transfers
     async function getAvailableBalance() {
-      const [dep, buys, transfers] = await Promise.all([
+      const [dep, buys, sells, transfers] = await Promise.all([
         sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status', 'credited'),
         sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'buy'),
+        sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'sell'),
         sb.from('transfer_requests').select('amount_source').eq('user_id', currentUser.id).eq('status', 'completed').eq('direction', 'outbound')
       ])
       const deposited   = (dep.data       || []).reduce((s, r) => s + Number(r.amount),        0)
       const spentBuy    = (buys.data      || []).reduce((s, r) => s + Number(r.amount_brl),     0)
+      const earnedSell  = (sells.data     || []).reduce((s, r) => s + Number(r.amount_brl),     0)
       const spentXfer   = (transfers.data || []).reduce((s, r) => s + Number(r.amount_source),  0)
-      return Math.max(0, deposited - spentBuy - spentXfer)
+      return Math.max(0, deposited - spentBuy + earnedSell - spentXfer)
     }
 
     async function loadOverview() {
