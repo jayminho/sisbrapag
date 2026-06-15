@@ -162,85 +162,93 @@
     </div>
   </div>
 
-  <!-- CONVERTER - THE STAR FEATURE -->
+  <!-- CONVERTER - Phone-style vertical card -->
   <div id="converter" class="bg-white border-y border-slate-100 section">
     <div class="max-w-screen-xl mx-auto px-6 py-16">
-      <div class="max-w-xl mb-9">
+
+      <div class="text-center mb-10">
         <div class="uppercase text-emerald-600 text-xs tracking-[1.5px] font-semibold">Live tool</div>
-        <h2 class="font-display text-4xl tracking-tighter font-semibold mt-1">Currency &amp; Crypto Converter</h2>
-        <p class="mt-3 text-slate-600">Real-time rates for illustration. Convert between traditional currencies and digital assets — back and forth.</p>
+        <h2 class="font-display text-4xl tracking-tighter font-semibold mt-1">Currency Converter</h2>
+        <p class="mt-2 text-slate-500 text-sm">Real-time rates · BRL, USD, EUR, GBP</p>
       </div>
 
-      <div class="max-w-2xl mx-auto">
-        <div class="converter-card bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-          <!-- Amount -->
-          <div class="mb-6">
-            <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-2">YOU SEND</label>
-            <div class="flex items-center gap-3">
-              <input id="amount" 
-                     type="number" 
-                     value="1000" 
-                     step="any"
-                     class="minimal-input flex-1 text-4xl font-semibold bg-slate-50 border border-slate-200 focus:border-emerald-300 rounded-2xl px-5 py-4 outline-none">
-              <div id="from-symbol" 
-                   class="min-w-[52px] text-center text-lg font-medium text-slate-400 tabular-nums"></div>
-            </div>
-          </div>
+      <!-- Phone-shaped card -->
+      <div class="max-w-[380px] mx-auto">
+        <div class="converter-card bg-white border border-slate-200 rounded-[2rem] overflow-hidden" style="box-shadow:0 20px 40px -8px rgba(0,0,0,0.10),0 8px 16px -4px rgba(0,0,0,0.06)">
 
-          <!-- From / To row -->
-          <div class="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
-            <!-- From -->
-            <div class="sm:col-span-2">
-              <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-1.5">FROM</label>
-              <select id="from-currency" 
-                      class="minimal-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base focus:border-emerald-300">
-                <!-- populated by JS -->
-              </select>
+          <div class="p-7">
+
+            <!-- YOU SEND -->
+            <div class="mb-5">
+              <div class="text-[10px] font-semibold tracking-widest text-slate-400 mb-2.5">YOU SEND</div>
+              <div class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-4 py-3.5 border border-slate-100">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span id="from-flag" class="text-[1.6rem] leading-none flex-shrink-0">🇧🇷</span>
+                  <select id="from-currency"
+                          class="text-sm font-bold text-slate-800 bg-transparent border-none outline-none cursor-pointer">
+                    <!-- populated by JS -->
+                  </select>
+                </div>
+                <input id="amount"
+                       type="number"
+                       value="1000"
+                       step="any"
+                       class="w-28 text-right text-xl font-semibold bg-transparent border-none outline-none text-slate-900 tabular-nums focus:text-emerald-700 transition-colors">
+              </div>
             </div>
 
             <!-- Swap -->
-            <div class="flex justify-center sm:justify-center pb-1 sm:pb-2">
+            <div class="flex items-center justify-center my-3">
               <button id="swap-btn"
-                      class="group w-11 h-11 flex items-center justify-center rounded-2xl border border-slate-200 hover:bg-slate-50 active:bg-slate-100 transition-colors"
+                      class="group w-9 h-9 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center hover:bg-slate-50 active:bg-slate-100 transition-colors"
                       title="Swap currencies">
-                <i class="fa-solid fa-exchange-alt text-slate-400 group-active:rotate-180 transition-transform"></i>
+                <i class="fa-solid fa-exchange-alt text-slate-400 text-sm group-active:rotate-180 transition-transform duration-200"></i>
               </button>
             </div>
 
-            <!-- To -->
-            <div class="sm:col-span-2">
-              <label class="text-xs font-semibold tracking-widest text-slate-500 block mb-1.5">TO</label>
-              <select id="to-currency" 
-                      class="minimal-input w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base focus:border-emerald-300">
-                <!-- populated by JS -->
-              </select>
-            </div>
-          </div>
-
-          <!-- Result -->
-          <div class="mt-8 pt-7 border-t border-slate-100">
-            <div class="flex justify-between items-baseline mb-1">
-              <div class="text-xs font-semibold tracking-widest text-slate-500">RECIPIENT RECEIVES</div>
-              <div id="rate-line" class="text-[10px] text-emerald-700 font-medium"></div>
-            </div>
-            
-            <div class="flex items-baseline gap-x-3">
-              <div id="result-amount" 
-                   class="font-display text-5xl font-semibold tabular-nums text-slate-900 tracking-tighter">
-                —
+            <!-- RECIPIENT RECEIVES -->
+            <div class="mb-6">
+              <div class="text-[10px] font-semibold tracking-widest text-slate-400 mb-2.5">RECIPIENT RECEIVES</div>
+              <div class="flex items-center justify-between gap-3 bg-emerald-50 rounded-2xl px-4 py-3.5 border border-emerald-100">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span id="to-flag" class="text-[1.6rem] leading-none flex-shrink-0">🇺🇸</span>
+                  <select id="to-currency"
+                          class="text-sm font-bold text-slate-800 bg-transparent border-none outline-none cursor-pointer">
+                    <!-- populated by JS -->
+                  </select>
+                </div>
+                <div id="result-amount" class="text-xl font-semibold text-slate-900 tabular-nums">—</div>
               </div>
-              <div id="to-symbol" class="text-xl text-slate-400 font-medium"></div>
             </div>
 
-            <div id="result-status" class="mt-2 text-xs text-slate-500 min-h-[18px]"></div>
+            <!-- Rate + status -->
+            <div class="mb-6 px-1 space-y-1">
+              <div id="rate-line" class="text-xs font-medium text-emerald-700"></div>
+              <div id="result-status" class="text-[10px] text-slate-400 min-h-[14px]"></div>
+            </div>
+
+            <!-- CTA -->
+            <a href="/onboard.html"
+               class="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-2xl py-3.5 text-sm font-semibold transition-colors">
+              Get started free <i class="fa-solid fa-arrow-right text-xs"></i>
+            </a>
           </div>
 
-          <div class="mt-6 text-[10px] text-center text-slate-400">
-            Rates are live from public sources (CoinGecko + open exchange data). For illustration only. 
-            Actual execution rates provided upon request.
+          <!-- Disclaimer footer -->
+          <div class="border-t border-slate-100 bg-slate-50 px-7 py-3">
+            <p class="text-[9px] text-center text-slate-400 leading-relaxed">
+              Rates live from public sources (CoinGecko + open exchange data). For illustration only. Actual execution rates on request.
+            </p>
+          </div>
+
+          <!-- Hidden legacy elements kept for JS compatibility -->
+          <div class="hidden" aria-hidden="true">
+            <div id="from-symbol"></div>
+            <div id="to-symbol"></div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -504,7 +512,7 @@
         if (item.type !== 'fiat') return;
         const opt = document.createElement('option');
         opt.value = item.code;
-        opt.textContent = `${item.code} — ${item.name}`;
+        opt.textContent = item.code; // compact label for phone UI
         fiatGroup.appendChild(opt.cloneNode(true));
       });
 
@@ -516,6 +524,8 @@
       toSel.value = 'USD';
     }
 
+    const FLAGS = { BRL: '🇧🇷', USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' };
+
     function updateSymbols() {
       const fromCode = document.getElementById('from-currency').value;
       const toCode = document.getElementById('to-currency').value;
@@ -523,8 +533,15 @@
       const fromItem = SUPPORTED.find(i => i.code === fromCode);
       const toItem = SUPPORTED.find(i => i.code === toCode);
 
+      // Legacy symbol elements (kept for backward-compat, now hidden)
       document.getElementById('from-symbol').textContent = fromItem ? fromItem.symbol : '';
       document.getElementById('to-symbol').textContent = toItem ? toItem.symbol : '';
+
+      // Flag icons
+      const fromFlagEl = document.getElementById('from-flag');
+      const toFlagEl   = document.getElementById('to-flag');
+      if (fromFlagEl) fromFlagEl.textContent = FLAGS[fromCode] || '🏳';
+      if (toFlagEl)   toFlagEl.textContent   = FLAGS[toCode]   || '🏳';
     }
 
     function formatAmount(amount, code) {
