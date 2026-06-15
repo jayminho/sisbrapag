@@ -149,35 +149,33 @@
       document.getElementById('sent-email').textContent = email
 
       // ── Admin notifications only for genuinely new users ─────────────────
-      // We track emails that have already requested a magic link in localStorage.
-      // If the email is already known, the user is logging in again — skip notifications.
-      const _knownKey = 'sbp_known_emails'
-      const _known = JSON.parse(localStorage.getItem(_knownKey) || '[]')
-      const _isNew = !_known.includes(email)
-      if (_isNew) {
-        _known.push(email)
-        localStorage.setItem(_knownKey, JSON.stringify(_known))
-        const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }
-        // Telegram
-        fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
-          method: 'POST', headers,
-          body: JSON.stringify({ type: 'new_user', email, name })
-        }).catch(() => {})
-        // Email to admin
-        fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
-          method: 'POST', headers,
-          body: JSON.stringify({
-            to: ['jaymepereiranunes@yahoo.com.br'],
-            subject: `🆕 Novo usuário cadastrado — ${email}`,
-            html: `<p style="font-family:sans-serif;font-size:15px;color:#1e293b">
-              <strong>Novo usuário solicitou acesso ao SISBRAPAG.</strong><br><br>
-              👤 Nome: <strong>${name}</strong><br>
-              📧 E-mail: <strong>${email}</strong><br><br>
-              <a href="https://admin.sisbrapag.com/admin.html" style="color:#10b981">Abrir painel admin →</a>
-            </p>`
-          })
-        }).catch(() => {})
-      }
+      // Server-side check: calls a SECURITY DEFINER RPC that queries auth.users
+      // directly. Works across all browsers and devices — not localStorage.
+      try {
+        const { data: isNew } = await sb.rpc('is_new_signup', { p_email: email })
+        if (isNew) {
+          const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }
+          // Telegram
+          fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
+            method: 'POST', headers,
+            body: JSON.stringify({ type: 'new_user', email, name })
+          }).catch(() => {})
+          // Email to admin
+          fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+            method: 'POST', headers,
+            body: JSON.stringify({
+              to: ['jaymepereiranunes@yahoo.com.br'],
+              subject: `🆕 Novo usuário cadastrado — ${email}`,
+              html: `<p style="font-family:sans-serif;font-size:15px;color:#1e293b">
+                <strong>Novo usuário solicitou acesso ao SISBRAPAG.</strong><br><br>
+                👤 Nome: <strong>${name}</strong><br>
+                📧 E-mail: <strong>${email}</strong><br><br>
+                <a href="https://admin.sisbrapag.com/admin.html" style="color:#10b981">Abrir painel admin →</a>
+              </p>`
+            })
+          }).catch(() => {})
+        }
+      } catch (_) { /* silent — notifications are best-effort */ }
       // ─────────────────────────────────────────────────────────────────────
     })
     function showError(msg) {
