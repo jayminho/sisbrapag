@@ -556,8 +556,9 @@
             <!-- quote box -->
             <div class="bg-gray-50 border border-gray-100 rounded-xl divide-y divide-gray-100 text-sm mb-3">
               <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa hoje</span><span id="tr-rate-line" class="font-medium text-gray-800">—</span></div>
+              <div id="tr-gross-row" class="hidden flex justify-between px-4 py-2.5"><span class="text-gray-400">Bruto (sem taxa)</span><span id="tr-gross-line" class="font-medium text-gray-800">—</span></div>
               <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa SISBRAPAG (<span id="tr-fee-pct">3</span>%)</span><span id="tr-fee-line" class="font-medium text-gray-800">—</span></div>
-              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400" id="tr-result-label">Valor estimado</span><span id="tr-result-line" class="font-semibold text-emerald-700">—</span></div>
+              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400" id="tr-result-label">Destinatário recebe</span><span id="tr-result-line" class="font-semibold text-emerald-700">—</span></div>
             </div>
             <p id="tr-rate-status" class="text-xs text-gray-400 mb-1"></p>
             <p id="tr-balance-note" class="hidden text-xs mb-3"></p>
@@ -590,7 +591,7 @@
                 </div>
 
                 <!-- Country -->
-                <div>
+                <div id="tr-rec-country-wrap">
                   <label class="block text-xs font-medium text-gray-600 mb-1">País *</label>
                   <select id="tr-rec-country"
                     class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
@@ -1755,6 +1756,17 @@
         ? document.getElementById('tr-target-ccy').value
         : document.getElementById('tr-source-ccy').value
     }
+    function trUpdateCountryVisibility(ccy) {
+      if (!ccy) ccy = trCurrentCcy()
+      const wrap = document.getElementById('tr-rec-country-wrap')
+      if (!wrap) return
+      if (trState.direction === 'outbound' && ccy === 'USD') {
+        wrap.style.display = 'none'
+        document.getElementById('tr-rec-country').value = 'US'
+      } else {
+        wrap.style.display = ''
+      }
+    }
     function trCurrentAmount() {
       const el = trState.direction === 'outbound'
         ? document.getElementById('tr-amount-out')
@@ -1781,7 +1793,10 @@
         const feeBrl = amountBrl * pct / 100 + flat * rateCcyToBrl
         const netBrl = Math.max(0, amountBrl - feeBrl)
         const est = netBrl / rateCcyToBrl
+        const gross = amountBrl / rateCcyToBrl
         trState.feeBrl = feeBrl; trState.resultAmt = est
+        document.getElementById('tr-gross-row').classList.remove('hidden')
+        document.getElementById('tr-gross-line').textContent = `${fmtCcy(gross, ccy)} ${ccy}`
         document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
         document.getElementById('tr-result-line').textContent = `${fmtCcy(est, ccy)} ${ccy}`
         trUpdateBalanceNote(amountBrl)
@@ -1850,6 +1865,8 @@
           document.getElementById('tr-form-' + f).classList.add('hidden'))
         const map = { EUR: 'iban', GBP: 'sort', USD: 'ach' }
         document.getElementById('tr-form-' + (map[ccy] || 'swift')).classList.remove('hidden')
+        // USD = ACH = US only, no country picker needed
+        trUpdateCountryVisibility(ccy)
       } else {
         trRenderInboundDetails()
       }
@@ -1972,12 +1989,25 @@
       return { ok: true, msg: '' }
     }
 
-    function trValidateACHLive() {
+    async function trValidateACHLive() {
       const el = document.getElementById('tr-ach-routing')
       el.value = el.value.replace(/\D/g, '').slice(0, 9)
       const { ok, msg } = trValidateACH(el.value)
       if (el.value) trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', ok, msg)
       else trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', false, '')
+      // If checksum passes, look up bank name
+      if (ok && el.value.length === 9) {
+        try {
+          const res = await fetch(`https://www.routingnumbers.info/api/data.json?rn=${el.value}`)
+          if (res.ok) {
+            const data = await res.json()
+            if (data.customer_name) {
+              const bankEl = document.getElementById('tr-ach-bank')
+              if (bankEl && !bankEl.value) bankEl.value = data.customer_name
+            }
+          }
+        } catch (_) { /* silent fallback */ }
+      }
     }
 
     function trRecipientNext() {
@@ -1999,10 +2029,11 @@
 
       // Outbound — common fields
       const name    = document.getElementById('tr-rec-name').value.trim()
-      const country = document.getElementById('tr-rec-country').value
+      const ccy0    = trCurrentCcy()
+      const country = ccy0 === 'USD' ? 'US' : document.getElementById('tr-rec-country').value
       document.getElementById('tr-rec-name-err').textContent    = name    ? '' : 'Informe o nome do destinatário.'
-      document.getElementById('tr-rec-country-err').textContent = country ? '' : 'Selecione o país.'
-      if (!name || !country) return
+      document.getElementById('tr-rec-country-err').textContent = (ccy0 === 'USD' || country) ? '' : 'Selecione o país.'
+      if (!name || (ccy0 !== 'USD' && !country)) return
 
       const ccy = trState.ccy
       let routing = {}
@@ -2064,7 +2095,7 @@
       const recompute = () => { clearTimeout(trRateTimer); trRateTimer = setTimeout(trRecompute, 300) }
       document.getElementById('tr-amount-out').addEventListener('input', recompute)
       document.getElementById('tr-amount-in').addEventListener('input', recompute)
-      document.getElementById('tr-target-ccy').addEventListener('change', recompute)
+      document.getElementById('tr-target-ccy').addEventListener('change', () => { trUpdateCountryVisibility(); recompute() })
       document.getElementById('tr-source-ccy').addEventListener('change', recompute)
     }
 

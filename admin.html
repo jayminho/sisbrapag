@@ -401,37 +401,7 @@
     </div>
   </div>
 
-  <!-- Transfer: Complete modal -->
-  <div id="atr-complete-overlay" class="hidden fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4" onclick="atrCloseComplete(event)">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h3 class="font-display text-base text-gray-900">Concluir transferência</h3>
-        <button onclick="atrCloseComplete()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="px-6 py-5 space-y-4">
-        <div>
-          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Taxa real executada (BRL/moeda)</label>
-          <input id="atr-complete-rate" type="number" step="0.01" placeholder="ex: 5.87"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Valor real enviado / recebido</label>
-          <input id="atr-complete-amount" type="number" step="0.01" placeholder="ex: 1250.00"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
-        </div>
-        <div>
-          <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1.5">Referência bancária / SWIFT ref</label>
-          <input id="atr-complete-bankref" type="text" placeholder="ex: SWIFT-20240613-001"
-            class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100">
-        </div>
-        <p id="atr-complete-err" class="text-xs text-red-500 min-h-[16px]"></p>
-      </div>
-      <div class="px-6 pb-5 flex gap-3">
-        <button onclick="atrCloseComplete()" class="flex-1 py-2.5 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-50 transition-colors">Cancelar</button>
-        <button onclick="atrConfirmComplete()" id="atr-complete-btn" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors">Concluir e notificar</button>
-      </div>
-    </div>
-  </div>
+  <!-- Transfer: Complete modal removed — Concluir now completes directly -->
 
   <!-- Transfer: Cancel modal -->
   <div id="atr-cancel-overlay" class="hidden fixed inset-0 bg-black/40 z-60 flex items-center justify-center p-4" onclick="atrCloseCancel(event)">
@@ -1874,7 +1844,7 @@
         actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','processing')" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">→ Em processamento</button>`
       }
       if (['under_review','processing'].includes(t.status)) {
-        actions.innerHTML += `<button onclick="atrOpenComplete('${t.id}')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
+        actions.innerHTML += `<button onclick="atrDirectComplete('${t.id}')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
         actions.innerHTML += `<button onclick="atrOpenCancel('${t.id}')" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors ml-auto">✕ Cancelar</button>`
       }
 
@@ -1902,57 +1872,26 @@
       if (t) atrSendStatusEmail(t, newStatus, null, null, null)
     }
 
-    // ── Complete modal ──────────────────────────────────────
+    // ── Complete (direct, no modal) ─────────────────────────
 
-    let _atrCompleteId = null
-
-    function atrOpenComplete(id) {
-      _atrCompleteId = id
-      document.getElementById('atr-complete-rate').value   = ''
-      document.getElementById('atr-complete-amount').value = ''
-      document.getElementById('atr-complete-bankref').value = ''
-      document.getElementById('atr-complete-err').textContent = ''
-      document.getElementById('atr-complete-btn').disabled = false
-      document.getElementById('atr-complete-overlay').classList.remove('hidden')
-    }
-
-    function atrCloseComplete(e) {
-      if (e && e.target !== document.getElementById('atr-complete-overlay')) return
-      document.getElementById('atr-complete-overlay').classList.add('hidden')
-    }
-
-    async function atrConfirmComplete() {
-      const rate    = parseFloat(document.getElementById('atr-complete-rate').value)
-      const amount  = parseFloat(document.getElementById('atr-complete-amount').value)
-      const bankref = document.getElementById('atr-complete-bankref').value.trim()
-      const err     = document.getElementById('atr-complete-err')
-      if (!rate || rate <= 0)   { err.textContent = 'Informe a taxa real executada.'; return }
-      if (!amount || amount <= 0) { err.textContent = 'Informe o valor real.'; return }
-      if (!bankref)              { err.textContent = 'Informe a referência bancária.'; return }
-
-      const btn = document.getElementById('atr-complete-btn')
-      btn.disabled = true; btn.textContent = 'Salvando…'
+    async function atrDirectComplete(id) {
+      if (!confirm('Marcar esta transferência como CONCLUÍDA?')) return
 
       const { error } = await sb.from('transfer_requests').update({
         status: 'completed',
-        actual_rate: rate,
-        actual_amount_target: amount,
-        bank_reference: bankref,
         completed_at: new Date().toISOString(),
-        reviewed_by: currentAdmin?.email || 'admin',
-      }).eq('id', _atrCompleteId)
+      }).eq('id', id)
 
-      if (error) { err.textContent = 'Erro: ' + error.message; btn.disabled = false; btn.textContent = 'Concluir e notificar'; return }
+      if (error) { alert('Erro ao concluir: ' + error.message); return }
 
-      const t = _atrAll.find(x => x.id === _atrCompleteId)
-      if (t) { t.status = 'completed'; t.actual_rate = rate; t.actual_amount_target = amount; t.bank_reference = bankref }
+      const t = _atrAll.find(x => x.id === id)
+      if (t) t.status = 'completed'
 
-      document.getElementById('atr-complete-overlay').classList.add('hidden')
       document.getElementById('atr-modal-overlay').classList.add('hidden')
       document.body.style.overflow = ''
       atrRenderTable()
       atrRefreshBadge()
-      if (t) atrSendCompletionEmail(t, rate, amount, bankref)
+      if (t) atrSendStatusEmail(t, 'completed', null, null, null)
     }
 
     // ── Cancel modal ────────────────────────────────────────
