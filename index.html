@@ -355,15 +355,6 @@
             <div id="result-status" class="mt-2 text-xs text-slate-500 min-h-[18px]"></div>
           </div>
 
-          <!-- Quick presets -->
-          <div class="mt-6 flex flex-wrap gap-2">
-            <button data-preset="100" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">100</button>
-            <button data-preset="500" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">500</button>
-            <button data-preset="1000" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">1,000</button>
-            <button data-preset="5000" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">5,000</button>
-            <button data-preset="0.01" class="preset-btn text-xs px-3.5 py-1 rounded-2xl border border-slate-200 hover:bg-slate-50">0.01 BTC</button>
-          </div>
-
           <div class="mt-6 text-[10px] text-center text-slate-400">
             Rates are live from public sources (CoinGecko + open exchange data). For illustration only. 
             Actual execution rates provided upon request.
@@ -910,14 +901,6 @@
         triggerUpdate();
       });
 
-      // Quick amount presets
-      document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const val = btn.dataset.preset;
-          amountEl.value = val;
-          triggerUpdate();
-        });
-      });
 
       // Initial calculation
       setTimeout(() => {
