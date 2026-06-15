@@ -707,44 +707,63 @@
     }
 
     async function fetchFiatRates(base) {
-      // Primary: Frankfurter — BCB provider for BRL (current daily rate), ECB for others
-      // ECB BRL is a lagged cross-rate; BCB (Banco Central do Brasil) publishes same-day rates
+      // ── Tier 1: AwesomeAPI — near real-time BRL rates (~30s updates, free, no key) ──
+      // Covers all BRL cross-rates (USD/EUR/GBP). Best source for intraday BRL moves.
       try {
-        const provider = base === 'BRL' ? '&provider=BCB' : '';
-        const mainUrl = `https://api.frankfurter.dev/v1/latest?base=${base}${provider}`;
-        const brlUrl  = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL&provider=BCB';
-        const fetches = [fetch(mainUrl)];
-        if (base !== 'BRL') fetches.push(fetch(brlUrl));
-        const [mainRes, brlRes] = await Promise.all(fetches);
-        if (!mainRes.ok) throw new Error('frankfurter');
-        const data = await mainRes.json();
-        if (!data?.rates) throw new Error('frankfurter empty');
-        const rates = { ...data.rates, [base]: 1 };
-        if (brlRes) {
-          try {
-            const db = await brlRes.json();
-            const usdBrl = db?.rates?.BRL;
-            if (usdBrl) {
-              const usdPerBase = base === 'USD' ? 1 : (rates.USD || null);
-              if (usdPerBase) rates.BRL = usdBrl * usdPerBase;
-            }
-          } catch (_) {}
-        }
+        const res = await fetch('https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,GBP-BRL');
+        if (!res.ok) throw new Error('awesomeapi');
+        const d = await res.json();
+        const usdBrl = parseFloat(d['USDBRL']?.bid);
+        const eurBrl = parseFloat(d['EURBRL']?.bid);
+        const gbpBrl = parseFloat(d['GBPBRL']?.bid);
+        if (!usdBrl || !eurBrl || !gbpBrl) throw new Error('awesomeapi empty');
+        // All pairs are expressed as "how many BRL per 1 unit of X"
+        const brlPer = { USD: usdBrl, EUR: eurBrl, GBP: gbpBrl, BRL: 1 };
+        const brlPerBase = brlPer[base];
+        if (!brlPerBase) throw new Error('awesomeapi unsupported base');
+        const rates = {};
+        for (const [code, val] of Object.entries(brlPer)) rates[code] = val / brlPerBase;
         return rates;
       } catch (e1) {
-        console.warn('Frankfurter unavailable, trying exchangerate-api fallback');
-        // Secondary: exchangerate-api (free, no key)
+        console.warn('AwesomeAPI unavailable, trying Frankfurter/BCB');
+        // ── Tier 2: Frankfurter — BCB for BRL (up to 4× daily), ECB for EUR/GBP ──
         try {
-          const res2 = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
-          if (!res2.ok) throw new Error('fiat api');
-          const data2 = await res2.json();
-          return data2.rates || {};
+          const provider = base === 'BRL' ? '&provider=BCB' : '';
+          const mainUrl = `https://api.frankfurter.dev/v1/latest?base=${base}${provider}`;
+          const brlUrl  = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL&provider=BCB';
+          const fetches = [fetch(mainUrl)];
+          if (base !== 'BRL') fetches.push(fetch(brlUrl));
+          const [mainRes, brlRes] = await Promise.all(fetches);
+          if (!mainRes.ok) throw new Error('frankfurter');
+          const data = await mainRes.json();
+          if (!data?.rates) throw new Error('frankfurter empty');
+          const rates = { ...data.rates, [base]: 1 };
+          if (brlRes) {
+            try {
+              const db = await brlRes.json();
+              const usdBrl = db?.rates?.BRL;
+              if (usdBrl) {
+                const usdPerBase = base === 'USD' ? 1 : (rates.USD || null);
+                if (usdPerBase) rates.BRL = usdBrl * usdPerBase;
+              }
+            } catch (_) {}
+          }
+          return rates;
         } catch (e2) {
-          // Final fallback: approximate rates (very rough, only if APIs blocked)
-          console.warn('Fiat API fallback used');
-          const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
-          if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
-          return approx;
+          console.warn('Frankfurter unavailable, trying exchangerate-api');
+          // ── Tier 3: exchangerate-api (daily, free, no key) ─────────────────
+          try {
+            const res3 = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`);
+            if (!res3.ok) throw new Error('fiat api');
+            const data3 = await res3.json();
+            return data3.rates || {};
+          } catch (e3) {
+            // ── Tier 4: hardcoded approximates (last resort) ──────────────────
+            console.warn('All fiat APIs unavailable, using hardcoded approximates');
+            const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
+            if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
+            return approx;
+          }
         }
       }
     }
