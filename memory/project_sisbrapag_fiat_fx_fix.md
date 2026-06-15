@@ -1,16 +1,34 @@
 ---
 name: project-sisbrapag-fiat-fx-fix
-description: "SISBRAPAG site's fiat FX converter was switched from exchangerate-api to Frankfurter API to fix delays"
+description: "SISBRAPAG fiat FX converter: switched to Frankfurter API with BCB provider for BRL (same-day rate); ECB for EUR/GBP"
 metadata: 
   node_type: memory
   type: project
   originSessionId: f2a00917-a17a-496e-92e0-a62903c7ab0a
 ---
 
-The sisbrapag.com site's currency converter had a delayed fiat-rate source (exchangerate-api.com), while the crypto side (CoinGecko) worked flawlessly. Fixed by switching `fetchFiatRates` to a layered fallback: Frankfurter API (api.frankfurter.dev — free, no key, no quota, ECB-sourced) as primary, exchangerate-api as secondary, hardcoded approximates as last resort. Morningstar was researched and confirmed to NOT offer an accessible free FX API.
+The sisbrapag.com site's currency converter had a delayed fiat-rate source (exchangerate-api.com). Fixed by switching to Frankfurter API (api.frankfurter.dev). Later discovered BRL via ECB was also stale (cross-rate, up to 3 days behind). Fixed a second time by adding BCB provider.
 
-**Why:** User found Morningstar accurate via web search and asked to check if it had a free API first; it didn't, so Frankfurter was chosen as the best free/no-key/no-limit alternative.
+## Current state (as of 2026-06-15, commit `4310dce`)
 
-**How to apply:** If asked about this site's converter again, the fix is live — commit `fbb7dfd` on `main` of github.com/jayminho/sisbrapag, deployed via github.dev (VS Code in browser, no PAT). Documented in STATUS.md and README.md in the project's local workspace (`/Users/jpn/grok-projects/sisbrapag/`). Vercel auto-deploys from `main`.
+Both `fetchFiatRates` (index.html) and `cvFetchFiat` (dashboard.html) now work as follows:
 
-**Deployment method note:** The standard GitHub web CodeMirror editor corrupted the file twice; github.dev (VS Code in browser, authenticated via existing GitHub session as "jayminho") proved reliable — clipboard paste (cmd+v) avoids auto-indentation issues with multi-line code blocks. Use this approach again for future direct GitHub edits if the user wants to avoid personal access tokens.
+- **BRL as base** (`base=BRL`): adds `&provider=BCB` → Banco Central do Brasil, same-day rate
+- **All other bases**: fires two parallel Frankfurter calls:
+  1. Main call (default ECB) for all currencies
+  2. `?base=USD&symbols=BRL&provider=BCB` for a fresh BRL rate
+  - Patches `rates.BRL = BCB_usdBrl × rates.USD` (cross-derived; correct for any base)
+- **Fallback 1:** exchangerate-api.com (free, no key)
+- **Fallback 2:** hardcoded approximates `{ USD:1, EUR:0.92, GBP:0.79, BRL:5.65 }`
+
+## Why BCB vs ECB for BRL
+
+ECB derives BRL as a cross-rate from other providers, and was returning `"date":"2026-06-12"` on a Monday (3 days stale). BCB (Banco Central do Brasil) publishes the official PTAX rate daily and returned `"date":"2026-06-15"` with rate `5.0498`. EUR and GBP are fine via ECB — they're natively published currencies for ECB.
+
+## Frankfurter provider parameter
+
+Frankfurter v1 API supports `&provider=BCB` directly. BCB is one of 55 central bank sources. No API key required. URL: `https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL&provider=BCB`
+
+## Deployment method note
+
+Always deploy via `gh` CLI from `/Users/jpn/grok-projects/sisbrapag` using Desktop Commander MCP (not github.dev — no terminal there). Vercel auto-deploys from `main`.

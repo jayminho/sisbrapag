@@ -15,8 +15,37 @@ Running log of changes to sisbrapag.com. Repo: github.com/jayminho/sisbrapag. Ve
 
 ## Up next (start here next session)
 
-Phase 3 Item #1 complete. Next:
+- Test EUR (IBAN/BIC) and GBP (sort code) outbound transfer paths end-to-end
+- Test crypto withdraw flow end-to-end
 - **Phase 3 Item #2:** Internal messaging system (`messages` table in Supabase, inbox in dashboard, both-way admin ↔ user)
+
+---
+
+### 2026-06-15 — BRL exchange rate fix: BCB provider (commit `4310dce`)
+
+- **Problem:** Frankfurter API was returning stale BRL rates (3 days behind) — ECB derives BRL as a cross-rate and it lagged vs. Google/XE/Morningstar.
+- **Fix:** Both `index.html` (`fetchFiatRates`) and `dashboard.html` (`cvFetchFiat`) now fire two parallel Frankfurter calls when BRL is in play:
+  1. Main call (ECB) for EUR, GBP, and all other fiat pairs
+  2. `&provider=BCB` call (Banco Central do Brasil) for USD→BRL, then cross-derived for other bases via `BRL = BCB_usdBrl × rates.USD`
+- **Result:** Rate is now same-day from BCB (5.0498 vs stale 5.1073). EUR/GBP unaffected — ECB is still authoritative for those.
+- **Note:** EUR/GBP rates are fine via ECB — they're major currencies ECB publishes natively. Lag was BRL-specific.
+
+### 2026-06-15 — "Repetir transferência" feature (commits from previous session)
+
+- **What:** Repeat button appears on outbound transfer history rows when `routing` + `recipient_name` are present. Clicking it pre-fills the entire transfer wizard: currency, recipient name, country, all routing fields (IBAN/BIC, sort code/account, ACH routing/account/type), bank name, address, and purpose code.
+- **Key pieces:**
+  - `_trRepeatStore` — module-level cache of repeatable transfer data, keyed by transfer ID (avoids JSON in onclick attrs)
+  - `trRepeat(id)` — sets `trState._prefill`, calls `trPickDirection('outbound')`, shows banner ("Dados de TRF-xxx pré-preenchidos · Informe o valor desejado")
+  - `trApplyPrefill()` — called at end of `trRenderRecipientForm()`, fills routing fields and triggers live validation; `_recipientApplied` flag prevents clobbering on back-navigation
+  - `trGoToDirection()` — new back button function that also clears prefill + banner
+  - Supabase history query expanded to include `recipient_name, recipient_country, routing, purpose_code`
+- **UX:** User sees "Repetir" link on eligible rows, hits it, sees amount step with green banner, fills amount, all recipient fields pre-populated on the next step.
+
+### 2026-06-15 — Removed preset amount buttons from converters (previous session)
+
+- **`index.html`:** Removed the "Quick presets" div block with 5 buttons (100, 500, 1,000, 5,000, 0.01 BTC) and the `.preset-btn` JS event listener.
+- **`dashboard.html`:** Removed the preset amounts div (100, 500, 1,000, 5,000, 10,000 / 0.01 BTC) and the `.cv-preset` event listener from the converter widget.
+- **Why:** Design philosophy — radical simplicity. Static shortcuts add visual clutter for no real conversion benefit.
 
 ### 2026-06-11 — Bug fixes: magic link + naked domain + vercel.json (commits `deea0e3`, `ef06892`)
 
