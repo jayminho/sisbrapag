@@ -573,12 +573,13 @@
         const eurBrl = parseFloat(d['EURBRL']?.bid);
         const gbpBrl = parseFloat(d['GBPBRL']?.bid);
         if (!usdBrl || !eurBrl || !gbpBrl) throw new Error('awesomeapi empty');
-        // All pairs are expressed as "how many BRL per 1 unit of X"
+        // brlPer[X] = "how many BRL per 1 unit of X" (e.g. USDBRL ≈ 5.07)
+        // To get "how many X per 1 unit of base": rates[X] = brlPer[base] / brlPer[X]
         const brlPer = { USD: usdBrl, EUR: eurBrl, GBP: gbpBrl, BRL: 1 };
         const brlPerBase = brlPer[base];
         if (!brlPerBase) throw new Error('awesomeapi unsupported base');
         const rates = {};
-        for (const [code, val] of Object.entries(brlPer)) rates[code] = val / brlPerBase;
+        for (const [code, val] of Object.entries(brlPer)) rates[code] = brlPerBase / val;
         return rates;
       } catch (e1) {
         console.warn('AwesomeAPI unavailable, trying Frankfurter/BCB');
