@@ -710,12 +710,8 @@
                       <option value="savings">Savings (Poupança)</option>
                     </select>
                   </div>
-                  <div>
-                    <label class="block text-xs font-medium text-gray-600 mb-1">Nome do banco *</label>
-                    <input id="tr-ach-bank" type="text" placeholder="JPMorgan Chase"
-                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
-                    <p id="tr-ach-bank-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
-                  </div>
+                  <!-- Bank name: hidden, auto-filled from ABA lookup -->
+                  <input id="tr-ach-bank" type="hidden">
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">SWIFT / BIC <span class="text-gray-400">(opcional — wire internacional)</span></label>
                     <div class="relative">
@@ -2066,8 +2062,7 @@
         const av = trValidateACH(achNum)
         document.getElementById('tr-ach-routing-err').textContent = av.ok ? '' : (av.msg || 'ABA Routing obrigatório.')
         document.getElementById('tr-ach-account-err').textContent = acct  ? '' : 'Informe o número da conta.'
-        document.getElementById('tr-ach-bank-err').textContent    = bank  ? '' : 'Informe o nome do banco.'
-        if (!av.ok || !acct || !bank) return
+        if (!av.ok || !acct) return
         if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-ach-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
         routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bic_swift: bic }
 
@@ -2283,13 +2278,14 @@
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
         body: JSON.stringify({
           type: 'transfer',
-          userName,
+          name: userName,
           userEmail: currentUser.email,
           direction: dirStr,
+          amount: brl(s.amount),
+          ref: s.refCode,
           recipient: recipLabel,
           bank: bankLabel,
           purpose: s.purpose.purpose_description,
-          refCode: s.refCode,
         })
       }).catch(() => {})
     }
