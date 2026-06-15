@@ -552,7 +552,13 @@
               <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa hoje</span><span id="tr-rate-line" class="font-medium text-gray-800">—</span></div>
               <div id="tr-gross-row" class="hidden flex justify-between px-4 py-2.5"><span class="text-gray-400">Bruto (sem taxa)</span><span id="tr-gross-line" class="font-medium text-gray-800">—</span></div>
               <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400">Taxa SISBRAPAG (<span id="tr-fee-pct">3</span>%)</span><span id="tr-fee-line" class="font-medium text-gray-800">—</span></div>
-              <div class="flex justify-between px-4 py-2.5"><span class="text-gray-400" id="tr-result-label">Destinatário recebe</span><span id="tr-result-line" class="font-semibold text-emerald-700">—</span></div>
+              <div class="flex justify-between items-start px-4 py-2.5">
+                <span class="text-gray-400" id="tr-result-label">Destinatário recebe</span>
+                <div class="text-right">
+                  <span id="tr-result-line" class="font-semibold text-emerald-700">—</span>
+                  <p id="tr-result-note" class="hidden text-xs text-gray-400 mt-0.5">aprox. · pequenas variações possíveis</p>
+                </div>
+              </div>
             </div>
             <p id="tr-rate-status" class="text-xs text-gray-400 mb-1"></p>
             <p id="tr-balance-note" class="hidden text-xs mb-3"></p>
@@ -590,27 +596,6 @@
                   <select id="tr-rec-country"
                     class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
                     <option value="">Selecione o país…</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="DE">Germany</option>
-                    <option value="FR">France</option>
-                    <option value="ES">Spain</option>
-                    <option value="IT">Italy</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="PT">Portugal</option>
-                    <option value="BE">Belgium</option>
-                    <option value="CH">Switzerland</option>
-                    <option value="AT">Austria</option>
-                    <option value="SE">Sweden</option>
-                    <option value="NO">Norway</option>
-                    <option value="DK">Denmark</option>
-                    <option value="IE">Ireland</option>
-                    <option value="CA">Canada</option>
-                    <option value="AU">Australia</option>
-                    <option value="JP">Japan</option>
-                    <option value="SG">Singapore</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="OTHER">Outro país</option>
                   </select>
                   <p id="tr-rec-country-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
                 </div>
@@ -626,6 +611,7 @@
                       <span id="tr-iban-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
                     </div>
                     <p id="tr-iban-err" class="text-xs mt-1 min-h-[16px]"></p>
+                    <p id="tr-iban-bank-info" class="text-xs text-gray-400 mt-1 hidden"></p>
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">BIC / SWIFT *</label>
@@ -1712,6 +1698,23 @@
       EUR: { symbol: '€', name: 'Euro',  flat: 1 },
       GBP: { symbol: '£', name: 'Libra', flat: 1 },
     }
+    const PARTNER_BANK_FEE = 0.002 // 0.2% partner bank cut, applied to final recipient amount
+
+    const SEPA_COUNTRIES = [
+      ['', 'Selecione o país…'],
+      ['AT','Austria'],['BE','Belgium'],['BG','Bulgaria'],['HR','Croatia'],
+      ['CY','Cyprus'],['CZ','Czech Republic'],['DK','Denmark'],['EE','Estonia'],
+      ['FI','Finland'],['FR','France'],['DE','Germany'],['GR','Greece'],
+      ['HU','Hungary'],['IE','Ireland'],['IT','Italy'],['LV','Latvia'],
+      ['LT','Lithuania'],['LU','Luxembourg'],['MT','Malta'],['NL','Netherlands'],
+      ['PL','Poland'],['PT','Portugal'],['RO','Romania'],['SK','Slovakia'],
+      ['SI','Slovenia'],['ES','Spain'],['SE','Sweden'],
+      ['AD','Andorra'],['IS','Iceland'],['LI','Liechtenstein'],['MC','Monaco'],
+      ['NO','Norway'],['SM','San Marino'],['CH','Switzerland'],['GB','United Kingdom'],
+    ]
+    const GBP_COUNTRIES = [
+      ['GB','United Kingdom'],
+    ]
     let trState = { direction: null, ccy: 'USD', amount: 0, rate: null, feeBrl: 0, resultAmt: 0 }
     let trBalance = 0
     let trReady = false
@@ -1756,6 +1759,7 @@
       document.getElementById('tr-rate-line').textContent = '—'
       document.getElementById('tr-fee-line').textContent = '—'
       document.getElementById('tr-result-line').textContent = '—'
+      document.getElementById('tr-result-note').classList.add('hidden')
       document.getElementById('tr-rate-status').textContent = ''
     }
 
@@ -1764,6 +1768,21 @@
         ? document.getElementById('tr-target-ccy').value
         : document.getElementById('tr-source-ccy').value
     }
+    function trPopulateCountries(ccy) {
+      const sel = document.getElementById('tr-rec-country')
+      const prev = sel.value
+      sel.innerHTML = ''
+      const list = ccy === 'EUR' ? SEPA_COUNTRIES
+                 : ccy === 'GBP' ? GBP_COUNTRIES
+                 : []
+      list.forEach(([val, label]) => {
+        const o = document.createElement('option')
+        o.value = val; o.textContent = label
+        sel.appendChild(o)
+      })
+      if (list.some(([v]) => v === prev)) sel.value = prev
+    }
+
     function trUpdateCountryVisibility(ccy) {
       if (!ccy) ccy = trCurrentCcy()
       const wrap = document.getElementById('tr-rec-country-wrap')
@@ -1773,6 +1792,8 @@
         document.getElementById('tr-rec-country').value = 'US'
       } else {
         wrap.style.display = ''
+        trPopulateCountries(ccy)
+        if (ccy === 'GBP') document.getElementById('tr-rec-country').value = 'GB'
       }
     }
     function trCurrentAmount() {
@@ -1800,21 +1821,23 @@
         const amountBrl = amount
         const feeBrl = amountBrl * pct / 100 + flat * rateCcyToBrl
         const netBrl = Math.max(0, amountBrl - feeBrl)
-        const est = netBrl / rateCcyToBrl
         const gross = amountBrl / rateCcyToBrl
+        const est = (netBrl / rateCcyToBrl) * (1 - PARTNER_BANK_FEE)
         trState.feeBrl = feeBrl; trState.resultAmt = est
         document.getElementById('tr-gross-row').classList.remove('hidden')
         document.getElementById('tr-gross-line').textContent = `${fmtCcy(gross, ccy)} ${ccy}`
         document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
         document.getElementById('tr-result-line').textContent = `${fmtCcy(est, ccy)} ${ccy}`
+        document.getElementById('tr-result-note').classList.remove('hidden')
         trUpdateBalanceNote(amountBrl)
       } else {
         const grossBrl = amount * rateCcyToBrl
         const feeBrl = grossBrl * pct / 100 + flat * rateCcyToBrl
-        const netBrl = Math.max(0, grossBrl - feeBrl)
+        const netBrl = Math.max(0, grossBrl - feeBrl) * (1 - PARTNER_BANK_FEE)
         trState.feeBrl = feeBrl; trState.resultAmt = netBrl
         document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
         document.getElementById('tr-result-line').textContent = brl(netBrl)
+        document.getElementById('tr-result-note').classList.remove('hidden')
       }
       document.getElementById('tr-rate-status').textContent = 'Câmbio atualizado · APIs públicas'
     }
@@ -1952,6 +1975,45 @@
       const { ok, msg } = trValidateIBAN(el.value)
       if (el.value.trim()) trFieldStatus('tr-iban-icon', 'tr-iban-err', ok, msg)
       else trFieldStatus('tr-iban-icon', 'tr-iban-err', false, '')
+      // If format is valid, look up bank info via Open IBAN
+      if (ok) trLookupIBAN(el.value.replace(/\s/g, '').toUpperCase())
+    }
+
+    let _ibanLookupTimer = null
+    function trLookupIBAN(iban) {
+      clearTimeout(_ibanLookupTimer)
+      _ibanLookupTimer = setTimeout(async () => {
+        const infoEl = document.getElementById('tr-iban-bank-info')
+        if (infoEl) infoEl.textContent = 'Verificando IBAN…'
+        try {
+          const r = await fetch(`https://openiban.com/validate/${iban}?getBIC=true&validateBankCode=true`)
+          if (!r.ok) throw new Error()
+          const d = await r.json()
+          if (d.valid && d.bankData) {
+            const bk = d.bankData
+            const bankName = bk.name || ''
+            const bic     = bk.bic  || ''
+            // Auto-fill BIC if empty
+            const bicEl = document.getElementById('tr-iban-bic')
+            if (bic && !bicEl.value.trim()) {
+              bicEl.value = bic.toUpperCase()
+              trValidateSWIFTLive('tr-iban-bic','tr-iban-bic-icon','tr-iban-bic-err')
+            }
+            // Auto-fill bank name if empty
+            const bankEl = document.getElementById('tr-iban-bank')
+            if (bankName && !bankEl.value.trim()) bankEl.value = bankName
+            // Show info pill
+            const parts = [bankName, bk.city, bk.country].filter(Boolean)
+            if (infoEl) { infoEl.textContent = parts.join(' · '); infoEl.classList.remove('hidden') }
+          } else {
+            trFieldStatus('tr-iban-icon', 'tr-iban-err', false, 'IBAN não encontrado ou inválido.')
+            if (infoEl) infoEl.textContent = ''
+          }
+        } catch (_) {
+          // API unreachable — silently keep local validation result
+          if (infoEl) infoEl.textContent = ''
+        }
+      }, 600)
     }
 
     function trValidateSWIFT(val) {
