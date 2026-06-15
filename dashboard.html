@@ -1573,7 +1573,7 @@
         sb.from('deposits').select('amount').eq('user_id', currentUser.id).eq('status', 'credited'),
         sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'buy'),
         sb.from('crypto_orders').select('amount_brl').eq('user_id', currentUser.id).eq('status', 'completed').eq('order_type', 'sell'),
-        sb.from('transfer_requests').select('amount_source').eq('user_id', currentUser.id).eq('status', 'completed').eq('direction', 'outbound'),
+        sb.from('transfer_requests').select('amount_source').eq('user_id', currentUser.id).neq('status', 'cancelled').eq('direction', 'outbound'),
         sb.from('manual_adjustments').select('amount').eq('user_id', currentUser.id),
       ])
       const deposited   = (dep.data       || []).reduce((s, r) => s + Number(r.amount),        0)
