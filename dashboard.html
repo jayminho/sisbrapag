@@ -508,12 +508,36 @@
 
             <!-- OUTBOUND inputs -->
             <div id="tr-amount-outbound" class="hidden">
-              <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">VOCÊ ENVIA (BRL)</p>
-              <div class="flex items-center gap-3 mb-3">
-                <span class="text-lg font-medium text-gray-400">R$</span>
-                <input id="tr-amount-out" type="number" min="1" step="0.01" placeholder="0,00"
-                  class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+              <!-- Mode toggle: enter in BRL or in foreign currency -->
+              <div class="flex justify-end mb-3">
+                <div class="flex bg-gray-100 rounded-lg p-0.5 text-xs font-medium gap-0.5">
+                  <button id="tr-toggle-brl" onclick="trSetOutMode('brl')"
+                    class="px-3 py-1.5 rounded-md transition bg-white shadow-sm text-gray-800">Digitar em R$</button>
+                  <button id="tr-toggle-ccy" onclick="trSetOutMode('ccy')"
+                    class="px-3 py-1.5 rounded-md transition text-gray-500">Digitar na moeda</button>
+                </div>
               </div>
+
+              <!-- BRL input row (default mode) -->
+              <div id="tr-out-brl-row">
+                <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">VOCÊ ENVIA (BRL)</p>
+                <div class="flex items-center gap-3 mb-3">
+                  <span class="text-lg font-medium text-gray-400">R$</span>
+                  <input id="tr-amount-out" type="number" min="1" step="0.01" placeholder="0,00"
+                    class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+                </div>
+              </div>
+
+              <!-- CCY input row (reverse mode: user enters target currency amount) -->
+              <div id="tr-out-ccy-row" class="hidden">
+                <p class="text-xs font-semibold tracking-widest text-gray-400 mb-2">DESTINATÁRIO RECEBE</p>
+                <div class="flex items-center gap-3 mb-3">
+                  <span id="tr-out-ccy-symbol" class="text-lg font-medium text-gray-400">$</span>
+                  <input id="tr-amount-out-ccy" type="number" min="1" step="0.01" placeholder="0.00"
+                    class="flex-1 text-3xl font-semibold bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-3 outline-none transition">
+                </div>
+              </div>
+
               <div class="flex items-center justify-between mb-4">
                 <label class="text-sm text-gray-500">Destinatário recebe em</label>
                 <select id="tr-target-ccy" class="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:border-emerald-400">
@@ -1749,7 +1773,7 @@
     const GBP_COUNTRIES = [
       ['GB','United Kingdom'],
     ]
-    let trState = { direction: null, ccy: 'USD', amount: 0, rate: null, feeBrl: 0, resultAmt: 0 }
+    let trState = { direction: null, ccy: 'USD', amount: 0, rate: null, feeBrl: 0, resultAmt: 0, outMode: 'brl' }
     let _trRepeatStore = {}   // cache of repeatable transfer data keyed by id
     let trBalance = 0
     let trReady = false
@@ -1786,8 +1810,30 @@
       document.getElementById('tr-amount-err').textContent = ''
       document.getElementById('tr-balance-note').classList.add('hidden')
       trState.rate = null; trState.resultAmt = 0
+      if (dir === 'outbound') trSetOutMode('brl') // always reset to BRL mode
       trResetQuote()
       trGoto('amount')
+    }
+
+    function trSetOutMode(mode) {
+      trState.outMode = mode
+      const isCcy = mode === 'ccy'
+      document.getElementById('tr-out-brl-row').classList.toggle('hidden', isCcy)
+      document.getElementById('tr-out-ccy-row').classList.toggle('hidden', !isCcy)
+      document.getElementById('tr-toggle-brl').className =
+        `px-3 py-1.5 rounded-md transition ${!isCcy ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500'}`
+      document.getElementById('tr-toggle-ccy').className =
+        `px-3 py-1.5 rounded-md transition ${isCcy ? 'bg-white shadow-sm text-gray-800' : 'text-gray-500'}`
+      document.getElementById('tr-result-label').textContent = isCcy ? 'Você envia' : 'Destinatário recebe'
+      // Sync CCY symbol when switching
+      const ccy = document.getElementById('tr-target-ccy')?.value || 'USD'
+      document.getElementById('tr-out-ccy-symbol').textContent = TR_CCYS[ccy]?.symbol || ''
+      // Clear the input that just became active and reset quote
+      document.getElementById(isCcy ? 'tr-amount-out-ccy' : 'tr-amount-out').value = ''
+      trState.rate = null; trState.resultAmt = 0; trState.amount = 0
+      trResetQuote()
+      document.getElementById('tr-balance-note').classList.add('hidden')
+      document.getElementById('tr-amount-next').disabled = false
     }
 
     function trGoToDirection() {
@@ -1930,6 +1976,8 @@
       }
     }
     function trCurrentAmount() {
+      if (trState.direction === 'outbound' && trState.outMode === 'ccy')
+        return parseFloat(document.getElementById('tr-amount-out-ccy').value) || 0
       const el = trState.direction === 'outbound'
         ? document.getElementById('tr-amount-out')
         : document.getElementById('tr-amount-in')
@@ -1950,13 +1998,32 @@
       trState.rate = rateCcyToBrl
       document.getElementById('tr-rate-line').textContent = `1 ${ccy} = ${brl(rateCcyToBrl)}`
       const flatNote = flat ? ` (${pct}% + ${fmtCcy(flat, ccy)})` : ` (${pct}%)`
-      if (trState.direction === 'outbound') {
+      if (trState.direction === 'outbound' && trState.outMode === 'ccy') {
+        // Reverse mode: user enters what recipient should receive; compute BRL needed
+        // destCcy = amount the recipient gets (after partner bank cut)
+        // netBrl  = BRL after SISBRAPAG fee that equals destCcy × rate / (1 - partner cut)
+        // amountBrl = BRL user must send (before SISBRAPAG fee)
+        const destCcy = amount
+        const netBrl = destCcy * rateCcyToBrl / (1 - PARTNER_BANK_FEE)
+        const amountBrl = (netBrl + flat * rateCcyToBrl) / (1 - pct / 100)
+        const feeBrl = amountBrl - netBrl
+        // sync symbol next to input
+        document.getElementById('tr-out-ccy-symbol').textContent = TR_CCYS[ccy]?.symbol || ''
+        trState.feeBrl = feeBrl
+        trState.resultAmt = destCcy   // what recipient gets — used in confirm screen
+        trState.amount = amountBrl    // BRL user sends  — used in confirm & balance check
+        document.getElementById('tr-gross-row').classList.add('hidden')
+        document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
+        document.getElementById('tr-result-line').textContent = `${brl(amountBrl)}`
+        document.getElementById('tr-result-note').classList.remove('hidden')
+        trUpdateBalanceNote(amountBrl)
+      } else if (trState.direction === 'outbound') {
         const amountBrl = amount
         const feeBrl = amountBrl * pct / 100 + flat * rateCcyToBrl
         const netBrl = Math.max(0, amountBrl - feeBrl)
         const gross = amountBrl / rateCcyToBrl
         const est = (netBrl / rateCcyToBrl) * (1 - PARTNER_BANK_FEE)
-        trState.feeBrl = feeBrl; trState.resultAmt = est
+        trState.feeBrl = feeBrl; trState.resultAmt = est; trState.amount = amountBrl
         document.getElementById('tr-gross-row').classList.remove('hidden')
         document.getElementById('tr-gross-line').textContent = `${fmtCcy(gross, ccy)} ${ccy}`
         document.getElementById('tr-fee-line').textContent = brl(feeBrl) + flatNote
@@ -1995,9 +2062,13 @@
       const err = document.getElementById('tr-amount-err')
       const amount = trCurrentAmount()
       if (!amount || amount <= 0) { err.textContent = 'Informe um valor válido.'; return }
-      if (trState.direction === 'outbound' && amount > trBalance) { err.textContent = 'Saldo insuficiente. Faça um depósito primeiro.'; return }
+      // In CCY mode the raw input is foreign currency; use the computed BRL amount for balance/limit checks
+      const brlCheck = (trState.direction === 'outbound' && trState.outMode === 'ccy')
+        ? trState.amount
+        : amount
+      if (trState.direction === 'outbound' && brlCheck > trBalance) { err.textContent = 'Saldo insuficiente. Faça um depósito primeiro.'; return }
       if (!trState.rate) { err.textContent = 'Aguarde o câmbio carregar.'; return }
-      const limitErr = checkTxLimit(amount)
+      const limitErr = checkTxLimit(brlCheck)
       if (limitErr) { err.textContent = limitErr; return }
       err.textContent = ''
       trRenderRecipientForm()
@@ -2326,8 +2397,15 @@
     function setupTransfers() {
       const recompute = () => { clearTimeout(trRateTimer); trRateTimer = setTimeout(trRecompute, 300) }
       document.getElementById('tr-amount-out').addEventListener('input', recompute)
+      document.getElementById('tr-amount-out-ccy').addEventListener('input', recompute)
       document.getElementById('tr-amount-in').addEventListener('input', recompute)
-      document.getElementById('tr-target-ccy').addEventListener('change', () => { trUpdateCountryVisibility(); recompute() })
+      document.getElementById('tr-target-ccy').addEventListener('change', () => {
+        // Keep CCY symbol in sync when currency selector changes
+        const ccy = document.getElementById('tr-target-ccy').value
+        document.getElementById('tr-out-ccy-symbol').textContent = TR_CCYS[ccy]?.symbol || ''
+        trUpdateCountryVisibility()
+        recompute()
+      })
       document.getElementById('tr-source-ccy').addEventListener('change', recompute)
     }
 
