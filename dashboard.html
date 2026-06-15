@@ -2348,8 +2348,8 @@
   </td></tr>
   <tr><td style="padding:32px;">
     <p style="margin:0 0 4px;font-size:13px;color:#6b7280;">Ref: <strong style="color:#111;">${esc(s.refCode)}</strong></p>
-    <h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111827;">Solicitação recebida, ${esc(firstName)}!</h1>
-    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">Recebemos sua solicitação de transferência. Nossa equipe entrará em contato em até <strong style="color:#111;">1 dia útil</strong>.</p>
+    <h1 style="margin:0 0 20px;font-size:20px;font-weight:700;color:#111827;">Pedido recebido, ${esc(firstName)}!</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;">Seu pedido foi recebido e está sendo processado. Você receberá uma confirmação ou notificação por e-mail assim que a transferência for concluída ou caso precise de alguma informação adicional.</p>
     <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">
       <tr style="background:#f9fafb;"><td style="padding:8px 12px;color:#6b7280;width:160px;">Você ${isOut ? 'envia' : 'aguarda'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtSend)}</td></tr>
       <tr><td style="padding:8px 12px;color:#6b7280;">${isOut ? 'Destinatário recebe ≈' : 'Você recebe ≈'}</td><td style="padding:8px 12px;font-weight:600;color:#111;">${esc(amtRecv)}</td></tr>
@@ -2384,10 +2384,9 @@
 
       const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
       const steps = [
-        { label: 'Solicitação recebida', done: true,  date: today },
-        { label: 'Em análise',           done: false, date: '' },
-        { label: 'Em processamento',     done: false, date: '' },
-        { label: 'Concluída',            done: false, date: '' },
+        { label: 'Solicitação recebida',           done: true,  date: today },
+        { label: 'Aguardando aprovação da equipe', done: false, date: '' },
+        { label: 'Concluída',                      done: false, date: '' },
       ]
       document.getElementById('tr-status-timeline').innerHTML = `
         <div class="space-y-3">
@@ -2425,11 +2424,11 @@
       }
 
       const ST = {
-        submitted:    { label: 'Enviada',          cls: 'bg-yellow-100 text-yellow-800' },
-        under_review: { label: 'Em análise',       cls: 'bg-blue-100 text-blue-800' },
-        processing:   { label: 'Em processamento', cls: 'bg-indigo-100 text-indigo-800' },
-        completed:    { label: 'Concluída',        cls: 'bg-emerald-100 text-emerald-800' },
-        cancelled:    { label: 'Cancelada',        cls: 'bg-red-100 text-red-800' },
+        submitted:    { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
+        under_review: { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
+        processing:   { label: 'Aguardando', cls: 'bg-amber-100 text-amber-800' },
+        completed:    { label: 'Concluída',  cls: 'bg-emerald-100 text-emerald-800' },
+        cancelled:    { label: 'Cancelada',  cls: 'bg-red-100 text-red-800' },
       }
 
       list.innerHTML = data.map(t => {

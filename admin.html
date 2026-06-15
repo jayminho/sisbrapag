@@ -305,9 +305,7 @@
           <!-- Filter bar -->
           <div class="flex gap-2 mb-5 flex-wrap">
             <button onclick="adminTrFilter('all')"       id="atr-f-all"        class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-gray-900 text-white font-medium">Todas</button>
-            <button onclick="adminTrFilter('submitted')" id="atr-f-submitted"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Enviadas</button>
-            <button onclick="adminTrFilter('under_review')" id="atr-f-under_review" class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Em análise</button>
-            <button onclick="adminTrFilter('processing')" id="atr-f-processing" class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Em processamento</button>
+            <button onclick="adminTrFilter('submitted')" id="atr-f-submitted"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Pendentes</button>
             <button onclick="adminTrFilter('completed')" id="atr-f-completed"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Concluídas</button>
             <button onclick="adminTrFilter('cancelled')" id="atr-f-cancelled"  class="atr-filter px-3 py-1.5 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">Canceladas</button>
           </div>
@@ -1692,11 +1690,11 @@
     // ── Admin: Transfers ────────────────────────────────────
 
     const ATR_STATUS = {
-      submitted:    { label: 'Enviada',          cls: 'bg-yellow-100 text-yellow-800' },
-      under_review: { label: 'Em análise',       cls: 'bg-blue-100 text-blue-800' },
-      processing:   { label: 'Em processamento', cls: 'bg-indigo-100 text-indigo-800' },
-      completed:    { label: 'Concluída',        cls: 'bg-emerald-100 text-emerald-800' },
-      cancelled:    { label: 'Cancelada',        cls: 'bg-red-100 text-red-800' },
+      submitted:    { label: 'Pendente',  cls: 'bg-amber-100 text-amber-800' },
+      under_review: { label: 'Pendente',  cls: 'bg-amber-100 text-amber-800' },
+      processing:   { label: 'Pendente',  cls: 'bg-amber-100 text-amber-800' },
+      completed:    { label: 'Concluída', cls: 'bg-emerald-100 text-emerald-800' },
+      cancelled:    { label: 'Cancelada', cls: 'bg-red-100 text-red-800' },
     }
 
     let _atrAll = []   // full list (cached)
@@ -1724,7 +1722,7 @@
       if (error) { document.getElementById('atr-empty').textContent = 'Erro: ' + error.message; document.getElementById('atr-empty').classList.remove('hidden'); return }
 
       _atrAll = data || []
-      const pending = _atrAll.filter(t => t.status === 'submitted').length
+      const pending = _atrAll.filter(t => !['completed','cancelled'].includes(t.status)).length
       const badge = document.getElementById('admin-tr-badge')
       badge.textContent = pending
       badge.classList.toggle('hidden', pending === 0)
@@ -1746,7 +1744,11 @@
     }
 
     function atrRenderTable() {
-      const rows = _atrFilter === 'all' ? _atrAll : _atrAll.filter(t => t.status === _atrFilter)
+      const rows = _atrFilter === 'all'
+        ? _atrAll
+        : _atrFilter === 'submitted'
+          ? _atrAll.filter(t => !['completed','cancelled'].includes(t.status))
+          : _atrAll.filter(t => t.status === _atrFilter)
       const tbody = document.getElementById('atr-tbody')
       if (rows.length === 0) {
         document.getElementById('atr-table').classList.add('hidden')
@@ -1834,16 +1836,10 @@
         </div>`
       }).join('')
 
-      // Action buttons (Sprint F will flesh these out; stubs for now)
+      // Action buttons — pending orders get Concluir + Cancelar directly
       const actions = document.getElementById('atr-modal-actions')
       actions.innerHTML = ''
-      if (t.status === 'submitted') {
-        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','under_review')" class="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">→ Em análise</button>`
-      }
-      if (t.status === 'under_review') {
-        actions.innerHTML += `<button onclick="atrSetStatus('${t.id}','processing')" class="px-4 py-2 text-sm bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors">→ Em processamento</button>`
-      }
-      if (['under_review','processing'].includes(t.status)) {
+      if (!['completed', 'cancelled'].includes(t.status)) {
         actions.innerHTML += `<button onclick="atrDirectComplete('${t.id}')" class="px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-colors">✓ Concluir</button>`
         actions.innerHTML += `<button onclick="atrOpenCancel('${t.id}')" class="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors ml-auto">✕ Cancelar</button>`
       }
@@ -1856,20 +1852,6 @@
       if (e && e.target !== document.getElementById('atr-modal-overlay')) return
       document.getElementById('atr-modal-overlay').classList.add('hidden')
       document.body.style.overflow = ''
-    }
-
-    // Simple status advance (submitted→under_review, under_review→processing) + notify user
-    async function atrSetStatus(id, newStatus) {
-      const { error } = await sb.from('transfer_requests').update({ status: newStatus }).eq('id', id)
-      if (error) { alert('Erro: ' + error.message); return }
-      const t = _atrAll.find(x => x.id === id)
-      if (t) t.status = newStatus
-      document.getElementById('atr-modal-overlay').classList.add('hidden')
-      document.body.style.overflow = ''
-      atrRenderTable()
-      atrRefreshBadge()
-      // Notify user by email
-      if (t) atrSendStatusEmail(t, newStatus, null, null, null)
     }
 
     // ── Complete (direct, no modal) ─────────────────────────
@@ -2012,10 +1994,8 @@
       const ccy         = isOut ? (t.currency_target || '') : (t.currency_source || '')
 
       const statusCopy = {
-        under_review: { subject: `Transferência em análise — ${t.reference_code}`, headline: 'Sua transferência está em análise', body: 'Recebemos sua solicitação e nossa equipe está revisando os detalhes. Entraremos em contato caso precise de informações adicionais.' },
-        processing:   { subject: `Transferência em processamento — ${t.reference_code}`, headline: 'Transferência em processamento', body: 'Ótima notícia! Sua transferência foi aprovada e está sendo processada junto à nossa parceira bancária.' },
-        completed:    { subject: `Transferência concluída — ${t.reference_code}`, headline: 'Transferência concluída com sucesso ✓', body: '' },
-        cancelled:    { subject: `Transferência cancelada — ${t.reference_code}`, headline: 'Transferência cancelada', body: '' },
+        completed: { subject: `Transferência concluída — ${t.reference_code}`, headline: 'Transferência concluída com sucesso ✓', body: '' },
+        cancelled: { subject: `Transferência cancelada — ${t.reference_code}`, headline: 'Transferência cancelada', body: '' },
       }
       const copy = statusCopy[newStatus]
       if (!copy) return
@@ -2073,7 +2053,7 @@
     // ── Badge helper ────────────────────────────────────────
 
     function atrRefreshBadge() {
-      const pending = _atrAll.filter(x => x.status === 'submitted').length
+      const pending = _atrAll.filter(x => !['completed','cancelled'].includes(x.status)).length
       const badge = document.getElementById('admin-tr-badge')
       badge.textContent = pending
       badge.classList.toggle('hidden', pending === 0)
