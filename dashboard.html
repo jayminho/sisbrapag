@@ -1465,9 +1465,27 @@
 
     async function cvFetchFiat(base) {
       try {
-        const r = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}`)
-        const d = await r.json()
-        if (d?.rates) return { ...d.rates, [base]: 1 }
+        // BCB (Banco Central do Brasil) publishes current BRL rates; ECB BRL is a lagged cross-rate
+        const provider = base === 'BRL' ? '&provider=BCB' : ''
+        const mainUrl = `https://api.frankfurter.dev/v1/latest?base=${base}${provider}`
+        const brlUrl  = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL&provider=BCB'
+        const fetches = [fetch(mainUrl)]
+        if (base !== 'BRL') fetches.push(fetch(brlUrl))
+        const [mainRes, brlRes] = await Promise.all(fetches)
+        const d = await mainRes.json()
+        if (!d?.rates) throw new Error('empty')
+        const rates = { ...d.rates, [base]: 1 }
+        if (brlRes) {
+          try {
+            const db = await brlRes.json()
+            const usdBrl = db?.rates?.BRL
+            if (usdBrl) {
+              const usdPerBase = base === 'USD' ? 1 : (rates.USD || null)
+              if (usdPerBase) rates.BRL = usdBrl * usdPerBase
+            }
+          } catch (_) {}
+        }
+        return rates
       } catch (_) {}
       try {
         const r = await fetch(`https://api.exchangerate-api.com/v4/latest/${base}`)

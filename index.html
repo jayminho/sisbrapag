@@ -707,13 +707,30 @@
     }
 
     async function fetchFiatRates(base) {
-      // Primary: Frankfurter (free, no key, ECB-sourced, no rate caps — fast & reliable)
+      // Primary: Frankfurter — BCB provider for BRL (current daily rate), ECB for others
+      // ECB BRL is a lagged cross-rate; BCB (Banco Central do Brasil) publishes same-day rates
       try {
-        const res = await fetch(`https://api.frankfurter.dev/v1/latest?base=${base}`);
-        if (!res.ok) throw new Error('frankfurter');
-        const data = await res.json();
-        if (data && data.rates) return { ...data.rates, [base]: 1 };
-        throw new Error('frankfurter empty');
+        const provider = base === 'BRL' ? '&provider=BCB' : '';
+        const mainUrl = `https://api.frankfurter.dev/v1/latest?base=${base}${provider}`;
+        const brlUrl  = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=BRL&provider=BCB';
+        const fetches = [fetch(mainUrl)];
+        if (base !== 'BRL') fetches.push(fetch(brlUrl));
+        const [mainRes, brlRes] = await Promise.all(fetches);
+        if (!mainRes.ok) throw new Error('frankfurter');
+        const data = await mainRes.json();
+        if (!data?.rates) throw new Error('frankfurter empty');
+        const rates = { ...data.rates, [base]: 1 };
+        if (brlRes) {
+          try {
+            const db = await brlRes.json();
+            const usdBrl = db?.rates?.BRL;
+            if (usdBrl) {
+              const usdPerBase = base === 'USD' ? 1 : (rates.USD || null);
+              if (usdPerBase) rates.BRL = usdBrl * usdPerBase;
+            }
+          } catch (_) {}
+        }
+        return rates;
       } catch (e1) {
         console.warn('Frankfurter unavailable, trying exchangerate-api fallback');
         // Secondary: exchangerate-api (free, no key)
@@ -723,7 +740,7 @@
           const data2 = await res2.json();
           return data2.rates || {};
         } catch (e2) {
-          // Final fallback: approximate rates (very rough, only for demo if APIs blocked)
+          // Final fallback: approximate rates (very rough, only if APIs blocked)
           console.warn('Fiat API fallback used');
           const approx = { USD: 1, EUR: 0.92, GBP: 0.79, BRL: 5.65 };
           if (base === 'BRL') return { USD: 0.177, EUR: 0.163, GBP: 0.14, BRL: 1 };
