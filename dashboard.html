@@ -2190,6 +2190,8 @@
       }
 
       trState.recipient = { recipient_name: name, recipient_country: country, ...routing }
+      document.getElementById('tr-purpose-summary').textContent =
+        `${name} · ${brl(trState.amount)} → ~${fmtCcy(trState.resultAmt, trState.ccy)} ${trState.ccy}`
       trGoto('purpose')
     }
 
