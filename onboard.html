@@ -149,13 +149,15 @@
       document.getElementById('sent-email').textContent = email
 
       // ── Admin notifications only for genuinely new users ─────────────────
-      // Check profiles table: if a row already exists for this email the user
-      // is just requesting a new magic link, not signing up for the first time.
-      const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }
-      fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id&email=eq.${encodeURIComponent(email)}&limit=1`, {
-        headers: { ...headers, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-      }).then(r => r.json()).then(rows => {
-        if (rows && rows.length > 0) return // existing user — skip notifications
+      // We track emails that have already requested a magic link in localStorage.
+      // If the email is already known, the user is logging in again — skip notifications.
+      const _knownKey = 'sbp_known_emails'
+      const _known = JSON.parse(localStorage.getItem(_knownKey) || '[]')
+      const _isNew = !_known.includes(email)
+      if (_isNew) {
+        _known.push(email)
+        localStorage.setItem(_knownKey, JSON.stringify(_known))
+        const headers = { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY }
         // Telegram
         fetch(`${SUPABASE_URL}/functions/v1/notify-telegram`, {
           method: 'POST', headers,
@@ -175,7 +177,7 @@
             </p>`
           })
         }).catch(() => {})
-      }).catch(() => {})
+      }
       // ─────────────────────────────────────────────────────────────────────
     })
     function showError(msg) {
