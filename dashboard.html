@@ -50,9 +50,10 @@
         <a href="#" onclick="showSection('transfers')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-transfers">
           <i class="fa-solid fa-globe w-4 text-gray-400"></i> Transferências
         </a>
-        <a href="#" onclick="showSection('crypto')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-crypto">
-          <i class="fa-solid fa-coins w-4 text-gray-400"></i> Cripto
-        </a>
+        <span class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-300 cursor-not-allowed select-none" id="nav-crypto" title="Em breve">
+          <i class="fa-solid fa-coins w-4 text-gray-300"></i> Cripto
+          <span class="ml-auto text-[10px] bg-amber-50 text-amber-400 border border-amber-100 px-1.5 py-0.5 rounded-full font-medium leading-none tracking-wide">Em breve</span>
+        </span>
         <a href="#" onclick="showSection('documents')" class="nav-link flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-gray-500 hover:bg-gray-50" id="nav-documents">
           <i class="fa-solid fa-file-lines w-4 text-gray-400"></i> Documents
         </a>
@@ -918,6 +919,17 @@
 
         <!-- ===== CRIPTO (Phase 5) ===== -->
         <section id="section-crypto" class="section hidden">
+          <!-- Coming soon screen -->
+          <div class="flex flex-col items-center justify-center py-24 text-center max-w-sm mx-auto">
+            <div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mb-6">
+              <i class="fa-solid fa-coins text-2xl text-amber-400"></i>
+            </div>
+            <h1 class="font-display text-2xl text-gray-900 mb-2">Cripto — Em breve</h1>
+            <p class="text-gray-400 text-sm leading-relaxed">Estamos finalizando as integrações para compra, venda e saque de criptomoedas. Em breve disponível aqui.</p>
+          </div>
+
+          <!-- *** Existing crypto UI (preserved, not visible) *** -->
+          <div class="hidden">
           <div class="mb-6">
             <h1 class="font-display text-2xl text-gray-900">Cripto</h1>
             <p class="text-gray-500 text-sm mt-1">Compre, venda e saque criptomoedas com segurança.</p>
@@ -1118,6 +1130,7 @@
               <p class="text-sm text-gray-400 py-6 text-center">Carregando…</p>
             </div>
           </div>
+          </div><!-- /hidden existing crypto UI -->
         </section>
 
       </div>
@@ -1443,10 +1456,9 @@
       const makeGroups = (sel) => {
         sel.innerHTML = ''
         const fg = document.createElement('optgroup'); fg.label = 'Fiat'
-        const cg = document.createElement('optgroup'); cg.label = 'Crypto'
+        // crypto optgroup intentionally omitted — crypto pairs hidden until product re-launch
         fiats.forEach(c => { const o = document.createElement('option'); o.value = c.code; o.textContent = `${c.code} — ${c.name}`; fg.appendChild(o) })
-        cryptos.forEach(c => { const o = document.createElement('option'); o.value = c.code; o.textContent = `${c.code} — ${c.name}`; cg.appendChild(o) })
-        sel.appendChild(fg); sel.appendChild(cg)
+        sel.appendChild(fg)
       }
       makeGroups(from); makeGroups(to)
       // Default FROM = user's country currency, TO = USD
