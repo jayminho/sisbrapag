@@ -508,7 +508,11 @@
 
           <!-- STEP 2: amount & currency -->
           <div id="tr-step-amount" class="hidden max-w-xl bg-white border border-gray-100 rounded-xl p-6">
-            <button onclick="trGoto('direction')" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <button onclick="trGoToDirection()" class="text-xs text-gray-400 hover:text-gray-600 mb-4"><i class="fa-solid fa-arrow-left mr-1"></i> Voltar</button>
+            <div id="tr-repeat-banner" class="hidden mb-4 flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg px-3 py-2">
+              <i class="fa-solid fa-rotate-right text-emerald-500 text-xs"></i>
+              <span id="tr-repeat-banner-text"></span>
+            </div>
 
             <!-- OUTBOUND inputs -->
             <div id="tr-amount-outbound" class="hidden">
@@ -1728,6 +1732,7 @@
       ['GB','United Kingdom'],
     ]
     let trState = { direction: null, ccy: 'USD', amount: 0, rate: null, feeBrl: 0, resultAmt: 0 }
+    let _trRepeatStore = {}   // cache of repeatable transfer data keyed by id
     let trBalance = 0
     let trReady = false
     let trRateTimer = null
@@ -1765,6 +1770,104 @@
       trState.rate = null; trState.resultAmt = 0
       trResetQuote()
       trGoto('amount')
+    }
+
+    function trGoToDirection() {
+      // Clear any pending repeat prefill when the user navigates back
+      trState._prefill = null
+      document.getElementById('tr-repeat-banner')?.classList.add('hidden')
+      trGoto('direction')
+    }
+
+    // ── Repetir transferência ───────────────────────────────
+    function trRepeat(id) {
+      const t = _trRepeatStore[id]
+      if (!t) return
+      // Store prefill so recipient form can self-populate
+      trState._prefill = { ...t }
+      // Enter the outbound amount step with the same currency
+      trPickDirection('outbound')
+      document.getElementById('tr-target-ccy').value = t.currency_target || 'USD'
+      trUpdateCountryVisibility(t.currency_target || 'USD')
+      // Trigger a quote refresh for the new currency
+      clearTimeout(trRateTimer); trRateTimer = setTimeout(trRecompute, 50)
+      // Show banner
+      const banner = document.getElementById('tr-repeat-banner')
+      const bannerText = document.getElementById('tr-repeat-banner-text')
+      if (banner && bannerText) {
+        bannerText.textContent = `Dados de ${esc(t.reference_code)} pré-preenchidos · Informe o valor desejado`
+        banner.classList.remove('hidden')
+      }
+    }
+
+    // Applies stored prefill data to recipient form fields (called from trRenderRecipientForm)
+    function trApplyPrefill() {
+      const p = trState._prefill
+      if (!p || p._recipientApplied) return
+
+      // Recipient name
+      const nameEl = document.getElementById('tr-rec-name')
+      if (nameEl && p.recipient_name) nameEl.value = p.recipient_name
+
+      // Country dropdown (if visible)
+      const countryEl = document.getElementById('tr-rec-country')
+      if (countryEl && p.recipient_country) {
+        const wrap = document.getElementById('tr-rec-country-wrap')
+        if (!wrap || wrap.style.display !== 'none') countryEl.value = p.recipient_country
+      }
+
+      const r = p.routing
+      if (r) {
+        if (r.routing_type === 'iban') {
+          if (r.iban) {
+            const el = document.getElementById('tr-iban')
+            if (el) { el.value = r.iban; trValidateIBANLive() }
+          }
+          if (r.bic_swift) {
+            const el = document.getElementById('tr-iban-bic')
+            if (el && !el.value.trim()) { el.value = r.bic_swift; trValidateSWIFTLive('tr-iban-bic','tr-iban-bic-icon','tr-iban-bic-err') }
+          }
+          if (r.bank_name) { const el = document.getElementById('tr-iban-bank'); if (el) el.value = r.bank_name }
+          if (r.recipient_address) { const el = document.getElementById('tr-iban-address'); if (el) el.value = r.recipient_address }
+
+        } else if (r.routing_type === 'sort_code') {
+          if (r.sort_code) {
+            const el = document.getElementById('tr-sort-code')
+            if (el) { el.value = r.sort_code; trAutoFormatSortCode(el) }
+          }
+          if (r.account_number) {
+            const el = document.getElementById('tr-sort-account')
+            if (el) { el.value = r.account_number; trValidateSortAccountLive() }
+          }
+          if (r.bic_swift) {
+            const el = document.getElementById('tr-sort-bic')
+            if (el) { el.value = r.bic_swift; trValidateSWIFTLive('tr-sort-bic','tr-sort-bic-icon','tr-sort-bic-err') }
+          }
+          if (r.recipient_address) { const el = document.getElementById('tr-sort-address'); if (el) el.value = r.recipient_address }
+
+        } else if (r.routing_type === 'ach') {
+          if (r.ach_routing) {
+            const el = document.getElementById('tr-ach-routing')
+            if (el) { el.value = r.ach_routing; trValidateACHLive() }
+          }
+          if (r.account_number) { const el = document.getElementById('tr-ach-account'); if (el) el.value = r.account_number }
+          if (r.account_type) { const el = document.getElementById('tr-ach-type'); if (el) el.value = r.account_type }
+          if (r.bank_name) {
+            const el = document.getElementById('tr-ach-bank'); if (el) el.value = r.bank_name
+            const display = document.getElementById('tr-ach-bank-display')
+            const label = document.getElementById('tr-ach-bank-label')
+            if (display && label) { label.textContent = r.bank_name; display.classList.remove('hidden') }
+          }
+          if (r.recipient_address) { const el = document.getElementById('tr-ach-address'); if (el) el.value = r.recipient_address }
+          if (r.bic_swift) {
+            const el = document.getElementById('tr-ach-bic')
+            if (el) { el.value = r.bic_swift; trValidateSWIFTLive('tr-ach-bic','tr-ach-bic-icon','tr-ach-bic-err') }
+          }
+        }
+      }
+
+      // Mark as applied so we don't clobber any edits if the user goes back and re-enters recipient step
+      trState._prefill._recipientApplied = true
     }
 
     function trResetQuote() {
@@ -1917,6 +2020,8 @@
       }
       // Clear errors from previous visit
       document.getElementById('tr-recipient-err').textContent = ''
+      // Apply repeat prefill if present (no-op if already applied or no prefill)
+      trApplyPrefill()
     }
 
     function trRenderInboundDetails() {
@@ -2193,6 +2298,11 @@
       document.getElementById('tr-purpose-summary').textContent =
         `${name} · ${brl(trState.amount)} → ~${fmtCcy(trState.resultAmt, trState.ccy)} ${trState.ccy}`
       trGoto('purpose')
+      // Pre-fill purpose code when repeating a transfer
+      if (trState._prefill?.purpose_code) {
+        const pcEl = document.getElementById('tr-purpose-code')
+        if (pcEl && !pcEl.value) { pcEl.value = trState._prefill.purpose_code; trPurposeCodeChange() }
+      }
     }
 
     function setupTransfers() {
@@ -2487,7 +2597,7 @@
       if (!list || !currentUser) return
       const { data, error } = await sb
         .from('transfer_requests')
-        .select('id, reference_code, direction, amount_source, currency_source, amount_target, currency_target, status, created_at')
+        .select('id, reference_code, direction, amount_source, currency_source, amount_target, currency_target, status, created_at, recipient_name, recipient_country, routing, purpose_code')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(20)
@@ -2505,6 +2615,7 @@
         cancelled:    { label: 'Cancelada',  cls: 'bg-red-100 text-red-800' },
       }
 
+      _trRepeatStore = {}
       list.innerHTML = data.map(t => {
         const st   = ST[t.status] || { label: t.status, cls: 'bg-gray-100 text-gray-600' }
         const date = new Date(t.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -2512,6 +2623,18 @@
         const amtStr = isOut
           ? `${brl(t.amount_source)} → ${t.currency_target}`
           : `${t.currency_source} → ${brl(t.amount_source ?? 0)}`
+        // Cache data for repeatable outbound transfers
+        const canRepeat = isOut && t.routing && t.recipient_name
+        if (canRepeat) {
+          _trRepeatStore[t.id] = {
+            reference_code:   t.reference_code,
+            currency_target:  t.currency_target,
+            recipient_name:   t.recipient_name,
+            recipient_country: t.recipient_country,
+            routing:          t.routing,
+            purpose_code:     t.purpose_code,
+          }
+        }
         return `<div class="flex items-center justify-between px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition">
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-8 h-8 rounded-lg ${isOut ? 'bg-orange-50' : 'bg-emerald-50'} flex items-center justify-center shrink-0">
@@ -2522,7 +2645,10 @@
               <p class="text-xs text-gray-400 truncate">${amtStr} · ${date}</p>
             </div>
           </div>
-          <span class="badge ${st.cls} ml-3 shrink-0 text-xs">${st.label}</span>
+          <div class="flex items-center gap-3 ml-3 shrink-0">
+            ${canRepeat ? `<button onclick="trRepeat('${t.id}')" class="text-xs text-emerald-600 hover:text-emerald-700 font-medium hover:underline transition">Repetir</button>` : ''}
+            <span class="badge ${st.cls} text-xs">${st.label}</span>
+          </div>
         </div>`
       }).join('')
     }
