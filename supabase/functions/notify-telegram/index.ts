@@ -82,6 +82,25 @@ serve(async (req) => {
         `🔖 Ref: \`${ref}\``,
       ].filter(l => l !== null).join('\n')
 
+    // ── Lock-in swap ─────────────────────────────────────────────────────────
+    } else if (type === 'swap') {
+      const { name, userEmail, fromAmount, toCurrency, toAmount, appliedRate, marketRate, rateSource, ref } = body
+      const flag = { USD: '🇺🇸', EUR: '🇪🇺', GBP: '🇬🇧' }[toCurrency] || '🌍'
+      text = [
+        `🔒 *Lock In — Câmbio executado*`,
+        ``,
+        `👤 Cliente: ${name || '—'}`,
+        userEmail ? `📧 ${userEmail}` : null,
+        `💵 BRL debitado: R$ ${fromAmount}`,
+        `${flag} ${toCurrency} creditado: ${toAmount}`,
+        `📊 Taxa aplicada: ${appliedRate} BRL/${toCurrency}`,
+        `💹 Taxa mercado: ${marketRate} BRL/${toCurrency}`,
+        rateSource ? `🔌 Fonte: ${rateSource}` : null,
+        `🔖 Ref: \`${ref}\``,
+        ``,
+        `→ Comprar ${toCurrency === 'USD' ? 'USDC' : toCurrency}: ~${toAmount} ${toCurrency}`,
+      ].filter(Boolean).join('\n')
+
     } else {
       // Unknown type — send raw dump so nothing is silently swallowed
       text = `⚠️ *Evento SISBRAPAG (tipo desconhecido: ${type})*\n\n\`\`\`\n${JSON.stringify(body, null, 2)}\n\`\`\``
