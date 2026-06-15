@@ -695,6 +695,13 @@
                       <span id="tr-ach-routing-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
                     </div>
                     <p id="tr-ach-routing-err" class="text-xs mt-1 min-h-[16px]"></p>
+                    <!-- Bank info pill: auto-filled from ABA lookup -->
+                    <div id="tr-ach-bank-display" class="hidden mt-1">
+                      <div class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800">
+                        <i class="fa-solid fa-building-columns text-emerald-500 text-xs"></i>
+                        <span id="tr-ach-bank-label" class="font-medium"></span>
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">Número da conta *</label>
@@ -710,14 +717,22 @@
                       <option value="savings">Savings (Poupança)</option>
                     </select>
                   </div>
-                  <!-- Bank info: auto-filled from ABA lookup -->
+                  <!-- Bank info: hidden inputs (populated by ABA lookup) -->
                   <input id="tr-ach-bank" type="hidden">
                   <input id="tr-ach-state" type="hidden">
-                  <div id="tr-ach-bank-display" class="hidden -mt-2">
-                    <div class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800">
-                      <i class="fa-solid fa-building-columns text-emerald-500 text-xs"></i>
-                      <span id="tr-ach-bank-label" class="font-medium"></span>
-                    </div>
+                  <!-- Recipient address -->
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Endereço do beneficiário *</label>
+                    <input id="tr-ach-address" type="text" placeholder="Ex: 123 Main St, New York"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-ach-address-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Estado (EUA) *</label>
+                    <input id="tr-ach-rec-state" type="text" maxlength="2" placeholder="Ex: NY, CA, TX"
+                      oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'')"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition font-mono">
+                    <p id="tr-ach-rec-state-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
                   </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">SWIFT / BIC <span class="text-gray-400">(opcional — wire internacional)</span></label>
@@ -2076,15 +2091,19 @@
       } else if (ccy === 'USD') {
         const achNum = document.getElementById('tr-ach-routing').value
         const acct   = document.getElementById('tr-ach-account').value.trim()
-        const bank   = document.getElementById('tr-ach-bank').value.trim()
-        const bic    = document.getElementById('tr-ach-bic').value.trim()
+        const bank     = document.getElementById('tr-ach-bank').value.trim()
+        const bic      = document.getElementById('tr-ach-bic').value.trim()
+        const address  = document.getElementById('tr-ach-address').value.trim()
+        const recState = document.getElementById('tr-ach-rec-state').value.trim()
         const av = trValidateACH(achNum)
-        document.getElementById('tr-ach-routing-err').textContent = av.ok ? '' : (av.msg || 'ABA Routing obrigatório.')
-        document.getElementById('tr-ach-account-err').textContent = acct  ? '' : 'Informe o número da conta.'
-        if (!av.ok || !acct) return
+        document.getElementById('tr-ach-routing-err').textContent   = av.ok   ? '' : (av.msg || 'ABA Routing obrigatório.')
+        document.getElementById('tr-ach-account-err').textContent   = acct    ? '' : 'Informe o número da conta.'
+        document.getElementById('tr-ach-address-err').textContent   = address ? '' : 'Informe o endereço do beneficiário.'
+        document.getElementById('tr-ach-rec-state-err').textContent = recState ? '' : 'Informe o estado (ex: NY).'
+        if (!av.ok || !acct || !address || !recState) return
         if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-ach-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
-        const state = document.getElementById('tr-ach-state').value.trim()
-        routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bank_state: state, bic_swift: bic }
+        const bankState = document.getElementById('tr-ach-state').value.trim()
+        routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bank_state: bankState, recipient_address: address, recipient_state: recState, bic_swift: bic }
 
       } else {
         const bic      = document.getElementById('tr-swift-bic').value.trim()
