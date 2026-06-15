@@ -1152,7 +1152,8 @@
     const DEFAULT_FEE_PCT = 3.0
     let effectiveFeePct = DEFAULT_FEE_PCT
     // Per-user transaction limits in BRL. null = no limit.
-    let minTxBrl = null
+    const MIN_TX_BRL = 1000
+    let minTxBrl = MIN_TX_BRL
     let maxTxBrl = null
 
     // Returns an error string if amount_brl violates the user's limits, otherwise null.
@@ -1191,7 +1192,7 @@
         const { data: profile } = await sb.from('profiles').select('status, fee_pct_override, min_tx_brl, max_tx_brl').eq('id', user.id).single()
         if (profile?.status) realStatus = profile.status
         effectiveFeePct = (profile?.fee_pct_override ?? null) !== null ? Number(profile.fee_pct_override) : DEFAULT_FEE_PCT
-        minTxBrl = (profile?.min_tx_brl ?? null) !== null ? Number(profile.min_tx_brl) : null
+        minTxBrl = (profile?.min_tx_brl ?? null) !== null ? Number(profile.min_tx_brl) : MIN_TX_BRL
         maxTxBrl = (profile?.max_tx_brl ?? null) !== null ? Number(profile.max_tx_brl) : null
       } catch (_) {}
 
@@ -3251,7 +3252,7 @@
       document.getElementById('cx-wd-2-next').disabled = false
     }
 
-    function cxWdStep3() {
+    async function cxWdStep3() {
       const bal = cxHoldingAmt(cxState.asset)
       document.getElementById('cx-wd-asset-name2').textContent = cxState.asset
       document.getElementById('cx-wd-network-label').textContent = cxState.network
@@ -3263,6 +3264,7 @@
       document.getElementById('cx-wd-preview').classList.add('hidden')
       document.getElementById('cx-wd-3-next').disabled = true
       document.getElementById('cx-wd-balance-warn').classList.add('hidden')
+      await cxLoadRate(cxState.asset)
       cxShow('wd-3')
     }
 
@@ -3280,11 +3282,16 @@
       document.getElementById('cx-wd-fee-crypto').textContent = cxCryptoFmt(feeCrypto, cxState.asset)
       document.getElementById('cx-wd-net-crypto').textContent = cxCryptoFmt(amt - feeCrypto, cxState.asset)
       preview.classList.remove('hidden')
+      const rate = cxRates[cxState.asset] || 0
+      const brlEst = amt * rate
       if (amt > bal) {
         warnEl.textContent = `Saldo insuficiente (disponível ${cxCryptoFmt(bal, cxState.asset)})`
         warnEl.classList.remove('hidden'); nextBtn.disabled = true
       } else if (addr.length < 10) {
         warnEl.textContent = 'Endereço inválido'; warnEl.classList.remove('hidden'); nextBtn.disabled = true
+      } else if (rate > 0 && brlEst < MIN_TX_BRL) {
+        warnEl.textContent = `Valor mínimo R$ ${MIN_TX_BRL.toLocaleString('pt-BR')} (≈ ${cxCryptoFmt(MIN_TX_BRL / rate, cxState.asset)} ${cxState.asset})`
+        warnEl.classList.remove('hidden'); nextBtn.disabled = true
       } else { warnEl.classList.add('hidden'); nextBtn.disabled = false }
     }
 
@@ -3310,6 +3317,13 @@
       const errEl = document.getElementById('cx-wd-submit-err')
       btn.disabled = true; btn.textContent = 'Enviando…'
       const s = cxState; s.refCode = cxRefCode()
+      const rate = cxRates[s.asset] || await cxLoadRate(s.asset)
+      const brlEst = s.cryptoAmount * rate
+      const limitErr = checkTxLimit(brlEst)
+      if (limitErr) {
+        errEl.textContent = limitErr; errEl.classList.remove('hidden')
+        btn.disabled = false; btn.textContent = 'Confirmar saque'; return
+      }
       const { error } = await sb.from('crypto_orders').insert({
         user_id: currentUser.id, reference_code: s.refCode, order_type: 'withdraw',
         asset: s.asset, network: s.network, amount_crypto: s.cryptoAmount,
