@@ -710,8 +710,15 @@
                       <option value="savings">Savings (Poupança)</option>
                     </select>
                   </div>
-                  <!-- Bank name: hidden, auto-filled from ABA lookup -->
+                  <!-- Bank info: auto-filled from ABA lookup -->
                   <input id="tr-ach-bank" type="hidden">
+                  <input id="tr-ach-state" type="hidden">
+                  <div id="tr-ach-bank-display" class="hidden -mt-2">
+                    <div class="flex items-center gap-2 px-3 py-2 bg-emerald-50 border border-emerald-100 rounded-xl text-sm text-emerald-800">
+                      <i class="fa-solid fa-building-columns text-emerald-500 text-xs"></i>
+                      <span id="tr-ach-bank-label" class="font-medium"></span>
+                    </div>
+                  </div>
                   <div>
                     <label class="block text-xs font-medium text-gray-600 mb-1">SWIFT / BIC <span class="text-gray-400">(opcional — wire internacional)</span></label>
                     <div class="relative">
@@ -1991,7 +1998,13 @@
       const { ok, msg } = trValidateACH(el.value)
       if (el.value) trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', ok, msg)
       else trFieldStatus('tr-ach-routing-icon', 'tr-ach-routing-err', false, '')
-      // If checksum passes, look up bank name
+      // Clear bank display when routing is incomplete or invalid
+      if (!ok || el.value.length < 9) {
+        document.getElementById('tr-ach-bank-display')?.classList.add('hidden')
+        const bankEl = document.getElementById('tr-ach-bank'); if (bankEl) bankEl.value = ''
+        const stateEl = document.getElementById('tr-ach-state'); if (stateEl) stateEl.value = ''
+      }
+      // If checksum passes, look up bank name + state
       if (ok && el.value.length === 9) {
         try {
           const res = await fetch(`https://www.routingnumbers.info/api/data.json?rn=${el.value}`)
@@ -1999,7 +2012,13 @@
             const data = await res.json()
             if (data.customer_name) {
               const bankEl = document.getElementById('tr-ach-bank')
-              if (bankEl && !bankEl.value) bankEl.value = data.customer_name
+              if (bankEl) bankEl.value = data.customer_name
+              const stateEl = document.getElementById('tr-ach-state')
+              if (stateEl && data.state) stateEl.value = data.state
+              const label = data.state ? `${data.customer_name} · ${data.state}` : data.customer_name
+              const display = document.getElementById('tr-ach-bank-display')
+              const labelEl = document.getElementById('tr-ach-bank-label')
+              if (display && labelEl) { labelEl.textContent = label; display.classList.remove('hidden') }
             }
           }
         } catch (_) { /* silent fallback */ }
@@ -2064,7 +2083,8 @@
         document.getElementById('tr-ach-account-err').textContent = acct  ? '' : 'Informe o número da conta.'
         if (!av.ok || !acct) return
         if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-ach-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
-        routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bic_swift: bic }
+        const state = document.getElementById('tr-ach-state').value.trim()
+        routing = { routing_type: 'ach', ach_routing: achNum, account_number: acct, account_type: document.getElementById('tr-ach-type').value, bank_name: bank, bank_state: state, bic_swift: bic }
 
       } else {
         const bic      = document.getElementById('tr-swift-bic').value.trim()
