@@ -628,6 +628,12 @@
                     <input id="tr-iban-bank" type="text" placeholder="Deutsche Bank"
                       class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
                   </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Endereço do beneficiário *</label>
+                    <input id="tr-iban-address" type="text" placeholder="Ex: Friedrichstraße 12, 10117 Berlin, Alemanha"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-iban-address-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
+                  </div>
                 </div>
 
                 <!-- ── GBP: Sort Code + Account ── -->
@@ -661,6 +667,12 @@
                       <span id="tr-sort-bic-icon" class="absolute right-3 top-2.5 text-sm leading-none"></span>
                     </div>
                     <p id="tr-sort-bic-err" class="text-xs mt-1 min-h-[16px]"></p>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Endereço do beneficiário *</label>
+                    <input id="tr-sort-address" type="text" placeholder="Ex: 10 Downing Street, London SW1A 2AA, United Kingdom"
+                      class="w-full text-sm bg-gray-50 border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 rounded-xl px-4 py-2.5 outline-none transition">
+                    <p id="tr-sort-address-err" class="text-xs text-red-500 mt-1 min-h-[16px]"></p>
                   </div>
                 </div>
 
@@ -2123,24 +2135,28 @@
       let routing = {}
 
       if (ccy === 'EUR') {
-        const iban = document.getElementById('tr-iban').value.trim()
-        const bic  = document.getElementById('tr-iban-bic').value.trim()
-        const bank = document.getElementById('tr-iban-bank').value.trim()
+        const iban    = document.getElementById('tr-iban').value.trim()
+        const bic     = document.getElementById('tr-iban-bic').value.trim()
+        const bank    = document.getElementById('tr-iban-bank').value.trim()
+        const address = document.getElementById('tr-iban-address').value.trim()
         const iv = trValidateIBAN(iban), sv = trValidateSWIFT(bic)
-        document.getElementById('tr-iban-err').textContent     = iv.ok ? '' : (iv.msg || 'IBAN obrigatório.')
-        document.getElementById('tr-iban-bic-err').textContent = sv.ok ? '' : (sv.msg || 'BIC/SWIFT obrigatório.')
-        if (!iv.ok || !sv.ok) return
-        routing = { routing_type: 'iban', iban: iban.replace(/\s/g,'').toUpperCase(), bic_swift: bic, bank_name: bank }
+        document.getElementById('tr-iban-err').textContent         = iv.ok ? '' : (iv.msg || 'IBAN obrigatório.')
+        document.getElementById('tr-iban-bic-err').textContent     = sv.ok ? '' : (sv.msg || 'BIC/SWIFT obrigatório.')
+        document.getElementById('tr-iban-address-err').textContent = address ? '' : 'Informe o endereço do beneficiário.'
+        if (!iv.ok || !sv.ok || !address) return
+        routing = { routing_type: 'iban', iban: iban.replace(/\s/g,'').toUpperCase(), bic_swift: bic, bank_name: bank, recipient_address: address }
 
       } else if (ccy === 'GBP') {
         const sortDigits = document.getElementById('tr-sort-code').value.replace(/\D/g,'')
-        const acct = document.getElementById('tr-sort-account').value.replace(/\D/g,'')
-        const bic  = document.getElementById('tr-sort-bic').value.trim()
+        const acct    = document.getElementById('tr-sort-account').value.replace(/\D/g,'')
+        const bic     = document.getElementById('tr-sort-bic').value.trim()
+        const address = document.getElementById('tr-sort-address').value.trim()
         document.getElementById('tr-sort-err').textContent         = sortDigits.length === 6 ? '' : 'Sort code deve ter 6 dígitos.'
         document.getElementById('tr-sort-account-err').textContent = acct.length === 8 ? '' : 'Conta deve ter 8 dígitos.'
-        if (sortDigits.length !== 6 || acct.length !== 8) return
+        document.getElementById('tr-sort-address-err').textContent = address ? '' : 'Informe o endereço do beneficiário.'
+        if (sortDigits.length !== 6 || acct.length !== 8 || !address) return
         if (bic && !trValidateSWIFT(bic).ok) { document.getElementById('tr-sort-bic-err').textContent = 'BIC/SWIFT inválido.'; return }
-        routing = { routing_type: 'sort_code', sort_code: `${sortDigits.slice(0,2)}-${sortDigits.slice(2,4)}-${sortDigits.slice(4)}`, account_number: acct, bic_swift: bic }
+        routing = { routing_type: 'sort_code', sort_code: `${sortDigits.slice(0,2)}-${sortDigits.slice(2,4)}-${sortDigits.slice(4)}`, account_number: acct, bic_swift: bic, recipient_address: address }
 
       } else if (ccy === 'USD') {
         const achNum = document.getElementById('tr-ach-routing').value
