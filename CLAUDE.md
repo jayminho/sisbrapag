@@ -41,6 +41,49 @@ deploy for some reason, say so explicitly and loudly — do not imply it's live.
 
 ---
 
+## Integrations
+
+### Email — Resend
+- Provider: **Resend** (`https://api.resend.com/emails`), called by the `send-email` edge function.
+- Default sender: **`SISBRAPAG <noreply@sisbrapag.com>`** (override per-call with a `from` field).
+- Secret (Supabase env): **`RESEND_API_KEY`** — value lives in Supabase function secrets, not in the repo.
+- Payload fields: `to, subject, html, from, attachments, replyTo`.
+
+### Telegram — activity notifications
+- Bot: **@sisbrapagbot** (id `8722822452`), via the `notify-telegram` edge function → `api.telegram.org/bot<token>/sendMessage`.
+- Secrets (Supabase env): **`TELEGRAM_BOT_TOKEN`**, **`TELEGRAM_CHAT_ID`** — values in function secrets, not the repo.
+- Sends alerts for activities like new signups / deposits.
+
+### Cron jobs (pg_cron, in the Supabase DB)
+| Job | Schedule | What it does |
+|-----|----------|--------------|
+| `expire-deposits-5min` | `*/5 * * * *` (every 5 min) | HTTP POST → `expire-deposits` edge function to expire stale deposits |
+
+To inspect/change cron: `select * from cron.job;` (and `cron.schedule(...)` / `cron.unschedule(...)`).
+
+---
+
+## Data model — `public` schema (Supabase)
+
+All tables have **RLS enabled**. Key tables:
+
+| Table | Purpose | Notable columns |
+|-------|---------|-----------------|
+| `profiles` | One row per user | `status`, `fee_pct_override`, `fee_note`, `min_tx_brl`, `max_tx_brl`, `country`, `primary_use` |
+| `deposits` | BRL deposits (PIX/manual) | `method`, `amount`, `status`, `receipt_url`, `expires_at`, `sender_name`, `reviewed_by` |
+| `transfer_requests` | Cross-border transfers (in/out) | `direction`, `amount_source/target`, `currency_source/target`, `fx_rate_at_request`, `routing_type`, bank fields (`iban`,`bic_swift`,`sort_code`,`ach_routing`…), `status`, `source_balance` |
+| `currency_swaps` | Lock In multi-currency swaps | `from_currency/to_currency`, `from_amount/to_amount`, `market_rate`, `applied_rate`, `fee_pct`, `status` |
+| `crypto_orders` | Crypto buy/sell orders | `order_type`, `asset`, `network`, `amount_crypto/brl`, `rate_at_request`, `destination_address`, `txhash`, `binance_order_id`, `status` |
+| `crypto_holdings` | Per-user crypto balances | `btc_balance`, `eth_balance`, `usdt_balance`, `usdc_balance` |
+| `manual_adjustments` | Admin balance adjustments | `amount`, `currency`, `note`, `created_by` |
+| `messages` | In-app user ↔ admin messages | `is_from_admin`, `body`, `read_at` |
+| `page_views` | Lightweight analytics | `page`, `referrer`, `user_agent` |
+
+> Balance is **derived**, not stored: `getAvailableBalance()` = deposited − spentBuy + earnedSell − spentXfer + adjTotal
+> (across `deposits` / `crypto_orders` / `currency_swaps` / `transfer_requests` / `manual_adjustments`).
+
+---
+
 ## How deployment works here
 
 | Layer | What it is | How it deploys |
