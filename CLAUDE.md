@@ -82,6 +82,28 @@ All tables have **RLS enabled**. Key tables:
 > Balance is **derived**, not stored: `getAvailableBalance()` = deposited − spentBuy + earnedSell − spentXfer + adjTotal
 > (across `deposits` / `crypto_orders` / `currency_swaps` / `transfer_requests` / `manual_adjustments`).
 
+### Canonical vs. leftover columns (`transfer_requests`)
+
+Some columns are duplicated from earlier schema iterations. **Always use the canonical
+one**; the leftovers are empty and unused (verified 2026-06-18) — don't read/write them,
+but leaving them in place is harmless, so there's no need to drop them.
+
+| Use this (canonical) | Ignore (leftover, empty + unreferenced) |
+|----------------------|------------------------------------------|
+| `actual_rate` | `actual_fx_rate` |
+| `cancellation_reason` | `cancelled_reason` |
+| — | `bank_reference`, `partner_ref` |
+
+### Observed `status` values (current data)
+
+- `deposits`: `credited`, `expired`, `rejected` (plus pending states before admin review)
+- `transfer_requests`: `completed`
+- `currency_swaps`: `completed`
+- `crypto_orders`: `completed`
+- `profiles`: `active`
+
+Full status lifecycles are driven by the admin review logic in `admin.html`.
+
 ---
 
 ## How deployment works here
