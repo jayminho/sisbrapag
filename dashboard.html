@@ -2122,7 +2122,7 @@
         document.getElementById('tr-source-symbol').textContent = TR_CCYS[ccy]?.symbol || ''
       if (!amount || amount <= 0) { trResetQuote(); trState.resultAmt = 0; trState.rate = null; trUpdateBalanceNote(0); return }
       document.getElementById('tr-rate-status').textContent = 'Buscando câmbio…'
-      const rateCcyToBrl = await cvGetRate(ccy, 'BRL') // 1 ccy = X BRL
+      const { rate: rateCcyToBrl } = await lkFetchRate(ccy) // 1 ccy = X BRL
       if (!rateCcyToBrl) { document.getElementById('tr-rate-status').textContent = 'Não foi possível obter o câmbio.'; trState.rate = null; return }
       trState.rate = rateCcyToBrl
       document.getElementById('tr-rate-line').textContent = `1 ${ccy} = ${brl(rateCcyToBrl)}`
