@@ -13,6 +13,34 @@ deploy for some reason, say so explicitly and loudly — do not imply it's live.
 
 ---
 
+## 🎯 Source of truth — services, refs & IDs
+
+> All verified live on 2026-06-18. The Supabase account has **three** projects —
+> always use the `sisbrapag` ref below, never the others (`xowxow` /
+> `jayminho's Project` are unrelated and must not be touched).
+
+| Service | Identifier | Notes |
+|---------|-----------|-------|
+| **Production site** | `https://www.sisbrapag.com` | Bare `sisbrapag.com` 308-redirects to `www`. Always test/verify the `www` URL. |
+| **App subdomain** | `https://app.sisbrapag.com` → `/dashboard.html` | per `vercel.json` redirect |
+| **Admin subdomain** | `https://admin.sisbrapag.com` → `/admin.html` | per `vercel.json` redirect |
+| **GitHub repo** | `https://github.com/jayminho/sisbrapag.git` | branch `main` |
+| **Vercel** | project connected to the GitHub repo above | auto-deploys on push to `main`; no manual step |
+| **Supabase project** | name `sisbrapag` · ref **`iiclntwwutsaoorbncfp`** | region `sa-east-1`, ACTIVE_HEALTHY |
+| **Supabase URL** | `https://iiclntwwutsaoorbncfp.supabase.co` | wired into the frontend |
+| **Supabase org** | `ygtgetydshlyycvgimsh` | |
+
+**Supabase edge functions** (all deployed to ref `iiclntwwutsaoorbncfp`, in `supabase/functions/`):
+
+| Function | verify_jwt | Purpose |
+|----------|-----------|---------|
+| `send-email` | false | outbound email |
+| `expire-deposits` | false | deposit expiry job |
+| `notify-telegram` | false | Telegram notifications |
+| `execute-swap` | true | multi-currency Lock In swap (requires auth) |
+
+---
+
 ## How deployment works here
 
 | Layer | What it is | How it deploys |
